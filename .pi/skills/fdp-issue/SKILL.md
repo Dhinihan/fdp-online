@@ -9,9 +9,10 @@ Você vai implementar uma issue do projeto FDP (Faz De Propósito). Siga rigoros
 
 ### 1. Leitura Obrigatória
 
-Antes de escrever qualquer código, leia:
-1. `AGENTS.md` na raiz do projeto → regras de arquitetura, código, testes.
-2. A issue no GitHub: `gh issue view <id> --json title,body,labels`
+Antes de escrever qualquer código, leia nesta ordem:
+1. `AGENTS.md` na raiz do projeto → regras de código, testes, qualidade.
+2. `ARQUITETURA.md` na raiz → decisões arquiteturais (stack, camadas, fluxo de dados).
+3. A issue no GitHub: `gh issue view <id> --json title,body,labels`
 
 ### 2. Entenda a Arquitetura
 

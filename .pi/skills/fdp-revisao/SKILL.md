@@ -9,9 +9,10 @@ Você vai aplicar uma revisão de PR no projeto FDP. Siga rigorosamente este flu
 
 ### 1. Leitura Obrigatória
 
-Antes de qualquer mudança:
+Antes de qualquer mudança, leia nesta ordem:
 1. `AGENTS.md` na raiz ← regras do projeto.
-2. O PR e seus comentários: `gh pr view <pr-id> --json title,body,comments`
+2. `ARQUITETURA.md` na raiz ← decisões arquiteturais (stack, camadas, fluxo de dados).
+3. O PR e seus comentários: `gh pr view <pr-id> --json title,body,comments`
 
 ### 2. Análise
 

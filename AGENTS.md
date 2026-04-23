@@ -5,6 +5,16 @@
 
 ---
 
+## 0. Leitura Obrigatória
+
+Antes de qualquer implementação, leia na seguinte ordem:
+
+1. **Este arquivo (`AGENTS.md`)** ← regras de código, testes, qualidade.
+2. **`ARQUITETURA.md`** ← decisões arquiteturais do projeto (stack, camadas, fluxo de dados, estrutura de pastas).
+3. A **issue do GitHub** que você vai implementar.
+
+---
+
 ## 1. Arquitetura
 
 - **Clean Architecture / Ports & Adapters**. O core do jogo é TypeScript puro. Não importa Phaser no `src/core/`.
