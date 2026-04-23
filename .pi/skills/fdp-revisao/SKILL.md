@@ -20,6 +20,12 @@ Antes de qualquer mudança, leia nesta ordem:
 - Identifique quais arquivos precisam mudar.
 - Se algo não estiver claro, faça o ajuste mais razoável e documente no commit.
 
+**Lembre das Regras Fortalecidas (Opção B):**
+1. **Regra de Ouro:** Adapter nunca decide regras. Se o revisor pediu lógica no adapter, ela deve ir pro core.
+2. **Regra do Contrato:** Se falta informação no estado público do core, adicione lá (com teste), não fuça pelo adapter.
+3. **Regra da Mentira Visual:** Animação/som são permitidos no adapter, mas nunca mudam estado.
+4. **Regra do Teste de Fuga:** Se o ajuste envolve regra de jogo, teste no core. Se é só visual, não precisa de teste novo.
+
 ### 3. Ajuste (TDD no core)
 
 - Mantenha o mesmo padrão de código (PT-BR, funções pequenas).

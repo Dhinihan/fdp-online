@@ -21,6 +21,15 @@ Antes de escrever qualquer código, leia nesta ordem:
 - `src/adapters/bots/` ← IA dos bots.
 - `src/store/` ← Event emitter + estado.
 
+**Regras Fortalecidas (leia antes de codar):**
+
+O projeto usa **Opção B — Entregáveis Verticais** (ver `ARQUITETURA.md`). Isso significa que entregamos valor jogável cedo, mas o risco de "vazar" lógica pro adapter é alto. Siga **sem exceção**:
+
+1. **Regra de Ouro:** O adapter **NUNCA decide regras**. Ele apenas renderiza o estado que o core entrega. Se precisar saber "quem ganhou a rodada", o core já deve ter `vencedorDaRodada` no estado público. O adapter **não calcula** isso.
+2. **Regra do Contrato:** Toda informação que o adapter precisa **DEVE** passar pelo estado público do core. Se faltar algo, você **adiciona ao core** (com teste), não "fuça" pelo adapter.
+3. **Regra da Mentira Visual:** O adapter pode "mentir" visualmente (animação, som, partículas) sem que o core saiba. Isso é permitido e é o que dá a dopamina. Mas a **mentira nunca muda o estado do jogo**.
+4. **Regra do Teste de Fuga:** Se você sentir vontade de testar algo através do Phaser ("vou abrir o browser pra ver se funciona"), **pare**. Isso é sintoma de lógica vazada pro adapter. O teste deve ser no core. O clique no Phaser apenas chama `core.jogarCarta()`.
+
 ### 3. TDD no Core (obrigatório)
 
 No `src/core/` você DEVE usar TDD. Segue a filosofia de Matt Pocock:

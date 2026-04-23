@@ -190,6 +190,42 @@ flowchart LR
 
 ---
 
+## Fases do MVP (Opção B — Entregáveis Verticais)
+
+Cada fase entrega uma experiência jogável, ainda que incompleta. Isso permite validar o Phaser cedo e "errar rápido" com a stack.
+
+| Fase | Nome | O que entrega | O que valida |
+|------|------|---------------|--------------|
+| **0** | Infraestrutura | Vite + TS + Phaser + Vitest + ESLint + Prettier. Quadrado na tela. | A stack funciona end-to-end |
+| **1** | Toque e Resposta | Quadrado vira carta ao tocar. Som ao tocar. Menu inicial básico. | O Phaser responde ao input mobile |
+| **2** | Loop Mecânico | 1 rodada: embaralha, distribui, joga 1 carta cada, maior carta ganha. Sem declaração, sem manilha, sem pontos. | O core aguenta o ciclo básico de turnos |
+| **3** | Regras Completas | Adiciona: declaração (Turno 0), manilha, hierarquia (valores + naipes), pontuação `|declarado − feito|`, eliminação (≤0), regra especial da 1ª rodada (não vê própria carta), reinício em N=1 quando cai alguém. | O core aguenta as regras reais do FDP |
+| **4** | Bots com Temperatura | 3 bots. Frio (conservador, joga o mínimo pra ganhar) vs Quente (arrisca). Não mais aleatório. | A arquitetura de IA é extensível |
+| **5** | UI/UX e Polimento | Animações de carta, SFX (Kenney), menu inicial, tela de fim de jogo, escolha de avatar, transições. | O adapter Phaser resiste à complexidade visual |
+| **6** | PWA e Persistência | Service worker, offline, localStorage de estatísticas, instalação no celular, ícone. | A entrega funciona fora do desktop |
+
+**Por que Opção B:** cada fase dá dopamina — você sempre tem algo pra mostrar. O risco é "vazar" lógica pro adapter. Contraímos isso com **Regras Fortalecidas** (abaixo).
+
+---
+
+## Regras Fortalecidas (Core vs Adapter)
+
+A Opção B só funciona se estas regras forem seguidas **sem exceção** desde a Fase 1:
+
+### 1. Regra de Ouro
+O adapter **NUNCA decide regras**. Ele apenas renderiza o estado que o core entrega. Se o adapter precisar saber "quem ganhou a rodada" pra mostrar uma coroa, o core já deve ter `vencedorDaRodada: string` no estado público. O adapter **não calcula** isso.
+
+### 2. Regra do Contrato
+Toda informação que o adapter precisa **DEVE** passar pelo estado público do core. Se faltar algo, você **adiciona ao core** (com teste), não "fuça" pelo adapter.
+
+### 3. Regra da Mentira Visual
+O adapter pode "mentir" visualmente (animação de carta virando, som, partículas) sem que o core saiba. Isso é permitido e é o que dá a dopamina da Opção B. Mas a **mentira nunca muda o estado do jogo**.
+
+### 4. Regra do Teste de Fuga
+Se você sentir vontade de testar algo através do Phaser (ex: "vou abrir o browser pra ver se a carta responde ao clique"), **pare**. Isso é sintoma de lógica vazada pro adapter. O teste deve ser no core. O clique no Phaser apenas chama `core.jogarCarta()`.
+
+---
+
 ## Decisões Arquiteturais Rejeitadas
 
 | Alternativa | Motivo da rejeição |
