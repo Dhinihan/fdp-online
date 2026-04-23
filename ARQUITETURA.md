@@ -37,36 +37,29 @@ Jogo de cartas brasileiro (baralho padrão de 52 cartas), gratuito, open-source,
 
 O core do jogo **não sabe que o Phaser existe**. Isso permite trocar a engine no futuro sem reescrever regras.
 
-```
-┌─────────────────────────────────────────────┐
-│              Adapter (Phaser 3)              │
-│  ┌──────────┐ ┌──────────┐ ┌─────────────┐ │
-│  │  Scenes  │ │ Sprites  │ │   Input     │ │
-│  │  Render  │ │ Tweens   │ │  (tap/drag) │ │
-│  └──────────┘ └──────────┘ └─────────────┘ │
-│                 │                            │
-│                 ▼                            │
-│         ┌──────────────┐                     │
-│         │  Store/Event   │ ◄── eventos do    │
-│         │   Emitter      │     core          │
-│         └──────────────┘                     │
-├─────────────────────────────────────────────┤
-│              Core (TypeScript puro)          │
-│  ┌──────────┐ ┌──────────┐ ┌─────────────┐ │
-│  │ Entities │ │ Use Cases│ │   State     │ │
-│  │ (Carta,  │ │ (jogar   │ │  Machine    │ │
-│  │  Baralho,│ │  turno,  │ │             │ │
-│  │  Jogador)│ │  pontuar)│ │             │ │
-│  └──────────┘ └──────────┘ └─────────────┘ │
-│                                              │
-│  ┌──────────┐ ┌──────────┐                   │
-│  │   IA     │ │  Eventos │                   │
-│  │  (bots   │ │  (log    │                   │
-│  │   com    │ │  puro)   │                   │
-│  │ tempera- │ │          │                   │
-│  │  tura)   │ │          │                   │
-│  └──────────┘ └──────────┘                   │
-└─────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Adapter["Adapter (Phaser 3)"]
+        direction TB
+        Scenes["Scenes"]
+        Render["Renderer"]
+        Sprites["Sprites / Tweens"]
+        Input["Input (tap / drag)"]
+    end
+
+    Store["Store / Event Emitter"]
+
+    subgraph Core["Core (TypeScript puro)"]
+        direction TB
+        Entities["Entities<br/>Carta, Baralho, Jogador"]
+        UseCases["Use Cases<br/>iniciarJogo, jogarTurno, calcularPontuacao"]
+        StateMachine["State Machine<br/>PREP → DECLARAR → JOGAR"]
+        IA["IA dos Bots<br/>(temperatura fria / quente)"]
+        Eventos["Eventos<br/>(log imutável)"]
+    end
+
+    Core -->|"emite eventos"| Store
+    Store -->|"consome & renderiza"| Adapter
 ```
 
 ### Estrutura de Pastas
@@ -173,31 +166,20 @@ Eventos principais:
 
 ## Workflow de Desenvolvimento
 
-```
-┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-│ Vinícius │◄──►│  Hermes  │◄──►│   Pi     │◄──►│  GitHub  │
-│ (dono)   │    │(orquestra)│   │ (coding) │    │  (repo)  │
-└──────────┘    └──────────┘    └──────────┘    └──────────┘
-     │                │                │                │
-     │  grill-me      │                │                │
-     │  define fase   │                │                │
-     └───────────────►│                │                │
-                      │  grill-me      │                │
-                      │  define issues │                │
-                      └───────────────►│                │
-                                       │  implementa    │
-                                       └───────────────►│
-                                                        │
-                                       ◄────────────────┘
-                                       PR aberto
-     │◄──────────────────────────────────────────────────┘
-     revisa PR direto no GitHub
-     │
-     └──────────────────────────────────────────────────►
-     "revisão feita, Hermes"
-                          │
-                          ▼
-                       Hermes devolve feedback ao Pi
+```mermaid
+flowchart LR
+    V["Vinícius<br/>(dono do produto)"]
+    H["Hermes<br/>(orquestrador)"]
+    P["Pi CLI<br/>(coding agent)"]
+    G["GitHub<br/>(repo & PRs)"]
+
+    V <-->|"grill-me: define fases"| H
+    H <-->|"grill-me: define issues"| H
+    H -->|"delega implementação"| P
+    P -->|"abre PR"| G
+    G -->|"revisa PR"| V
+    V -->|"feedback da revisão"| H
+    H -->|"devolve ao Pi"| P
 ```
 
 1. **Sessões grill-me** entre Vinícius e Hermes definem fases e issues.
