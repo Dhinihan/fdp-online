@@ -20,11 +20,15 @@ Antes de qualquer mudança, leia nesta ordem:
 - Identifique quais arquivos precisam mudar.
 - Se algo não estiver claro, faça o ajuste mais razoável e documente no commit.
 
-### 3. Ajuste
+### 3. Ajuste (TDD no core)
 
-- Mantenha o mesmo padrão de código (PT-BR, funções pequenas, TDD no core).
-- Se o revisor apontou bug no core, escreva teste primeiro (TDD).
-- Se é no adapter, ajuste diretamente.
+- Mantenha o mesmo padrão de código (PT-BR, funções pequenas).
+- **Se o revisor apontou bug no `src/core/`:**
+  1. Escreva um teste que reproduza o bug (RED).
+  2. Corrija o bug com o mínimo de código (GREEN).
+  3. Refatore se necessário.
+  4. Siga a filosofia TDD: teste comportamento via interface pública, não detalhe de implementação. Use fatias verticais (tracer bullets), nunca fatias horizontais.
+- **Se é no adapter:** ajuste diretamente.
 
 ### 4. Validação
 
