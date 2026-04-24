@@ -14,5 +14,10 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // @ts-expect-error — property not yet in Vitest v4 types, but valid in upcoming versions
+    environmentMatchGlobs: [
+      ['tests/**/*.dom.test.ts', 'jsdom'],
+      ['tests/**/*.test.ts', 'node'],
+    ],
   },
 });

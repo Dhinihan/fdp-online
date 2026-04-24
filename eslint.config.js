@@ -18,7 +18,7 @@ export default defineConfig(
   },
   {
     languageOptions: {
-      globals: globals.browser,
+      globals: { ...globals.browser },
       parserOptions: {
         projectService: {
           allowDefaultProject: ['*.config.js', 'tests/*.test.ts'],
@@ -26,6 +26,12 @@ export default defineConfig(
         },
         tsconfigRootDir: import.meta.dirname,
       },
+    },
+  },
+  {
+    files: ['*.config.{ts,js}', 'tests/**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: { ...globals.node },
     },
   },
   importPlugin.flatConfigs.recommended,
