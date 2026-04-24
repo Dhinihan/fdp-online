@@ -14,8 +14,11 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "vitest",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.tests.json"
+  },
+  "dependencies": {
+    "phaser": "3.80.1"
   },
   "devDependencies": {
     "@types/node": "^24.9.0",

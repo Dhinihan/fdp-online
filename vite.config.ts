@@ -1,6 +1,7 @@
-/// <reference types="vitest/config" />
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference types='vitest/config' />
 import path from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   resolve: {
@@ -12,7 +13,6 @@ export default defineConfig({
     },
   },
   test: {
-    globals: true,
     environment: 'node',
   },
 });

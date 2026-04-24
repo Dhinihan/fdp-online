@@ -21,10 +21,23 @@ O Pi está instalado via nvm e configurado com **kimi2.5**.
 
 ### 1. Implementar Issue
 
+**Método preferido (prompt inline):**
+
 ```bash
 cd <worktree>
-pi -p --skill .pi/skills/fdp-issue "/skill:fdp-issue <id>"
+export PATH="/home/agente/.nvm/versions/node/v24.15.0/bin:$PATH"
+pi --print --no-session "Leia AGENTS.md, ARQUITETURA.md, e execute 'gh issue view <id>'. Depois implemente a issue #<id>. Commit e abra PR."
 ```
+
+**Método alternativo (skill — use apenas se já testou e funcionou):**
+
+```bash
+cd <worktree>
+export PATH="/home/agente/.nvm/versions/node/v24.15.0/bin:$PATH"
+pi --print --no-session --skill .pi/skills/fdp-issue "/skill:fdp-issue <id>"
+```
+
+> **Atenção:** Skills grandes (>3KB, >50 linhas) podem travar silenciosamente. Se travar após 3-5 min com log vazio, use o método de prompt inline.
 
 O Pi:
 1. Lê `AGENTS.md` (automático, está no diretório).
@@ -37,13 +50,9 @@ O Pi:
 
 ```bash
 cd <worktree-original-ou-novo>
-pi -p --skill .pi/skills/fdp-revisao "/skill:fdp-revisao <pr-id>"
+export PATH="/home/agente/.nvm/versions/node/v24.15.0/bin:$PATH"
+pi --print --no-session "Leia os comentários do PR #<pr-id> no GitHub. Aplique as revisões necessárias e push um novo commit no mesmo PR."
 ```
-
-O Pi:
-1. Lê o comentário de revisão no PR.
-2. Ajusta o código.
-3. Pusha novo commit no mesmo PR.
 
 ---
 
@@ -120,12 +129,42 @@ As skills ficam em `.pi/skills/` dentro do repo:
 
 ---
 
+## Aprendizados Práticos (atualizado em 2026-04-24)
+
+### 1. Skills grandes travam silenciosamente
+
+**Descoberto na issue #2:** A skill `fdp-issue` (5.189 bytes / 106 linhas) travou o Pi em todas as tentativas com `--skill` + `/skill:`, mesmo usando corretamente ambos. O processo existia mas nunca produzia output (log em 0 bytes).
+
+**Solução:** Prompt inline com instruções completas no lugar de carregar a skill.
+
+**Regra:**
+- Skills pequenas (< 3KB): pode usar `--skill` + `/skill:`
+- Skills grandes (> 3KB): use prompt inline direto
+
+### 2. Foreground é mais confiável que background neste ambiente
+
+Execuções em background (`&`, `nohup`, `terminal(background=true)`) frequentemente perdem o PATH do nvm ou falham no redirecionamento de logs. O modo foreground com `timeout=300` ou `timeout=600` é o mais confiável.
+
+**Sempre use:**
+```bash
+export PATH="/home/agente/.nvm/versions/node/v24.15.0/bin:$PATH"
+cd .pi/worktrees/issue-N
+pi --print --no-session "prompt completo aqui"
+```
+
+### 3. Sempre verifique se o worktree tem os arquivos
+
+Depois de `git worktree add`, confirme que `src/`, `tests/`, `package.json` existem no filesystem. O `git ls-tree` pode mostrar arquivos que o worktree não tem se houve erro na criação.
+
+---
+
 ## Notas
 
 - O Pi **não sabe que o Hermes existe**. Ele recebe um prompt e executa.
 - O Hermes **não acompanha em tempo real**. Só verifica logs/PIDs quando perguntado.
 - Vinícius **revisa PRs direto no GitHub**, sem intermediário.
 - Se o Pi travar ou der erro, o log em `.pi/logs/` é a fonte de debug.
+- **Skills grandes (>3KB) devem ser usadas como prompt inline**, não via `--skill`.
 
 ---
 

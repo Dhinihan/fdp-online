@@ -21,7 +21,7 @@ export default defineConfig(
       globals: globals.browser,
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['*.config.js'],
+          allowDefaultProject: ['*.config.js', 'tests/*.test.ts'],
           noWarnOnMultipleProjects: true,
         },
         tsconfigRootDir: import.meta.dirname,
