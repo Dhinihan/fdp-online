@@ -1,5 +1,4 @@
 import { defineConfig } from 'eslint/config';
-import eslintConfigPrettier from 'eslint-config-prettier';
 import importPlugin from 'eslint-plugin-import';
 import prettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
@@ -57,5 +56,4 @@ export default defineConfig(
     },
   },
   prettierRecommended,
-  eslintConfigPrettier,
 );
