@@ -23,7 +23,7 @@ O Pi está instalado via nvm e configurado com **kimi2.5**.
 
 ```bash
 cd <worktree>
-pi -p "/skill:fdp-issue <id>"
+pi -p --skill .pi/skills/fdp-issue "/skill:fdp-issue <id>"
 ```
 
 O Pi:
@@ -37,7 +37,7 @@ O Pi:
 
 ```bash
 cd <worktree-original-ou-novo>
-pi -p "/skill:fdp-revisao <pr-id>"
+pi -p --skill .pi/skills/fdp-revisao "/skill:fdp-revisao <pr-id>"
 ```
 
 O Pi:
@@ -69,7 +69,7 @@ git worktree add .pi/worktrees/issue-$ISSUE_ID "$BRANCH"
 
 # 2. Disparar Pi em background
 cd .pi/worktrees/issue-$ISSUE_ID
-pi -p "/skill:fdp-issue $ISSUE_ID" \
+pi -p --skill .pi/skills/fdp-issue "/skill:fdp-issue $ISSUE_ID" \
    > ../../logs/issue-$ISSUE_ID.log 2>&1 &
 echo $! > ../../pids/issue-$ISSUE_ID.pid
 
@@ -91,14 +91,14 @@ sequenceDiagram
 
     V->>H: "Vamos implementar issue #5"
     H->>H: Cria worktree + branch
-    H->>Pi: pi -p "/skill:fdp-issue 5"
+    H->>Pi: pi -p --skill .pi/skills/fdp-issue "/skill:fdp-issue 5"
     Note over Pi: Lê AGENTS.md<br/>Busca issue #5<br/>Implementa<br/>Roda testes<br/>Abre PR
     Pi->>GH: Push + PR criado
     H->>V: "PR #12 aberto para issue #5"
     V->>GH: Revisa e comenta
     V->>H: "Revisão feita no PR #12"
     H->>H: Cria worktree da revisão
-    H->>Pi: pi -p "/skill:fdp-revisao 12"
+    H->>Pi: pi -p --skill .pi/skills/fdp-revisao "/skill:fdp-revisao 12"
     Note over Pi: Lê comentário<br/>Ajusta código<br/>Push novo commit
     Pi->>GH: Novo commit no PR #12
     H->>V: "Ajustes aplicados no PR #12"
@@ -131,6 +131,7 @@ As skills ficam em `.pi/skills/` dentro do repo:
 
 ## Próximos Passos
 
-1. Criar `AGENTS.md` na raiz do projeto.
-2. Criar skills `fdp-issue` e `fdp-revisao`.
-3. Testar fluxo end-to-end com uma issue simples.
+1. ~~Criar `AGENTS.md` na raiz do projeto.~~ ✅ Feito.
+2. ~~Criar skills `fdp-issue` e `fdp-revisao`.~~ ✅ Feitas.
+3. ~~Testar fluxo end-to-end com uma issue simples.~~ ✅ Issue #1 (Fase 0) implementada e revisada.
+4. Evoluir o `ORQUESTRACAO.md` conforme novos aprendizados (ex: redirecionamento de logs, worktree cleanup, timeouts).
