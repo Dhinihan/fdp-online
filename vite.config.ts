@@ -13,6 +13,14 @@ export default defineConfig({
     },
   },
   test: {
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/cypress/**',
+      '**/.{idea,git,cache,output,temp}/**',
+      '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
+      'tests/e2e/**',
+    ],
     environment: 'node',
     // @ts-expect-error — property not yet in Vitest v4 types, but valid in upcoming versions
     environmentMatchGlobs: [
