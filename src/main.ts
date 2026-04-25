@@ -6,6 +6,10 @@ export async function criarCenaVazia(): Promise<new () => Scene> {
     constructor() {
       super({ key: 'CenaVazia' });
     }
+
+    create() {
+      this.add.rectangle(400, 300, 100, 100, 0x00ff00);
+    }
   }
   return CenaVazia;
 }
