@@ -6,7 +6,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:5173' },
     },
   ],
   webServer: {
@@ -17,7 +17,7 @@ export default defineConfig({
   },
   expect: {
     toHaveScreenshot: {
-      maxDiffPixelRatio: 0.1,
+      maxDiffPixelRatio: 0,
     },
   },
 });
