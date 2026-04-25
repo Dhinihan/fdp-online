@@ -18,13 +18,14 @@
 **Objetivo:** Provar que a stack funciona end-to-end.
 
 **Entregáveis:**
-- [ ] Projeto Vite + TypeScript configurado
-- [ ] Phaser 3 instalado e renderizando algo na tela
-- [ ] Vitest configurado com pelo menos 1 teste passando
-- [ ] ESLint + Prettier configurados
-- [ ] Husky + lint-staged no pre-commit
-- [ ] Quadrado verde (ou carta placeholder) aparece no canvas ao rodar `pnpm dev`
-- [ ] `pnpm test` passa no CI (GitHub Actions)
+
+- [x] Projeto Vite + TypeScript configurado
+- [x] Phaser 3 instalado e renderizando algo na tela
+- [x] Vitest configurado com pelo menos 1 teste passando
+- [x] ESLint + Prettier configurados
+- [x] Husky + lint-staged no pre-commit
+- [x] Quadrado verde (ou carta placeholder) aparece no canvas ao rodar `pnpm dev`
+- [x] `pnpm test` passa no CI (GitHub Actions)
 
 **Valida:** A stack funciona. Build, testes, lint e CI estão conversando.
 
@@ -35,6 +36,7 @@
 **Objetivo:** O Phaser responde ao input mobile. Primeira dopamina.
 
 **Entregáveis:**
+
 - [ ] Carta placeholder renderizada na tela (sprite ou retângulo)
 - [ ] Toque na carta dispara evento
 - [ ] Carta "vira" (troca de sprite ou animação simples) ao tocar
@@ -53,6 +55,7 @@
 **Objetivo:** O core aguenta o ciclo básico de turnos.
 
 **Entregáveis:**
+
 - [ ] Entidade `Carta` (valor, naipe) no core com testes
 - [ ] Entidade `Baralho` com Fisher-Yates e testes
 - [ ] Distribuição de 1 carta para 4 jogadores
@@ -65,6 +68,7 @@
 **Valida:** O core separado do adapter funciona. State machine básica opera.
 
 **Regras Fortalecidas:**
+
 - Adapter nunca decide quem ganhou. O core calcula e expõe `vencedorDoTurno` no estado.
 - Adapter apenas renderiza o que o core manda.
 
@@ -75,6 +79,7 @@
 **Objetivo:** O core aguenta todas as regras reais do jogo.
 
 **Entregáveis:**
+
 - [ ] Preparação: virar carta para definir manilha
 - [ ] Hierarquia completa: valores (3>2>A>K>Q>J>7>6>5>4) + naipes (♣>♥>♠>♦)
 - [ ] Turno 0 — Declaração: cada jogador diz quantos turnos vai fazer
@@ -88,6 +93,7 @@
 **Valida:** O core é robusto o suficiente para o FDP real.
 
 **Regras Fortalecidas:**
+
 - Toda informação que o adapter precisa (manilha atual, pontos, declarações) passa pelo estado público do core.
 - Adapter não calcula pontuação, não decide eliminação.
 
@@ -98,6 +104,7 @@
 **Objetivo:** A arquitetura de IA é extensível.
 
 **Entregáveis:**
+
 - [ ] Interface `EstrategiaBot` (port) no core
 - [ ] Bot Aleatório ( já existe da Fase 2, agora formalizado)
 - [ ] Bot Frio: joga a carta mínima necessária para ganhar o turno
@@ -108,6 +115,7 @@
 **Valida:** A arquitetura de ports permite trocar a IA sem mexer no core.
 
 **Regras Fortalecidas:**
+
 - A estratégia é injetada no core como port. O core não sabe se é bot ou humano.
 - Adapter não escolhe jogada do bot. O core pede a jogada ao bot via interface.
 
@@ -118,6 +126,7 @@
 **Objetivo:** O adapter Phaser resiste à complexidade visual.
 
 **Entregáveis:**
+
 - [ ] Sprites de cartas (Kenney ou similar)
 - [ ] Animação de distribuição (carta saindo do baralho pra mão)
 - [ ] Animação de jogada (carta deslizando pra mesa)
@@ -131,6 +140,7 @@
 **Valida:** O adapter consegue renderizar tudo que o core manda, de forma bonita.
 
 **Regras Fortalecidas:**
+
 - Animações são mentira visual permitida. Nunca mudam estado.
 - Adapter pode enriquecer o estado visualmente, mas a fonte da verdade é sempre o core.
 
@@ -141,6 +151,7 @@
 **Objetivo:** A entrega funciona fora do desktop.
 
 **Entregáveis:**
+
 - [ ] Service worker configurado (Vite PWA plugin)
 - [ ] Funciona offline (jogo single-player roda sem internet)
 - [ ] Manifest JSON com ícone, nome, descrição
