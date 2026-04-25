@@ -13,7 +13,7 @@ export default defineConfig({
     },
   },
   test: {
-    exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**'],
+    exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**', '.pi/**'],
     environment: 'node',
     // @ts-expect-error — property not yet in Vitest v4 types, but valid in upcoming versions
     environmentMatchGlobs: [

@@ -25,3 +25,6 @@ dist
 *.njsproj
 *.sln
 *.sw?
+
+# Pi CLI worktrees
+.pi/worktrees/

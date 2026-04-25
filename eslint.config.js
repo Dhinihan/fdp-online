@@ -6,7 +6,7 @@ import * as ts from 'typescript-eslint';
 
 export default defineConfig(
   {
-    ignores: ['dist/**', 'node_modules/**', 'public/**', 'coverage/**'],
+    ignores: ['dist/**', 'node_modules/**', 'public/**', 'coverage/**', '.pi/**'],
   },
   ts.configs.strictTypeChecked,
   {
