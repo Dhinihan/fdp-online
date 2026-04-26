@@ -71,3 +71,20 @@ describe('Emissor de Eventos — limpar', () => {
     expect(handler2).not.toHaveBeenCalled();
   });
 });
+
+describe('Emissor de Eventos — edge cases', () => {
+  it('deve executar handler que se auto-remove durante emit', () => {
+    const handler = vi.fn();
+    const autoRemove: (evento: ToqueBotao) => void = (evento) => {
+      emissor.off('TOQUE_BOTAO', autoRemove);
+      handler(evento);
+    };
+    emissor.on('TOQUE_BOTAO', autoRemove);
+    emissor.emit(criarEventoBotao('1', 'btn-1'));
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler).toHaveBeenCalledWith(criarEventoBotao('1', 'btn-1'));
+    // emit posterior não deve chamar o handler removido
+    emissor.emit(criarEventoBotao('2', 'btn-2'));
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+});
