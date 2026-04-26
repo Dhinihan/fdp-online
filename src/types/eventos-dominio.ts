@@ -47,3 +47,12 @@ export interface JogoEncerrado extends EventoBase {
   tipo: 'JOGO_ENCERRADO';
   classificacao: Jogador[];
 }
+
+export type EventoDominio =
+  | JogoIniciado
+  | ManilhaVirada
+  | DeclaracaoFeita
+  | CartaJogada
+  | TurnoGanho
+  | RodadaEncerrada
+  | JogoEncerrado;

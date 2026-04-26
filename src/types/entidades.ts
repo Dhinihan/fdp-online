@@ -14,3 +14,8 @@ export interface Jogador {
   pontos: number;
   avatar?: string;
 }
+
+export interface Posicao {
+  x: number;
+  y: number;
+}
