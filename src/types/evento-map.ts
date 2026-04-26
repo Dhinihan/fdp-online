@@ -11,6 +11,7 @@ import type { ArrastoCarta, ToqueBotao, ToqueCarta } from './eventos-input';
 import type { CenaMudada, EfeitoCartaVirada, EfeitoSomTocado } from './eventos-visual';
 
 export interface EventoMap {
+  // --- Eventos de domínio ---
   JOGO_INICIADO: JogoIniciado;
   MANILHA_VIRADA: ManilhaVirada;
   DECLARACAO_FEITA: DeclaracaoFeita;
@@ -18,9 +19,11 @@ export interface EventoMap {
   TURNO_GANHO: TurnoGanho;
   RODADA_ENCERRADA: RodadaEncerrada;
   JOGO_ENCERRADO: JogoEncerrado;
+  // --- Eventos de input ---
   TOQUE_CARTA: ToqueCarta;
   TOQUE_BOTAO: ToqueBotao;
   ARRASTO_CARTA: ArrastoCarta;
+  // --- Eventos visuais ---
   EFEITO_CARTA_VIRADA: EfeitoCartaVirada;
   EFEITO_SOM_TOCADO: EfeitoSomTocado;
   CENA_MUDADA: CenaMudada;
