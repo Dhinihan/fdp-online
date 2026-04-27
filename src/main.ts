@@ -1,27 +1,18 @@
 import type { Game, Scene } from 'phaser';
 
-export async function criarCenaVazia(): Promise<new () => Scene> {
-  const phaser = await import('phaser');
-  class CenaVazia extends phaser.Scene {
-    constructor() {
-      super({ key: 'CenaVazia' });
-    }
-
-    create() {
-      this.add.rectangle(400, 300, 100, 100, 0x00ff00);
-    }
-  }
-  return CenaVazia;
-}
-
 export async function inicializarJogo(containerId?: string): Promise<Game> {
   const phaser = await import('phaser');
-  const Cena = await criarCenaVazia();
+  const { JogoScene } = await import('@/adapters/phaser/scenes/JogoScene');
+
   return new phaser.Game({
-    width: 800,
-    height: 600,
-    scene: Cena,
+    type: phaser.AUTO,
+    width: window.innerWidth,
+    height: window.innerHeight,
     parent: containerId,
+    scene: JogoScene as unknown as new () => Scene,
+    scale: {
+      mode: phaser.Scale.RESIZE,
+    },
   });
 }
 
