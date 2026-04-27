@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import type { GameObjects } from 'phaser';
+import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 
 type Graphics = GameObjects.Graphics;
 type Text = GameObjects.Text;
@@ -10,7 +11,7 @@ export class MenuScene extends Scene {
   private botaoGrafico?: Graphics;
   private botaoTexto?: Text;
   private botaoZona?: Zone;
-  private timeoutResize?: ReturnType<typeof setTimeout>;
+  private redesenhar?: ResizeDebouncer;
 
   constructor() {
     super({ key: 'MenuScene' });
@@ -19,33 +20,24 @@ export class MenuScene extends Scene {
   create(): void {
     this.cameras.main.setBackgroundColor('#1a1a2e');
     this.desenharElementos();
+
+    this.redesenhar = criarDebounceResize(this, () => {
+      this.destruirElementos();
+      this.desenharElementos();
+    });
+
     this.scale.on('resize', this.redesenhar);
+    this.events.on('shutdown', () => {
+      this.shutdown();
+    });
   }
 
   shutdown(): void {
-    this.scale.off('resize', this.redesenhar);
-    if (this.timeoutResize) {
-      clearTimeout(this.timeoutResize);
+    if (this.redesenhar) {
+      this.scale.off('resize', this.redesenhar);
+      this.redesenhar.limpar();
     }
   }
-
-  private redesenhar = (): void => {
-    if (this.timeoutResize) {
-      clearTimeout(this.timeoutResize);
-    }
-
-    this.timeoutResize = setTimeout(() => {
-      const largura = this.scale.width;
-      const altura = this.scale.height;
-
-      if (largura <= 0 || altura <= 0) {
-        return;
-      }
-
-      this.destruirElementos();
-      this.desenharElementos();
-    }, 100);
-  };
 
   private destruirElementos(): void {
     this.titulo?.destroy();
@@ -100,6 +92,8 @@ export class MenuScene extends Scene {
   }
 
   private iniciarJogo = (): void => {
+    this.botaoZona?.disableInteractive();
+
     this.cameras.main.fadeOut(500);
     this.cameras.main.once('camerafadeoutcomplete', () => {
       this.scene.start('JogoScene');

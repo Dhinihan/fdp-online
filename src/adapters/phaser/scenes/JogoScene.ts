@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import type { GameObjects } from 'phaser';
+import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 
 type Graphics = GameObjects.Graphics;
 type Text = GameObjects.Text;
@@ -7,7 +8,7 @@ type Text = GameObjects.Text;
 export class JogoScene extends Scene {
   private graficos?: Graphics;
   private textoDaCarta?: Text;
-  private timeoutResize?: ReturnType<typeof setTimeout>;
+  private redesenhar?: ResizeDebouncer;
 
   constructor() {
     super({ key: 'JogoScene' });
@@ -15,34 +16,25 @@ export class JogoScene extends Scene {
 
   create(): void {
     this.criarCartaPlaceholder();
-    this.scale.on('resize', this.redesenhar);
-  }
 
-  shutdown(): void {
-    this.scale.off('resize', this.redesenhar);
-    if (this.timeoutResize) {
-      clearTimeout(this.timeoutResize);
-    }
-  }
-
-  private redesenhar = (): void => {
-    if (this.timeoutResize) {
-      clearTimeout(this.timeoutResize);
-    }
-
-    this.timeoutResize = setTimeout(() => {
-      const largura = this.scale.width;
-      const altura = this.scale.height;
-
-      if (largura <= 0 || altura <= 0) {
-        return;
-      }
-
+    this.redesenhar = criarDebounceResize(this, () => {
       this.graficos?.destroy();
       this.textoDaCarta?.destroy();
       this.criarCartaPlaceholder();
-    }, 100);
-  };
+    });
+
+    this.scale.on('resize', this.redesenhar);
+    this.events.on('shutdown', () => {
+      this.shutdown();
+    });
+  }
+
+  shutdown(): void {
+    if (this.redesenhar) {
+      this.scale.off('resize', this.redesenhar);
+      this.redesenhar.limpar();
+    }
+  }
 
   private criarCartaPlaceholder(): void {
     const centroX = this.cameras.main.centerX;
