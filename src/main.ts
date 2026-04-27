@@ -1,30 +1,29 @@
-import type { Game, Scene } from 'phaser';
+import { Game } from 'phaser';
+import { JogoScene } from './adapters/phaser/scenes/JogoScene';
 
-export async function criarCenaVazia(): Promise<new () => Scene> {
-  const phaser = await import('phaser');
-  class CenaVazia extends phaser.Scene {
-    constructor() {
-      super({ key: 'CenaVazia' });
-    }
+let jogo: Game | null = null;
 
-    create() {
-      this.add.rectangle(400, 300, 100, 100, 0x00ff00);
-    }
-  }
-  return CenaVazia;
-}
-
-export async function inicializarJogo(containerId?: string): Promise<Game> {
-  const phaser = await import('phaser');
-  const Cena = await criarCenaVazia();
-  return new phaser.Game({
-    width: 800,
-    height: 600,
-    scene: Cena,
+export function inicializarJogo(containerId?: string): Game {
+  jogo = new Game({
+    type: Phaser.AUTO,
+    width: window.innerWidth,
+    height: window.innerHeight,
     parent: containerId,
+    scene: JogoScene,
+    scale: {
+      mode: Phaser.Scale.RESIZE,
+    },
   });
+  return jogo;
 }
 
 if (typeof window !== 'undefined') {
-  void inicializarJogo('app');
+  inicializarJogo('app');
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    jogo?.destroy(true);
+    jogo = null;
+  });
 }
