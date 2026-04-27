@@ -20,7 +20,8 @@ export function inicializarJogo(containerId?: string): Game {
 }
 
 if (typeof window !== 'undefined') {
-  inicializarJogo('app');
+  const game = inicializarJogo('app');
+  (window as unknown as Record<string, unknown>).__jogoPhaser = game;
 }
 
 if (import.meta.hot) {

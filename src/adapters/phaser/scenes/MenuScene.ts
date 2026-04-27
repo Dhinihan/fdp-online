@@ -10,6 +10,7 @@ export class MenuScene extends Scene {
   private botaoGrafico?: Graphics;
   private botaoTexto?: Text;
   private botaoZona?: Zone;
+  private timeoutResize?: ReturnType<typeof setTimeout>;
 
   constructor() {
     super({ key: 'MenuScene' });
@@ -23,11 +24,27 @@ export class MenuScene extends Scene {
 
   shutdown(): void {
     this.scale.off('resize', this.redesenhar);
+    if (this.timeoutResize) {
+      clearTimeout(this.timeoutResize);
+    }
   }
 
   private redesenhar = (): void => {
-    this.destruirElementos();
-    this.desenharElementos();
+    if (this.timeoutResize) {
+      clearTimeout(this.timeoutResize);
+    }
+
+    this.timeoutResize = setTimeout(() => {
+      const largura = this.scale.width;
+      const altura = this.scale.height;
+
+      if (largura <= 0 || altura <= 0) {
+        return;
+      }
+
+      this.destruirElementos();
+      this.desenharElementos();
+    }, 100);
   };
 
   private destruirElementos(): void {
