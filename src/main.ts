@@ -1,21 +1,22 @@
-import type { Game, Scene } from 'phaser';
+import { Game } from 'phaser';
+import { JogoScene } from './adapters/phaser/scenes/JogoScene';
 
-export async function inicializarJogo(containerId?: string): Promise<Game> {
-  const phaser = await import('phaser');
-  const { JogoScene } = await import('@/adapters/phaser/scenes/JogoScene');
+let jogo: Game | null = null;
 
-  return new phaser.Game({
-    type: phaser.AUTO,
+export function inicializarJogo(containerId?: string): Game {
+  jogo = new Game({
+    type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
     parent: containerId,
-    scene: JogoScene as unknown as new () => Scene,
+    scene: JogoScene,
     scale: {
-      mode: phaser.Scale.RESIZE,
+      mode: Phaser.Scale.RESIZE,
     },
   });
+  return jogo;
 }
 
 if (typeof window !== 'undefined') {
-  void inicializarJogo('app');
+  inicializarJogo('app');
 }
