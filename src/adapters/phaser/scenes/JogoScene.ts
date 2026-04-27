@@ -7,6 +7,7 @@ type Text = GameObjects.Text;
 export class JogoScene extends Scene {
   private graficos?: Graphics;
   private textoDaCarta?: Text;
+  private timeoutResize?: ReturnType<typeof setTimeout>;
 
   constructor() {
     super({ key: 'JogoScene' });
@@ -19,12 +20,28 @@ export class JogoScene extends Scene {
 
   shutdown(): void {
     this.scale.off('resize', this.redesenhar);
+    if (this.timeoutResize) {
+      clearTimeout(this.timeoutResize);
+    }
   }
 
   private redesenhar = (): void => {
-    this.graficos?.destroy();
-    this.textoDaCarta?.destroy();
-    this.criarCartaPlaceholder();
+    if (this.timeoutResize) {
+      clearTimeout(this.timeoutResize);
+    }
+
+    this.timeoutResize = setTimeout(() => {
+      const largura = this.scale.width;
+      const altura = this.scale.height;
+
+      if (largura <= 0 || altura <= 0) {
+        return;
+      }
+
+      this.graficos?.destroy();
+      this.textoDaCarta?.destroy();
+      this.criarCartaPlaceholder();
+    }, 100);
   };
 
   private criarCartaPlaceholder(): void {

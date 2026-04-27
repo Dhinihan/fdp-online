@@ -1,6 +1,7 @@
 import { Game } from 'phaser';
 import { JogoScene } from './adapters/phaser/scenes/JogoScene';
 import { MenuScene } from './adapters/phaser/scenes/MenuScene';
+import './style.css';
 
 let jogo: Game | null = null;
 
