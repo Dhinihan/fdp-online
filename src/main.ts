@@ -20,3 +20,10 @@ export function inicializarJogo(containerId?: string): Game {
 if (typeof window !== 'undefined') {
   inicializarJogo('app');
 }
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    jogo?.destroy(true);
+    jogo = null;
+  });
+}
