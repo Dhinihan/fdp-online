@@ -21,13 +21,7 @@ export default defineConfig(
       globals: { ...globals.browser },
       parserOptions: {
         projectService: {
-          allowDefaultProject: [
-            '*.config.js',
-            '.sandcastle/*.ts',
-            'tests/*.test.ts',
-            'tests/core/*.test.ts',
-            'tests/e2e/*.spec.ts',
-          ],
+          allowDefaultProject: ['*.config.js', 'tests/*.test.ts', 'tests/core/*.test.ts', 'tests/e2e/*.spec.ts'],
           noWarnOnMultipleProjects: true,
         },
         tsconfigRootDir: import.meta.dirname,
@@ -46,7 +40,7 @@ export default defineConfig(
     settings: {
       'import/resolver': {
         typescript: {
-          project: ['./tsconfig.json', './tsconfig.tests.json'],
+          project: ['./tsconfig.json', './tsconfig.tests.json', './.sandcastle/tsconfig.json'],
         },
       },
     },
