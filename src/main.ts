@@ -1,5 +1,7 @@
 import { Game } from 'phaser';
 import { JogoScene } from './adapters/phaser/scenes/JogoScene';
+import { MenuScene } from './adapters/phaser/scenes/MenuScene';
+import './style.css';
 
 let jogo: Game | null = null;
 
@@ -9,7 +11,7 @@ export function inicializarJogo(containerId?: string): Game {
     width: window.innerWidth,
     height: window.innerHeight,
     parent: containerId,
-    scene: JogoScene,
+    scene: [MenuScene, JogoScene],
     scale: {
       mode: Phaser.Scale.RESIZE,
     },
@@ -18,7 +20,11 @@ export function inicializarJogo(containerId?: string): Game {
 }
 
 if (typeof window !== 'undefined') {
-  inicializarJogo('app');
+  const jogo = inicializarJogo('app');
+
+  if (import.meta.env.DEV) {
+    (window as unknown as Record<string, unknown>).__jogoPhaser = jogo;
+  }
 }
 
 if (import.meta.hot) {
