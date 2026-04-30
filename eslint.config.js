@@ -21,7 +21,13 @@ export default defineConfig(
       globals: { ...globals.browser },
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['*.config.js', 'tests/*.test.ts', 'tests/core/*.test.ts', 'tests/e2e/*.spec.ts'],
+          allowDefaultProject: [
+            '*.config.js',
+            '.sandcastle/*.ts',
+            'tests/*.test.ts',
+            'tests/core/*.test.ts',
+            'tests/e2e/*.spec.ts',
+          ],
           noWarnOnMultipleProjects: true,
         },
         tsconfigRootDir: import.meta.dirname,
@@ -29,7 +35,7 @@ export default defineConfig(
     },
   },
   {
-    files: ['*.config.{ts,js}', 'tests/**/*.{ts,tsx}'],
+    files: ['*.config.{ts,js}', '.sandcastle/**/*.ts', 'tests/**/*.{ts,tsx}'],
     languageOptions: {
       globals: { ...globals.node },
     },
@@ -59,6 +65,12 @@ export default defineConfig(
           alphabetize: { order: 'asc', caseInsensitive: true },
         },
       ],
+    },
+  },
+  {
+    files: ['.sandcastle/**/*.ts'],
+    rules: {
+      'no-console': 'off',
     },
   },
   prettierRecommended,
