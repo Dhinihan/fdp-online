@@ -4,6 +4,7 @@ import { homedir } from 'node:os';
 import { loadEnvFile } from 'node:process';
 import { codex, createSandbox } from '@ai-hero/sandcastle';
 import { docker } from '@ai-hero/sandcastle/sandboxes/docker';
+import { validarGhDisponivel } from './github-gh';
 
 const LIMITE_ITERACOES_AGENTE = 5;
 const TEMPO_INATIVIDADE_SEGUNDOS = 300;
@@ -79,6 +80,8 @@ function carregarConfiguracaoLocal(): ConfiguracaoLocal {
 }
 
 export function executarCron(configuracao = carregarConfiguracaoLocal()): void {
+  validarGhDisponivel();
+
   void codex;
   void createSandbox;
   void docker;
@@ -90,7 +93,8 @@ export function executarCron(configuracao = carregarConfiguracaoLocal()): void {
     [
       'Sandcastle cron ainda esta em scaffold.',
       `Configuracao local carregada com sucesso. Autenticacao do Codex: ${configuracao.modoAutenticacaoCodex}.`,
-      'Fase 1 criou a estrutura inicial; as proximas fases implementam GitHub, estado e execucao.',
+      'Integracao com GitHub via gh validada com sucesso.',
+      'As proximas fases implementam selecao, elegibilidade, retry e execucao.',
       `Configuracao prevista: gpt-5.4, effort low, maxIterations ${String(LIMITE_ITERACOES_AGENTE)}, idleTimeoutSeconds ${String(TEMPO_INATIVIDADE_SEGUNDOS)}.`,
     ].join('\n'),
   );

@@ -30,6 +30,7 @@ dist
 .pi/worktrees/
 
 # Sandcastle local configuration
+.codex
 .sandcastle/.env
 .sandcastle/worktrees/
 .sandcastle/logs/
