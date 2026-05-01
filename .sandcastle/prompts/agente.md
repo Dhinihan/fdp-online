@@ -15,7 +15,8 @@ Se houver bloqueio em qualquer passo:
 1. Adicione a label `sandcastle:blocked`.
 2. Garanta que a label `{{label_execucao}}` não esteja mais presente.
 3. Comente objetivamente o bloqueio e diga o mínimo necessário para destravar.
-4. Pare. Não instale nada. Não configure ambiente. Não ajuste SSH. Não troque `remote` git. Não tente consertar Playwright, Docker, Node, pnpm ou credenciais.
+4. Escreva exatamente `<promise>COMPLETE</promise>` na resposta final.
+5. Pare. Não instale nada. Não configure ambiente. Não ajuste SSH. Não troque `remote` git. Não tente consertar Playwright, Docker, Node, pnpm ou credenciais.
 
 Se a issue for executável:
 
@@ -25,6 +26,7 @@ Se a issue for executável:
 4. Se a implementação estiver pronta, faça push da branch atual.
 5. Abra ou atualize uma PR com `Closes #<numero>`.
 6. Garanta que a label `{{label_execucao}}` não esteja mais presente.
+7. Escreva exatamente `<promise>COMPLETE</promise>` na resposta final.
 
 Regras adicionais:
 

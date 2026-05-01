@@ -9,6 +9,7 @@ const MODELO_CODEX = 'gpt-5.4';
 const NOME_IMAGEM_SANDCASTLE = 'sandcastle:fdp-online';
 const CAMINHO_AUTH_CODEX = `${homedir()}/.codex/auth.json`;
 const CAMINHO_CONFIG_DOCKER = `${homedir()}/.docker/config.json`;
+const COMANDO_PREPARAR_DEPENDENCIAS = 'corepack enable && pnpm install --frozen-lockfile';
 
 export function validarAutenticacaoCodex(): void {
   if (process.env.OPENAI_API_KEY?.trim()) {
@@ -38,6 +39,8 @@ export async function rodarAgenteSandcastle(issue: IssueGitHub, prompt: string):
     cwd: process.cwd(),
     prompt,
     maxIterations: 5,
+    hooks: montarHooksSandbox(),
+    copyToWorktree: montarCopiasWorktree(),
     idleTimeoutSeconds: 300,
     branchStrategy: { type: 'branch', branch },
     logging: { type: 'stdout' },
@@ -67,6 +70,24 @@ function montarEnvSandbox(): Record<string, string> {
     ...(process.env.GITHUB_TOKEN ? { GH_TOKEN: process.env.GITHUB_TOKEN } : {}),
     ...(process.env.GITHUB_TOKEN ? { GITHUB_TOKEN: process.env.GITHUB_TOKEN } : {}),
   };
+}
+
+function montarHooksSandbox(): {
+  sandbox: { onSandboxReady: { command: string; timeoutMs: number }[] };
+} {
+  return {
+    sandbox: {
+      onSandboxReady: [{ command: COMANDO_PREPARAR_DEPENDENCIAS, timeoutMs: 120_000 }],
+    },
+  };
+}
+
+function montarCopiasWorktree(): string[] {
+  if (!existsSync(`${process.cwd()}/node_modules`)) {
+    return [];
+  }
+
+  return ['node_modules'];
 }
 
 function montarMountsDocker(): { hostPath: string; sandboxPath: string; readonly?: boolean }[] {

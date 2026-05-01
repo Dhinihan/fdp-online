@@ -71,7 +71,11 @@ export function lerComentariosIssue(numero: number): ComentarioGitHub[] {
 }
 
 export function removerLabelIssue(numero: number, label: string): void {
-  executarGh(['issue', 'edit', String(numero), '--remove-label', label]);
+  const resultado = executarGhSemErro(['issue', 'edit', String(numero), '--remove-label', label]);
+
+  if (resultado.status !== 0 && !erroLabelAusente(resultado)) {
+    throw new Error(formatarErroGh(['issue', 'edit', String(numero), '--remove-label', label], resultado));
+  }
 }
 
 export function adicionarLabelIssue(numero: number, label: string): void {
@@ -85,21 +89,33 @@ function executarGhJson(argumentos: string[]): unknown {
 }
 
 function executarGh(argumentos: string[]): ResultadoGh {
+  const resultado = executarGhSemErro(argumentos);
+
+  if (resultado.status !== 0) {
+    throw new Error(formatarErroGh(argumentos, resultado));
+  }
+
+  return resultado;
+}
+
+function executarGhSemErro(argumentos: string[]): ResultadoGh {
   const resultado = spawnSync('gh', argumentos, {
     encoding: 'utf8',
     env: process.env,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 
-  if (resultado.status !== 0) {
-    throw new Error(formatarErroGh(argumentos, resultado));
-  }
-
   return {
     stdout: resultado.stdout,
     stderr: resultado.stderr,
     status: resultado.status,
   };
+}
+
+function erroLabelAusente(resultado: ResultadoGh): boolean {
+  const detalhe = `${resultado.stderr}\n${resultado.stdout}`.toLowerCase();
+
+  return detalhe.includes('404') || detalhe.includes('does not exist') || detalhe.includes('not found');
 }
 
 function formatarErroGh(argumentos: string[], resultado: ResultadoGh): string {
