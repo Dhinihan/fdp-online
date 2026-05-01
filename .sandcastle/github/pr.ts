@@ -24,6 +24,9 @@ export interface PullRequestGitHub {
   state: 'OPEN' | 'CLOSED' | 'MERGED';
   createdAt: string;
   headRefName: string;
+  headRefOid: string;
+  headRepositoryOwner: { login: string };
+  isCrossRepository: boolean;
   reviewDecision: string | null;
   labels: { name: string }[];
 }
@@ -91,7 +94,7 @@ export function lerPullRequest(numero: number): PullRequestGitHub {
     'view',
     String(numero),
     '--json',
-    'number,title,state,createdAt,headRefName,reviewDecision,labels',
+    'number,title,state,createdAt,headRefName,headRefOid,headRepositoryOwner,isCrossRepository,reviewDecision,labels',
   ]) as PullRequestGitHub;
 }
 
@@ -106,7 +109,7 @@ export function listarPullRequestsCandidatas(limite = 100): PullRequestGitHub[] 
     '--limit',
     String(limite),
     '--json',
-    'number,title,state,createdAt,headRefName,reviewDecision,labels',
+    'number,title,state,createdAt,headRefName,headRefOid,headRepositoryOwner,isCrossRepository,reviewDecision,labels',
   ]) as PullRequestGitHub[];
 }
 
