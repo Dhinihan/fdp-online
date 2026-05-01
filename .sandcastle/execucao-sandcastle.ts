@@ -9,7 +9,8 @@ const MODELO_CODEX = 'gpt-5.4';
 const NOME_IMAGEM_SANDCASTLE = 'sandcastle:fdp-online';
 const CAMINHO_AUTH_CODEX = `${homedir()}/.codex/auth.json`;
 const CAMINHO_CONFIG_DOCKER = `${homedir()}/.docker/config.json`;
-const COMANDO_PREPARAR_DEPENDENCIAS = 'corepack enable && pnpm install --frozen-lockfile';
+const COMANDO_PREPARAR_DEPENDENCIAS =
+  'corepack prepare pnpm@9.15.0 --activate && pnpm config set store-dir "$PNPM_STORE_DIR" && pnpm install --frozen-lockfile --prefer-offline';
 
 export function validarAutenticacaoCodex(): void {
   if (process.env.OPENAI_API_KEY?.trim()) {
@@ -40,7 +41,6 @@ export async function rodarAgenteSandcastle(issue: IssueGitHub, prompt: string):
     prompt,
     maxIterations: 5,
     hooks: montarHooksSandbox(),
-    copyToWorktree: montarCopiasWorktree(),
     idleTimeoutSeconds: 300,
     branchStrategy: { type: 'branch', branch },
     logging: { type: 'stdout' },
@@ -80,14 +80,6 @@ function montarHooksSandbox(): {
       onSandboxReady: [{ command: COMANDO_PREPARAR_DEPENDENCIAS, timeoutMs: 120_000 }],
     },
   };
-}
-
-function montarCopiasWorktree(): string[] {
-  if (!existsSync(`${process.cwd()}/node_modules`)) {
-    return [];
-  }
-
-  return ['node_modules'];
 }
 
 function montarMountsDocker(): { hostPath: string; sandboxPath: string; readonly?: boolean }[] {
