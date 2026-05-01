@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import {
   LABEL_BLOQUEIO_SANDCASTLE,
   LABEL_REVISAO_SANDCASTLE,
@@ -11,7 +12,6 @@ import {
   type ThreadRevisaoGitHub,
 } from '../github';
 import { lerArquivo } from '../runner';
-import { validarBranchLocalPr } from './pr-branch';
 import type { AdaptadorProcessamento, ItemFila } from './tipos';
 
 const CAMINHO_PROMPT = new URL('../prompts/revisao-pr.md', import.meta.url);
@@ -163,4 +163,58 @@ function possuiLabel(pr: PullRequestGitHub, label: string): boolean {
 
 function formatarHeadPr(pr: PullRequestGitHub): string {
   return `${pr.headRepositoryOwner.login}:${pr.headRefName} @ ${pr.headRefOid}`;
+}
+
+function validarBranchLocalPr(pr: PullRequestGitHub): void {
+  validarPrMesmoRepositorio(pr);
+
+  const referencia = `refs/heads/${pr.headRefName}`;
+  const shaLocal = lerShaBranchLocal(pr, referencia);
+
+  validarShaBranchLocal(pr, referencia, shaLocal);
+}
+
+function validarPrMesmoRepositorio(pr: PullRequestGitHub): void {
+  if (!pr.isCrossRepository) {
+    return;
+  }
+
+  throw new Error(
+    [
+      `PR #${String(pr.number)} vem de fork: ${formatarHeadPr(pr)}.`,
+      'O runner precisa resolver explicitamente a branch remota do fork antes de executar o agente nessa PR.',
+    ].join('\n'),
+  );
+}
+
+function lerShaBranchLocal(pr: PullRequestGitHub, referencia: string): string {
+  const resultado = spawnSync('git', ['rev-parse', referencia], {
+    encoding: 'utf8',
+    env: process.env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  if (resultado.status === 0) {
+    return resultado.stdout.trim();
+  }
+
+  throw new Error(
+    [
+      `Branch da PR #${String(pr.number)} nao resolvida localmente: ${formatarHeadPr(pr)}.`,
+      'Evite usar apenas headRefName; a execucao deve apontar para o head exato da PR antes de rodar o agente.',
+    ].join('\n'),
+  );
+}
+
+function validarShaBranchLocal(pr: PullRequestGitHub, referencia: string, shaLocal: string): void {
+  if (shaLocal !== pr.headRefOid) {
+    throw new Error(
+      [
+        `Branch local divergente para a PR #${String(pr.number)}.`,
+        `Esperado: ${pr.headRefOid}.`,
+        `Encontrado em ${referencia}: ${shaLocal}.`,
+        `Head informado pelo GitHub: ${formatarHeadPr(pr)}.`,
+      ].join('\n'),
+    );
+  }
 }
