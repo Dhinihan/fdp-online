@@ -13,6 +13,7 @@ const DURACAO_FLIP_MS = 280;
 const LARGURA_CARTA = 80;
 const ALTURA_CARTA = 120;
 const RAIO_CARTA = 8;
+const MARGEM_TOQUE_CARTA = 12;
 
 function contemPontoNaArea(area: Geom.Rectangle, x: number, y: number): boolean {
   return area.contains(x, y);
@@ -26,7 +27,8 @@ export class JogoScene extends Scene {
   private redesenhar?: ResizeDebouncer;
   private tweenVirada?: Tween;
   private animandoVirada = false;
-  private cartaVirada = false;
+  private mostrandoVerso = false;
+  private proximoEstadoVerso = false;
 
   constructor() {
     super({ key: 'JogoScene' });
@@ -52,7 +54,8 @@ export class JogoScene extends Scene {
       this.redesenhar = undefined;
     }
 
-    this.cartaVirada = false;
+    this.mostrandoVerso = false;
+    this.proximoEstadoVerso = false;
     this.carta = undefined;
     this.frenteDaCarta = undefined;
     this.versoDaCarta = undefined;
@@ -86,7 +89,12 @@ export class JogoScene extends Scene {
   };
 
   private criarContainerCarta(centroX: number, centroY: number): Container {
-    const areaInterativa = new Geom.Rectangle(-LARGURA_CARTA / 2, -ALTURA_CARTA / 2, LARGURA_CARTA, ALTURA_CARTA);
+    const areaInterativa = new Geom.Rectangle(
+      -LARGURA_CARTA / 2 - MARGEM_TOQUE_CARTA,
+      -ALTURA_CARTA / 2 - MARGEM_TOQUE_CARTA,
+      LARGURA_CARTA + MARGEM_TOQUE_CARTA * 2,
+      ALTURA_CARTA + MARGEM_TOQUE_CARTA * 2,
+    );
     const frenteDaCarta = this.frenteDaCarta;
     const versoDaCarta = this.versoDaCarta;
     const textoDaCarta = this.textoDaCarta;
@@ -112,7 +120,7 @@ export class JogoScene extends Scene {
   }
 
   private aoInteragirComCarta = (): void => {
-    if (this.animandoVirada || this.cartaVirada || !this.carta) return;
+    if (this.animandoVirada || !this.carta) return;
 
     this.virarCarta();
   };
@@ -120,6 +128,7 @@ export class JogoScene extends Scene {
   private virarCarta(): void {
     this.emitirEventosVirada();
     this.animandoVirada = true;
+    this.proximoEstadoVerso = !this.mostrandoVerso;
     this.tweenVirada = this.tweens.add({
       targets: this.carta,
       scaleX: 0,
@@ -144,7 +153,7 @@ export class JogoScene extends Scene {
   }
 
   private concluirVirada = (): void => {
-    this.cartaVirada = true;
+    this.mostrandoVerso = this.proximoEstadoVerso;
     this.atualizarFaces();
 
     this.tweenVirada = this.tweens.add({
@@ -164,11 +173,12 @@ export class JogoScene extends Scene {
     this.tweenVirada?.remove();
     this.tweenVirada = undefined;
     this.animandoVirada = false;
+    this.proximoEstadoVerso = this.mostrandoVerso;
   }
 
   private atualizarFaces(): void {
-    this.frenteDaCarta?.setVisible(!this.cartaVirada);
-    this.textoDaCarta?.setVisible(!this.cartaVirada);
-    this.versoDaCarta?.setVisible(this.cartaVirada);
+    this.frenteDaCarta?.setVisible(!this.mostrandoVerso);
+    this.textoDaCarta?.setVisible(!this.mostrandoVerso);
+    this.versoDaCarta?.setVisible(this.mostrandoVerso);
   }
 }
