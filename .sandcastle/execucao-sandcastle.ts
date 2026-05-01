@@ -65,6 +65,7 @@ function montarEnvAgente(): Record<string, string> {
 function montarEnvSandbox(): Record<string, string> {
   return {
     ...(process.env.GITHUB_TOKEN ? { GH_TOKEN: process.env.GITHUB_TOKEN } : {}),
+    ...(process.env.GITHUB_TOKEN ? { GITHUB_TOKEN: process.env.GITHUB_TOKEN } : {}),
   };
 }
 

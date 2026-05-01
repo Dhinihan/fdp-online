@@ -1,4 +1,6 @@
-FROM node:22-bookworm
+FROM node:24-bookworm
+
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 RUN apt-get update && apt-get install -y \
   git \
@@ -17,8 +19,13 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 
 RUN usermod -d /home/agent -m -l agent node
 RUN npm install -g @openai/codex
+RUN npm install -g playwright@1.59.1
+RUN playwright install --with-deps chromium
 RUN corepack enable
 RUN mkdir -p /home/agent/.codex && chown -R 1000:1000 /home/agent/.codex
+RUN mkdir -p /ms-playwright && chown -R 1000:1000 /ms-playwright
+RUN git config --system url.https://github.com/.insteadOf git@github.com: \
+  && git config --system credential.https://github.com.helper '!gh auth git-credential'
 
 USER agent
 WORKDIR /home/agent
