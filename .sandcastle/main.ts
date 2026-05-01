@@ -1,22 +1,30 @@
-import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { loadEnvFile } from 'node:process';
-import { codex, createSandbox } from '@ai-hero/sandcastle';
-import { docker } from '@ai-hero/sandcastle/sandboxes/docker';
-import { validarGhDisponivel } from './github-gh';
+import {
+  formatarResultadoAgente,
+  rodarAgenteSandcastle,
+  validarAutenticacaoCodex,
+  validarDocker,
+} from './execucao-sandcastle';
+import {
+  adicionarLabelIssue,
+  LABEL_EXECUCAO_SANDCASTLE,
+  LABEL_EXECUTANDO_SANDCASTLE,
+  lerComentariosIssue,
+  lerIssue,
+  listarIssuesCandidatas,
+  removerLabelIssue,
+  validarGhDisponivel,
+  type ComentarioGitHub,
+  type IssueGitHub,
+} from './github-gh';
 
-const LIMITE_ITERACOES_AGENTE = 5;
-const TEMPO_INATIVIDADE_SEGUNDOS = 300;
+const LIMITE_ISSUES_POR_RODADA = 3;
+const LIMITE_COMENTARIOS_CONTEXTO = 5;
 const CAMINHO_ENV = new URL('.env', import.meta.url);
-const CAMINHO_AUTH_CODEX = `${homedir()}/.codex/auth.json`;
 
-type ModoAutenticacaoCodex = 'chatgpt' | 'api';
-
-interface ConfiguracaoLocal {
-  githubToken: string;
-  modoAutenticacaoCodex: ModoAutenticacaoCodex;
-  openaiApiKey?: string;
+interface OpcoesCron {
+  dryRun: boolean;
 }
 
 function carregarEnvLocal(): void {
@@ -25,90 +33,106 @@ function carregarEnvLocal(): void {
   }
 }
 
-function lerVariavelObrigatoria(nome: 'GITHUB_TOKEN'): string {
-  const valor = process.env[nome]?.trim();
-
-  if (!valor) {
-    throw new Error(`Configuracao ausente: defina ${nome} em .sandcastle/.env antes de rodar o cron.`);
-  }
-
-  return valor;
-}
-
-function lerOpenAiApiKey(): string | undefined {
-  return process.env.OPENAI_API_KEY?.trim() || undefined;
-}
-
-function validarLoginCodexChatGpt(): void {
-  if (!existsSync(CAMINHO_AUTH_CODEX)) {
-    throw new Error(
-      'Configuracao ausente: faca login no Codex com ChatGPT (`codex login`) ou defina OPENAI_API_KEY em .sandcastle/.env.',
-    );
-  }
-
-  const resultado = spawnSync('codex', ['login', 'status'], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  const saida = `${resultado.stdout}${resultado.stderr}`;
-
-  if (resultado.status !== 0 || !saida.includes('Logged in using ChatGPT')) {
-    throw new Error(
-      'Configuracao ausente: nao foi possivel validar login do Codex. Rode `codex login` ou defina OPENAI_API_KEY em .sandcastle/.env.',
-    );
-  }
-}
-
-function carregarConfiguracaoLocal(): ConfiguracaoLocal {
+export async function executarCron(opcoes = lerOpcoesCli()): Promise<void> {
   carregarEnvLocal();
-  const openaiApiKey = lerOpenAiApiKey();
+  validarGhDisponivel();
+  validarAutenticacaoCodex();
+  validarDocker();
 
-  if (openaiApiKey) {
-    return {
-      githubToken: lerVariavelObrigatoria('GITHUB_TOKEN'),
-      modoAutenticacaoCodex: 'api',
-      openaiApiKey,
-    };
+  const issues = selecionarIssues(listarIssuesCandidatas());
+
+  if (issues.length === 0) {
+    console.log(`Nenhuma issue aberta com label ${LABEL_EXECUCAO_SANDCASTLE}.`);
+    return;
   }
 
-  validarLoginCodexChatGpt();
+  for (const issue of issues) {
+    await executarIssue(issue, opcoes);
+  }
+}
 
+function selecionarIssues(issues: IssueGitHub[]): IssueGitHub[] {
+  return [...issues]
+    .sort((primeira, segunda) => primeira.createdAt.localeCompare(segunda.createdAt))
+    .slice(0, LIMITE_ISSUES_POR_RODADA);
+}
+
+async function executarIssue(issueResumo: IssueGitHub, opcoes: OpcoesCron): Promise<void> {
+  const issue = lerIssue(issueResumo.number);
+  const comentarios = lerComentariosIssue(issue.number);
+  const prompt = montarPromptAgente(issue, comentarios);
+
+  if (opcoes.dryRun) {
+    console.log(formatarDryRun(issue, comentarios));
+    return;
+  }
+
+  adicionarLabelIssue(issue.number, LABEL_EXECUTANDO_SANDCASTLE);
+  try {
+    const resultado = await rodarAgenteSandcastle(issue, prompt);
+    console.log(formatarResultadoAgente(issue, resultado));
+  } finally {
+    removerLabelIssue(issue.number, LABEL_EXECUTANDO_SANDCASTLE);
+  }
+}
+
+function montarPromptAgente(issue: IssueGitHub, comentarios: ComentarioGitHub[]): string {
+  const comentariosRecentes = comentarios.slice(-LIMITE_COMENTARIOS_CONTEXTO).map(formatarComentario).join('\n\n');
+
+  return [
+    'Voce e o agente Sandcastle deste repositorio.',
+    '',
+    'Leia AGENTS.md e ARQUITETURA.md antes de decidir ou implementar.',
+    'Sua primeira tarefa e decidir se a issue e executavel agora.',
+    '',
+    'Bloqueie a issue se ela for ambigua, grande demais, depender de decisao humana, conflitar com a arquitetura, depender de outra issue/PR, ou nao tiver criterio claro de validacao.',
+    `Ao bloquear: adicione a label \`sandcastle:blocked\`, remova \`${LABEL_EXECUCAO_SANDCASTLE}\` e comente objetivamente o motivo e o que precisa mudar.`,
+    '',
+    'Ao executar: implemente seguindo as regras do projeto, rode verificacoes relevantes, faca push da branch atual, abra ou atualize uma PR com `Closes #<numero>` e remova `sandcastle:run`.',
+    'Se encontrar um bloqueio durante a implementacao, pare, bloqueie a issue com comentario claro, e nao deixe mudancas parciais sem PR.',
+    '',
+    'Contexto da issue:',
+    `Numero: #${String(issue.number)}`,
+    `Titulo: ${issue.title}`,
+    `Estado: ${issue.state}`,
+    `Labels: ${issue.labels.map((label) => label.name).join(', ') || 'nenhuma'}`,
+    '',
+    'Corpo:',
+    issue.body || '(sem corpo)',
+    '',
+    'Comentarios recentes:',
+    comentariosRecentes || '(sem comentarios)',
+  ].join('\n');
+}
+
+function formatarComentario(comentario: ComentarioGitHub): string {
+  return [`Autor: ${comentario.author.login}`, `Criado em: ${comentario.createdAt}`, comentario.body].join('\n');
+}
+
+function formatarDryRun(issue: IssueGitHub, comentarios: ComentarioGitHub[]): string {
+  return [
+    `DRY RUN: issue #${String(issue.number)} seria enviada ao agente.`,
+    `Titulo: ${issue.title}`,
+    `Labels: ${issue.labels.map((label) => label.name).join(', ') || 'nenhuma'}`,
+    `Comentarios no contexto: ${String(Math.min(comentarios.length, LIMITE_COMENTARIOS_CONTEXTO))}`,
+  ].join('\n');
+}
+
+function lerOpcoesCli(): OpcoesCron {
   return {
-    githubToken: lerVariavelObrigatoria('GITHUB_TOKEN'),
-    modoAutenticacaoCodex: 'chatgpt',
+    dryRun: process.argv.includes('--dry-run'),
   };
 }
 
-export function executarCron(configuracao = carregarConfiguracaoLocal()): void {
-  validarGhDisponivel();
-
-  void codex;
-  void createSandbox;
-  void docker;
-  void configuracao.githubToken;
-  void configuracao.modoAutenticacaoCodex;
-  void configuracao.openaiApiKey;
-
-  console.log(
-    [
-      'Sandcastle cron ainda esta em scaffold.',
-      `Configuracao local carregada com sucesso. Autenticacao do Codex: ${configuracao.modoAutenticacaoCodex}.`,
-      'Integracao com GitHub via gh validada com sucesso.',
-      'As proximas fases implementam selecao, elegibilidade, retry e execucao.',
-      `Configuracao prevista: gpt-5.4, effort low, maxIterations ${String(LIMITE_ITERACOES_AGENTE)}, idleTimeoutSeconds ${String(TEMPO_INATIVIDADE_SEGUNDOS)}.`,
-    ].join('\n'),
-  );
-}
-
-function executarEntrada(): void {
+async function executarEntrada(): Promise<void> {
   try {
-    executarCron();
+    await executarCron();
   } catch (erro) {
-    const mensagem = erro instanceof Error ? erro.message : 'Falha desconhecida ao iniciar o cron.';
+    const mensagem = erro instanceof Error ? erro.message : 'Falha desconhecida ao executar o cron.';
 
     console.error(mensagem);
     process.exitCode = 1;
   }
 }
 
-executarEntrada();
+void executarEntrada();

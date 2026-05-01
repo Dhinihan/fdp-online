@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 
-const LABEL_EXECUCAO_SANDCASTLE = 'sandcastle:run';
+export const LABEL_EXECUCAO_SANDCASTLE = 'sandcastle:run';
+export const LABEL_EXECUTANDO_SANDCASTLE = 'sandcastle:running';
 
 interface ResultadoGh {
   stdout: string;
@@ -15,6 +16,7 @@ export interface IssueGitHub {
   state: 'OPEN' | 'CLOSED';
   createdAt: string;
   updatedAt: string;
+  labels: { name: string }[];
 }
 
 export interface ComentarioGitHub {
@@ -23,25 +25,6 @@ export interface ComentarioGitHub {
   createdAt: string;
   updatedAt: string;
   author: { login: string };
-}
-
-export interface PullRequestGitHub {
-  number: number;
-  title: string;
-  body: string;
-  headRefName: string;
-  state: 'OPEN' | 'CLOSED' | 'MERGED';
-  url: string;
-  mergedAt: string | null;
-}
-
-export interface CheckPullRequestGitHub {
-  name: string;
-  state: string;
-  conclusion: string;
-  startedAt: string;
-  completedAt: string;
-  link: string;
 }
 
 export function validarGhDisponivel(): void {
@@ -59,7 +42,7 @@ export function listarIssuesCandidatas(limite = 100): IssueGitHub[] {
     '--limit',
     String(limite),
     '--json',
-    'number,title,body,state,createdAt,updatedAt',
+    'number,title,body,state,createdAt,updatedAt,labels',
   ]) as IssueGitHub[];
 }
 
@@ -69,94 +52,30 @@ export function lerIssue(numero: number): IssueGitHub {
     'view',
     String(numero),
     '--json',
-    'number,title,body,state,createdAt,updatedAt',
+    'number,title,body,state,createdAt,updatedAt,labels',
   ]) as IssueGitHub;
 }
 
 export function lerComentariosIssue(numero: number): ComentarioGitHub[] {
-  return executarGhJson([
-    'api',
-    `repos/:owner/:repo/issues/${String(numero)}/comments`,
-    '--paginate',
-    '--slurp',
-    '--jq',
-    'map(.[]) | map({id, body, createdAt: .created_at, updatedAt: .updated_at, author: {login: .user.login}})',
-  ]) as ComentarioGitHub[];
+  const issue = executarGhJson(['issue', 'view', String(numero), '--json', 'comments']) as {
+    comments: {
+      id: number;
+      body: string;
+      createdAt: string;
+      updatedAt: string;
+      author: { login: string };
+    }[];
+  };
+
+  return issue.comments;
 }
 
-export function criarComentarioIssue(numero: number, corpo: string): ComentarioGitHub {
-  return executarGhJson([
-    'api',
-    `repos/:owner/:repo/issues/${String(numero)}/comments`,
-    '--method',
-    'POST',
-    '--field',
-    `body=${corpo}`,
-    '--jq',
-    '{id, body, createdAt: .created_at, updatedAt: .updated_at, author: {login: .user.login}}',
-  ]) as ComentarioGitHub;
+export function removerLabelIssue(numero: number, label: string): void {
+  executarGh(['issue', 'edit', String(numero), '--remove-label', label]);
 }
 
-export function atualizarComentarioIssue(comentarioId: number | string, corpo: string): ComentarioGitHub {
-  return executarGhJson([
-    'api',
-    `repos/:owner/:repo/issues/comments/${String(comentarioId)}`,
-    '--method',
-    'PATCH',
-    '--field',
-    `body=${corpo}`,
-    '--jq',
-    '{id, body, createdAt: .created_at, updatedAt: .updated_at, author: {login: .user.login}}',
-  ]) as ComentarioGitHub;
-}
-
-export function procurarPrAbertaPorBranch(branch: string): PullRequestGitHub | null {
-  const prs = executarGhJson([
-    'pr',
-    'list',
-    '--state',
-    'open',
-    '--head',
-    branch,
-    '--json',
-    'number,title,body,headRefName,state,url,mergedAt',
-  ]) as PullRequestGitHub[];
-
-  return prs[0] ?? null;
-}
-
-export function criarPullRequest(entrada: { branch: string; titulo: string; corpo: string }): PullRequestGitHub {
-  const resultado = executarGh([
-    'pr',
-    'create',
-    '--head',
-    entrada.branch,
-    '--title',
-    entrada.titulo,
-    '--body',
-    entrada.corpo,
-  ]);
-  return lerPullRequest(resultado.stdout.trim());
-}
-
-export function consultarChecksPullRequest(numero: number): CheckPullRequestGitHub[] {
-  return executarGhJson([
-    'pr',
-    'checks',
-    String(numero),
-    '--json',
-    'name,state,conclusion,startedAt,completedAt,link',
-  ]) as CheckPullRequestGitHub[];
-}
-
-function lerPullRequest(referencia: string): PullRequestGitHub {
-  return executarGhJson([
-    'pr',
-    'view',
-    referencia,
-    '--json',
-    'number,title,body,headRefName,state,url,mergedAt',
-  ]) as PullRequestGitHub;
+export function adicionarLabelIssue(numero: number, label: string): void {
+  executarGh(['issue', 'edit', String(numero), '--add-label', label]);
 }
 
 function executarGhJson(argumentos: string[]): unknown {
