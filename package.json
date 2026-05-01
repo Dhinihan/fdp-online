@@ -18,6 +18,7 @@
     "test:e2e": "playwright test --config=playwright.config.js",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.tests.json",
     "sandcastle:cron": "tsx .sandcastle/main.ts",
+    "sandcastle:cron:lock": ".sandcastle/rodar-cron-com-lock.sh",
     "sandcastle:build": "pnpm exec sandcastle docker build-image --image-name sandcastle:fdp-online --dockerfile .sandcastle/Dockerfile",
     "prepare": "husky"
   },
