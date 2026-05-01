@@ -103,14 +103,17 @@ async function processarEntrada(entrada: EntradaFila, dryRun: boolean): Promise<
 async function executarAgenteParaEntrada(entrada: EntradaFila, item: unknown, contexto: unknown): Promise<void> {
   const branch = entrada.adaptador.obterBranch(item);
   const prompt = entrada.adaptador.montarPrompt(item, contexto);
-
-  await entrada.adaptador.fazerLock(item);
+  let lockAdquirido = false;
 
   try {
+    await entrada.adaptador.fazerLock(item);
+    lockAdquirido = true;
     const resultado = await rodarAgenteSandcastle(prompt, branch);
     console.log(formatarResultadoAgente(entrada.item.tipo, entrada.item.numero, resultado));
   } finally {
-    await entrada.adaptador.desfazerLock(item);
+    if (lockAdquirido) {
+      await entrada.adaptador.desfazerLock(item);
+    }
   }
 }
 
