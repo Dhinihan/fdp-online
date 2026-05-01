@@ -28,3 +28,12 @@ dist
 
 # Pi CLI worktrees
 .pi/worktrees/
+
+# Sandcastle local configuration
+.codex
+.sandcastle/.env
+.sandcastle/worktrees/
+.sandcastle/logs/
+
+# arquivos temporarios
+planos/

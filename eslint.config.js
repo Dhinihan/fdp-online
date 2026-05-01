@@ -6,7 +6,7 @@ import * as ts from 'typescript-eslint';
 
 export default defineConfig(
   {
-    ignores: ['dist/**', 'node_modules/**', 'public/**', 'coverage/**', '.pi/**'],
+    ignores: ['dist/**', 'node_modules/**', 'public/**', 'coverage/**', '.pi/**', '.sandcastle/worktrees/**'],
   },
   ts.configs.strictTypeChecked,
   {
@@ -29,7 +29,7 @@ export default defineConfig(
     },
   },
   {
-    files: ['*.config.{ts,js}', 'tests/**/*.{ts,tsx}'],
+    files: ['*.config.{ts,js}', '.sandcastle/**/*.ts', 'tests/**/*.{ts,tsx}'],
     languageOptions: {
       globals: { ...globals.node },
     },
@@ -40,7 +40,7 @@ export default defineConfig(
     settings: {
       'import/resolver': {
         typescript: {
-          project: ['./tsconfig.json', './tsconfig.tests.json'],
+          project: ['./tsconfig.json', './tsconfig.tests.json', './.sandcastle/tsconfig.json'],
         },
       },
     },
@@ -59,6 +59,12 @@ export default defineConfig(
           alphabetize: { order: 'asc', caseInsensitive: true },
         },
       ],
+    },
+  },
+  {
+    files: ['.sandcastle/**/*.ts'],
+    rules: {
+      'no-console': 'off',
     },
   },
   prettierRecommended,
