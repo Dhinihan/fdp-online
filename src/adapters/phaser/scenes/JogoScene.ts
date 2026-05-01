@@ -1,11 +1,12 @@
-import { Geom, Math as MatematicaPhaser, Scene } from 'phaser';
-import type { GameObjects } from 'phaser';
+import { Geom, Scene } from 'phaser';
+import type { GameObjects, Tweens } from 'phaser';
 import { emissorEventos } from '@/store/emissor-eventos';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 
 type Container = GameObjects.Container;
 type Graphics = GameObjects.Graphics;
 type Text = GameObjects.Text;
+type Tween = Tweens.Tween;
 
 const CARTA_ID = 'placeholder-carta';
 const DURACAO_FLIP_MS = 280;
@@ -23,6 +24,7 @@ export class JogoScene extends Scene {
   private versoDaCarta?: Graphics;
   private textoDaCarta?: Text;
   private redesenhar?: ResizeDebouncer;
+  private tweenVirada?: Tween;
   private animandoVirada = false;
   private cartaVirada = false;
 
@@ -33,24 +35,28 @@ export class JogoScene extends Scene {
   create(): void {
     this.criarCartaPlaceholder();
 
-    this.redesenhar = criarDebounceResize(this, () => {
-      this.carta?.destroy();
-      this.criarCartaPlaceholder();
-    });
+    this.redesenhar = criarDebounceResize(this, this.recriarCartaPlaceholder);
 
     this.scale.on('resize', this.redesenhar);
-    this.game.canvas.addEventListener('click', this.aoClicarNoCanvas);
     this.events.on('shutdown', () => {
       this.shutdown();
     });
   }
 
   shutdown(): void {
+    this.limparAnimacaoVirada();
+
     if (this.redesenhar) {
       this.scale.off('resize', this.redesenhar);
       this.redesenhar.limpar();
+      this.redesenhar = undefined;
     }
-    this.game.canvas.removeEventListener('click', this.aoClicarNoCanvas);
+
+    this.cartaVirada = false;
+    this.carta = undefined;
+    this.frenteDaCarta = undefined;
+    this.versoDaCarta = undefined;
+    this.textoDaCarta = undefined;
   }
 
   private criarCartaPlaceholder(): void {
@@ -72,6 +78,12 @@ export class JogoScene extends Scene {
 
     this.atualizarFaces();
   }
+
+  private recriarCartaPlaceholder = (): void => {
+    this.limparAnimacaoVirada();
+    this.carta?.destroy();
+    this.criarCartaPlaceholder();
+  };
 
   private criarContainerCarta(centroX: number, centroY: number): Container {
     const areaInterativa = new Geom.Rectangle(-LARGURA_CARTA / 2, -ALTURA_CARTA / 2, LARGURA_CARTA, ALTURA_CARTA);
@@ -102,10 +114,19 @@ export class JogoScene extends Scene {
   private aoInteragirComCarta = (): void => {
     if (this.animandoVirada || this.cartaVirada || !this.carta) return;
 
+    this.virarCarta();
+  };
+
+  private virarCarta(): void {
     this.emitirEventosVirada();
     this.animandoVirada = true;
-    this.animarVirada();
-  };
+    this.tweenVirada = this.tweens.add({
+      targets: this.carta,
+      scaleX: 0,
+      duration: DURACAO_FLIP_MS / 2,
+      onComplete: this.concluirVirada,
+    });
+  }
 
   private emitirEventosVirada(): void {
     if (!this.carta) return;
@@ -122,19 +143,11 @@ export class JogoScene extends Scene {
     });
   }
 
-  private animarVirada(): void {
-    this.tweens.add({
-      targets: this.carta,
-      scaleX: 0,
-      duration: DURACAO_FLIP_MS / 2,
-      onComplete: this.concluirPrimeiraMetadeVirada,
-    });
-  }
-
-  private concluirPrimeiraMetadeVirada = (): void => {
+  private concluirVirada = (): void => {
     this.cartaVirada = true;
     this.atualizarFaces();
-    this.tweens.add({
+
+    this.tweenVirada = this.tweens.add({
       targets: this.carta,
       scaleX: 1,
       duration: DURACAO_FLIP_MS / 2,
@@ -143,28 +156,19 @@ export class JogoScene extends Scene {
   };
 
   private finalizarAnimacaoVirada = (): void => {
+    this.tweenVirada = undefined;
     this.animandoVirada = false;
   };
+
+  private limparAnimacaoVirada(): void {
+    this.tweenVirada?.remove();
+    this.tweenVirada = undefined;
+    this.animandoVirada = false;
+  }
 
   private atualizarFaces(): void {
     this.frenteDaCarta?.setVisible(!this.cartaVirada);
     this.textoDaCarta?.setVisible(!this.cartaVirada);
     this.versoDaCarta?.setVisible(this.cartaVirada);
   }
-
-  private aoClicarNoCanvas = (evento: MouseEvent): void => {
-    if (this.animandoVirada || this.cartaVirada || !this.carta) return;
-
-    const area = this.game.canvas.getBoundingClientRect();
-    const escalaX = this.game.canvas.width / area.width;
-    const escalaY = this.game.canvas.height / area.height;
-    const ponto = new MatematicaPhaser.Vector2(
-      (evento.clientX - area.left) * escalaX,
-      (evento.clientY - area.top) * escalaY,
-    );
-
-    if (this.carta.getBounds().contains(ponto.x, ponto.y)) {
-      this.aoInteragirComCarta();
-    }
-  };
 }
