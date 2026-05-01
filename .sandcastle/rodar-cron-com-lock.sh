@@ -28,6 +28,12 @@ garantir_arvore_limpa() {
     echo 'Execucao cancelada: ha alteracoes locais em staging.' >&2
     exit 1
   fi
+
+  if [[ -n "$(git ls-files --others --exclude-standard)" ]]; then
+    echo 'Execucao cancelada: ha arquivos nao rastreados na arvore de trabalho.' >&2
+    exit 1
+  fi
+
 }
 
 atualizar_branch_base() {
