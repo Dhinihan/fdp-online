@@ -1,6 +1,7 @@
 import type { GameObjects, Tweens } from 'phaser';
 import { Scene } from 'phaser';
 import { emissorEventos } from '@/store/emissor-eventos';
+import { tocarSomUi } from '../audio/som-ui';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 
 type Container = GameObjects.Container;
@@ -122,6 +123,7 @@ export class JogoScene extends Scene {
   private aoInteragirComCarta = (): void => {
     if (this.animandoVirada || !this.carta) return;
 
+    tocarSomUi(this);
     this.virarCarta();
   };
 

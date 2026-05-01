@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import type { GameObjects } from 'phaser';
+import { precarregarSomUi, tocarSomUi } from '../audio/som-ui';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 
 type Graphics = GameObjects.Graphics;
@@ -15,6 +16,10 @@ export class MenuScene extends Scene {
 
   constructor() {
     super({ key: 'MenuScene' });
+  }
+
+  preload(): void {
+    precarregarSomUi(this);
   }
 
   create(): void {
@@ -93,6 +98,7 @@ export class MenuScene extends Scene {
 
   private iniciarJogo = (): void => {
     this.botaoZona?.disableInteractive();
+    tocarSomUi(this);
 
     this.cameras.main.fadeOut(500);
     this.cameras.main.once('camerafadeoutcomplete', () => {
