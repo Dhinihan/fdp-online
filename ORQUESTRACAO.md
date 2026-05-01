@@ -112,8 +112,10 @@ Mostra quais issues seriam enviadas ao agente sem executar sandbox, sem criar br
   .env.example             ← modelo de configuração
   Dockerfile               ← imagem usada pelo sandbox
   execucao-sandcastle.ts   ← integração com Sandcastle/Codex
-  github-gh.ts             ← leitura e edição de issues via gh
-  main.ts                  ← entrada principal do cron
+  run.ts                   ← entrada principal acionada por `pnpm sandcastle:run`
+  runner.ts                ← orquestra fila, validações e execução dos adaptadores
+  github/
+    issue.ts               ← leitura e edição de issues e labels via gh
   prompts/
     agente.md              ← prompt base do agente
   rodar-cron-com-lock.sh   ← wrapper com lock, timeout e validações
