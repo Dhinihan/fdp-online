@@ -1,5 +1,5 @@
-import { Geom, Scene } from 'phaser';
 import type { GameObjects, Tweens } from 'phaser';
+import { Scene } from 'phaser';
 import { emissorEventos } from '@/store/emissor-eventos';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 
@@ -7,6 +7,7 @@ type Container = GameObjects.Container;
 type Graphics = GameObjects.Graphics;
 type Text = GameObjects.Text;
 type Tween = Tweens.Tween;
+type Zone = GameObjects.Zone;
 
 const CARTA_ID = 'placeholder-carta';
 const DURACAO_FLIP_MS = 280;
@@ -15,12 +16,9 @@ const ALTURA_CARTA = 120;
 const RAIO_CARTA = 8;
 const MARGEM_TOQUE_CARTA = 12;
 
-function contemPontoNaArea(area: Geom.Rectangle, x: number, y: number): boolean {
-  return area.contains(x, y);
-}
-
 export class JogoScene extends Scene {
   private carta?: Container;
+  private areaDaCarta?: Zone;
   private frenteDaCarta?: Graphics;
   private versoDaCarta?: Graphics;
   private textoDaCarta?: Text;
@@ -57,6 +55,7 @@ export class JogoScene extends Scene {
     this.mostrandoVerso = false;
     this.proximoEstadoVerso = false;
     this.carta = undefined;
+    this.areaDaCarta = undefined;
     this.frenteDaCarta = undefined;
     this.versoDaCarta = undefined;
     this.textoDaCarta = undefined;
@@ -78,6 +77,7 @@ export class JogoScene extends Scene {
       .setOrigin(0.5);
 
     this.carta = this.criarContainerCarta(centroX, centroY);
+    this.areaDaCarta = this.criarAreaInterativaCarta(centroX, centroY);
 
     this.atualizarFaces();
   }
@@ -85,16 +85,11 @@ export class JogoScene extends Scene {
   private recriarCartaPlaceholder = (): void => {
     this.limparAnimacaoVirada();
     this.carta?.destroy();
+    this.areaDaCarta?.destroy();
     this.criarCartaPlaceholder();
   };
 
   private criarContainerCarta(centroX: number, centroY: number): Container {
-    const areaInterativa = new Geom.Rectangle(
-      -LARGURA_CARTA / 2 - MARGEM_TOQUE_CARTA,
-      -ALTURA_CARTA / 2 - MARGEM_TOQUE_CARTA,
-      LARGURA_CARTA + MARGEM_TOQUE_CARTA * 2,
-      ALTURA_CARTA + MARGEM_TOQUE_CARTA * 2,
-    );
     const frenteDaCarta = this.frenteDaCarta;
     const versoDaCarta = this.versoDaCarta;
     const textoDaCarta = this.textoDaCarta;
@@ -105,8 +100,13 @@ export class JogoScene extends Scene {
 
     return this.add
       .container(centroX, centroY, [frenteDaCarta, versoDaCarta, textoDaCarta])
-      .setSize(LARGURA_CARTA, ALTURA_CARTA)
-      .setInteractive(areaInterativa, contemPontoNaArea)
+      .setSize(LARGURA_CARTA, ALTURA_CARTA);
+  }
+
+  private criarAreaInterativaCarta(centroX: number, centroY: number): Zone {
+    return this.add
+      .zone(centroX, centroY, LARGURA_CARTA + MARGEM_TOQUE_CARTA * 2, ALTURA_CARTA + MARGEM_TOQUE_CARTA * 2)
+      .setInteractive()
       .on('pointerdown', this.aoInteragirComCarta);
   }
 
