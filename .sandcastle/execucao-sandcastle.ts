@@ -3,7 +3,6 @@ import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { codex, run, type RunResult } from '@ai-hero/sandcastle';
 import { docker } from '@ai-hero/sandcastle/sandboxes/docker';
-import type { IssueGitHub } from './github-gh';
 
 const MODELO_CODEX = 'gpt-5.4';
 const NOME_IMAGEM_SANDCASTLE = 'sandcastle:fdp-online';
@@ -27,9 +26,22 @@ export function validarDocker(): void {
   validarImagemSandcastle();
 }
 
-export async function rodarAgenteSandcastle(issue: IssueGitHub, prompt: string): Promise<RunResult> {
-  const branch = `sandcastle-issue-${String(issue.number)}`;
+export async function rodarAgenteSandcastle(prompt: string, branch: string): Promise<RunResult> {
+  return rodarAgente(prompt, branch);
+}
 
+export function formatarResultadoAgente(prefixo: string, numero: number, resultado: RunResult): string {
+  return [
+    `${prefixo} #${String(numero)} processado pelo Sandcastle.`,
+    `Branch: ${resultado.branch}`,
+    `Commits: ${String(resultado.commits.length)}`,
+    resultado.logFilePath ? `Log: ${resultado.logFilePath}` : null,
+  ]
+    .filter((linha): linha is string => Boolean(linha))
+    .join('\n');
+}
+
+async function rodarAgente(prompt: string, branch: string): Promise<RunResult> {
   return run({
     agent: codex(MODELO_CODEX, { effort: 'low', env: montarEnvAgente() }),
     sandbox: docker({
@@ -44,19 +56,12 @@ export async function rodarAgenteSandcastle(issue: IssueGitHub, prompt: string):
     idleTimeoutSeconds: 300,
     branchStrategy: { type: 'branch', branch },
     logging: { type: 'stdout' },
-    name: `issue-${String(issue.number)}`,
+    name: montarNomeExecucao(branch),
   });
 }
 
-export function formatarResultadoAgente(issue: IssueGitHub, resultado: RunResult): string {
-  return [
-    `Issue #${String(issue.number)} processada pelo Sandcastle.`,
-    `Branch: ${resultado.branch}`,
-    `Commits: ${String(resultado.commits.length)}`,
-    resultado.logFilePath ? `Log: ${resultado.logFilePath}` : null,
-  ]
-    .filter((linha): linha is string => Boolean(linha))
-    .join('\n');
+function montarNomeExecucao(branch: string): string {
+  return `sandcastle-${branch}-${String(Date.now())}`;
 }
 
 function montarEnvAgente(): Record<string, string> {

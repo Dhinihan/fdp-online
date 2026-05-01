@@ -1,13 +1,8 @@
-import { spawnSync } from 'node:child_process';
+import { executarGh, executarGhJson, executarGhSemErro, type ResultadoGh } from './base';
 
 export const LABEL_EXECUCAO_SANDCASTLE = 'sandcastle:run';
 export const LABEL_EXECUTANDO_SANDCASTLE = 'sandcastle:running';
-
-interface ResultadoGh {
-  stdout: string;
-  stderr: string;
-  status: number | null;
-}
+export const LABEL_BLOQUEIO_SANDCASTLE = 'sandcastle:blocked';
 
 export interface IssueGitHub {
   number: number;
@@ -25,10 +20,6 @@ export interface ComentarioGitHub {
   createdAt: string;
   updatedAt: string;
   author: { login: string };
-}
-
-export function validarGhDisponivel(): void {
-  executarGh(['auth', 'status']);
 }
 
 export function listarIssuesCandidatas(limite = 100): IssueGitHub[] {
@@ -58,13 +49,7 @@ export function lerIssue(numero: number): IssueGitHub {
 
 export function lerComentariosIssue(numero: number): ComentarioGitHub[] {
   const issue = executarGhJson(['issue', 'view', String(numero), '--json', 'comments']) as {
-    comments: {
-      id: number;
-      body: string;
-      createdAt: string;
-      updatedAt: string;
-      author: { login: string };
-    }[];
+    comments: ComentarioGitHub[];
   };
 
   return issue.comments;
@@ -74,7 +59,7 @@ export function removerLabelIssue(numero: number, label: string): void {
   const resultado = executarGhSemErro(['issue', 'edit', String(numero), '--remove-label', label]);
 
   if (resultado.status !== 0 && !erroLabelAusente(resultado)) {
-    throw new Error(formatarErroGh(['issue', 'edit', String(numero), '--remove-label', label], resultado));
+    throw new Error(`Falha ao remover label ${label} da issue #${String(numero)}.`);
   }
 }
 
@@ -82,45 +67,8 @@ export function adicionarLabelIssue(numero: number, label: string): void {
   executarGh(['issue', 'edit', String(numero), '--add-label', label]);
 }
 
-function executarGhJson(argumentos: string[]): unknown {
-  const resultado = executarGh(argumentos);
-
-  return JSON.parse(resultado.stdout) as unknown;
-}
-
-function executarGh(argumentos: string[]): ResultadoGh {
-  const resultado = executarGhSemErro(argumentos);
-
-  if (resultado.status !== 0) {
-    throw new Error(formatarErroGh(argumentos, resultado));
-  }
-
-  return resultado;
-}
-
-function executarGhSemErro(argumentos: string[]): ResultadoGh {
-  const resultado = spawnSync('gh', argumentos, {
-    encoding: 'utf8',
-    env: process.env,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-
-  return {
-    stdout: resultado.stdout,
-    stderr: resultado.stderr,
-    status: resultado.status,
-  };
-}
-
 function erroLabelAusente(resultado: ResultadoGh): boolean {
   const detalhe = `${resultado.stderr}\n${resultado.stdout}`.toLowerCase();
 
   return detalhe.includes('404') || detalhe.includes('does not exist') || detalhe.includes('not found');
-}
-
-function formatarErroGh(argumentos: string[], resultado: ResultadoGh): string {
-  const comando = ['gh', ...argumentos].join(' ');
-  const detalhe = resultado.stderr.trim() || resultado.stdout.trim() || 'sem detalhes do gh';
-
-  return `Falha ao executar ${comando}: ${detalhe}`;
 }
