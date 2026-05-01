@@ -34,3 +34,6 @@ dist
 .sandcastle/.env
 .sandcastle/worktrees/
 .sandcastle/logs/
+
+# arquivos temporarios
+planos/
