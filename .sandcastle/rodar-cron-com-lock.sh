@@ -5,6 +5,7 @@ set -euo pipefail
 readonly CAMINHO_LOCK="${SANDCASTLE_LOCK:-/tmp/fdp-sandcastle.lock}"
 readonly TEMPO_LIMITE="${SANDCASTLE_TIMEOUT:-30m}"
 readonly BRANCH_BASE="${SANDCASTLE_BRANCH_BASE:-main}"
+readonly DESCRITOR_LOCK=9
 
 garantir_branch_base() {
   local branch_atual
@@ -34,13 +35,21 @@ atualizar_branch_base() {
   git pull --ff-only origin "${BRANCH_BASE}"
 }
 
+adquirir_lock() {
+  eval "exec ${DESCRITOR_LOCK}>\"${CAMINHO_LOCK}\""
+
+  if ! flock -n "${DESCRITOR_LOCK}"; then
+    echo "Execucao cancelada: nao foi possivel adquirir lock em '${CAMINHO_LOCK}'." >&2
+    exit 1
+  fi
+}
+
 executar_cron() {
-  timeout "${TEMPO_LIMITE}" \
-    flock -n "${CAMINHO_LOCK}" \
-    pnpm sandcastle:cron
+  timeout "${TEMPO_LIMITE}" pnpm sandcastle:cron
 }
 
 main() {
+  adquirir_lock
   garantir_branch_base
   garantir_arvore_limpa
   atualizar_branch_base
