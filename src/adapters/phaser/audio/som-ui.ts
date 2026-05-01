@@ -17,22 +17,6 @@ export function tocarSomUi(scene: Scene): void {
     return;
   }
 
-  const tocar = (): void => {
-    scene.sound.stopByKey(CHAVE_SOM_UI);
-    scene.sound.play(CHAVE_SOM_UI, { volume: VOLUME_SOM_UI });
-  };
-
-  if (!scene.sound.locked) {
-    tocar();
-    return;
-  }
-
-  const contexto = 'context' in scene.sound ? scene.sound.context : undefined;
-
-  if (!contexto || contexto.state !== 'suspended') {
-    tocar();
-    return;
-  }
-
-  void contexto.resume().then(tocar).catch(tocar);
+  scene.sound.stopByKey(CHAVE_SOM_UI);
+  scene.sound.play(CHAVE_SOM_UI, { volume: VOLUME_SOM_UI });
 }
