@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { loadEnvFile } from 'node:process';
 import {
   formatarResultadoAgente,
@@ -22,6 +22,7 @@ import {
 const LIMITE_ISSUES_POR_RODADA = 3;
 const LIMITE_COMENTARIOS_CONTEXTO = 5;
 const CAMINHO_ENV = new URL('.env', import.meta.url);
+const CAMINHO_PROMPT = new URL('prompts/agente.md', import.meta.url);
 
 interface OpcoesCron {
   dryRun: boolean;
@@ -68,6 +69,7 @@ async function executarIssue(issueResumo: IssueGitHub, opcoes: OpcoesCron): Prom
   }
 
   adicionarLabelIssue(issue.number, LABEL_EXECUTANDO_SANDCASTLE);
+  removerLabelIssue(issue.number, LABEL_EXECUCAO_SANDCASTLE);
   try {
     const resultado = await rodarAgenteSandcastle(issue, prompt);
     console.log(formatarResultadoAgente(issue, resultado));
@@ -78,19 +80,28 @@ async function executarIssue(issueResumo: IssueGitHub, opcoes: OpcoesCron): Prom
 
 function montarPromptAgente(issue: IssueGitHub, comentarios: ComentarioGitHub[]): string {
   const comentariosRecentes = comentarios.slice(-LIMITE_COMENTARIOS_CONTEXTO).map(formatarComentario).join('\n\n');
+  const promptBase = lerPromptBaseAgente();
 
   return [
-    'Voce e o agente Sandcastle deste repositorio.',
-    '',
-    'Leia AGENTS.md e ARQUITETURA.md antes de decidir ou implementar.',
-    'Sua primeira tarefa e decidir se a issue e executavel agora.',
-    '',
-    'Bloqueie a issue se ela for ambigua, grande demais, depender de decisao humana, conflitar com a arquitetura, depender de outra issue/PR, ou nao tiver criterio claro de validacao.',
-    `Ao bloquear: adicione a label \`sandcastle:blocked\`, remova \`${LABEL_EXECUCAO_SANDCASTLE}\` e comente objetivamente o motivo e o que precisa mudar.`,
-    '',
-    'Ao executar: implemente seguindo as regras do projeto, rode verificacoes relevantes, faca push da branch atual, abra ou atualize uma PR com `Closes #<numero>` e remova `sandcastle:run`.',
-    'Se encontrar um bloqueio durante a implementacao, pare, bloqueie a issue com comentario claro, e nao deixe mudancas parciais sem PR.',
-    '',
+    aplicarPlaceholdersPrompt(promptBase),
+    ...montarContextoIssue(issue),
+    'Comentarios recentes:',
+    comentariosRecentes || '(sem comentarios)',
+  ].join('\n');
+}
+
+function lerPromptBaseAgente(): string {
+  return readFileSync(CAMINHO_PROMPT, 'utf8').trim();
+}
+
+function aplicarPlaceholdersPrompt(promptBase: string): string {
+  return promptBase
+    .replaceAll('{{label_execucao}}', LABEL_EXECUCAO_SANDCASTLE)
+    .replaceAll('{{label_executando}}', LABEL_EXECUTANDO_SANDCASTLE);
+}
+
+function montarContextoIssue(issue: IssueGitHub): string[] {
+  return [
     'Contexto da issue:',
     `Numero: #${String(issue.number)}`,
     `Titulo: ${issue.title}`,
@@ -100,9 +111,7 @@ function montarPromptAgente(issue: IssueGitHub, comentarios: ComentarioGitHub[])
     'Corpo:',
     issue.body || '(sem corpo)',
     '',
-    'Comentarios recentes:',
-    comentariosRecentes || '(sem comentarios)',
-  ].join('\n');
+  ];
 }
 
 function formatarComentario(comentario: ComentarioGitHub): string {
