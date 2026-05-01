@@ -56,7 +56,10 @@ export async function executarRunner(opcoes: OpcoesRunner): Promise<void> {
   }
 
   for (const entrada of fila) {
-    await processarEntrada(entrada, Boolean(opcoes.dryRun));
+    await executarEntrada(
+      () => processarEntrada(entrada, Boolean(opcoes.dryRun)),
+      `Falha ao processar ${entrada.item.tipo} #${String(entrada.item.numero)}.`,
+    );
   }
 }
 
