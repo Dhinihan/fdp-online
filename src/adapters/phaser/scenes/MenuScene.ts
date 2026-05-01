@@ -1,6 +1,6 @@
 import { Scene } from 'phaser';
 import type { GameObjects } from 'phaser';
-import { precarregarSomUi, tocarSomUi } from '../audio/som-ui';
+import { precarregarSomUi, prepararSomUi, tocarSomUi } from '../audio/som-ui';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 
 type Graphics = GameObjects.Graphics;
@@ -23,6 +23,7 @@ export class MenuScene extends Scene {
   }
 
   create(): void {
+    prepararSomUi(this);
     this.cameras.main.setBackgroundColor('#1a1a2e');
     this.desenharElementos();
 

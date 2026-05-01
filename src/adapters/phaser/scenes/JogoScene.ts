@@ -1,7 +1,7 @@
 import type { GameObjects, Tweens } from 'phaser';
 import { Scene } from 'phaser';
 import { emissorEventos } from '@/store/emissor-eventos';
-import { tocarSomUi } from '../audio/som-ui';
+import { prepararSomUi, tocarSomUi } from '../audio/som-ui';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 
 type Container = GameObjects.Container;
@@ -34,6 +34,7 @@ export class JogoScene extends Scene {
   }
 
   create(): void {
+    prepararSomUi(this);
     this.criarCartaPlaceholder();
 
     this.redesenhar = criarDebounceResize(this, this.recriarCartaPlaceholder);
