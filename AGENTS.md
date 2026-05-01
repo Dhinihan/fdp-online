@@ -1,17 +1,19 @@
 # AGENTS.md — FDP (Faz De Propósito)
 
 > Regras de desenvolvimento para agentes de código no projeto FDP.
-> Leia este arquivo antes de qualquer implementação.
+> Este arquivo descreve convenções, restrições e referências úteis para atuar no projeto.
 
 ---
 
-## 0. Leitura Obrigatória
+## 0. Referências do Projeto
 
-Antes de qualquer implementação, leia na seguinte ordem:
+Use estes arquivos quando fizer sentido para a tarefa:
 
-1. **Este arquivo (`AGENTS.md`)** ← regras de código, testes, qualidade.
-2. **`ARQUITETURA.md`** ← decisões arquiteturais do projeto (stack, camadas, fluxo de dados, estrutura de pastas).
-3. A **issue do GitHub** que você vai implementar.
+1. **`AGENTS.md`** ← convenções de código, testes, qualidade e fluxo de trabalho.
+2. **Issue do GitHub** ← contexto da tarefa específica, quando existir.
+3. **`ARQUITETURA.md`** ← decisões arquiteturais do projeto (stack, camadas, fluxo de dados, estrutura de pastas).
+4. **`REGRAS.md`** ← versão enxuta e canônica das regras do jogo.
+5. **`CONTEXT.md`** e **`docs/adr/`** ← vocabulário de domínio e decisões registradas, quando existirem.
 
 ---
 
@@ -77,8 +79,22 @@ src/
 - 5 pontos iniciais, só diminuem, negativos permitidos.
 - Anti-horário. Último jogador embaralha.
 - Rodada N → N cartas cada (máx 13).
-- Manilha: próximo valor na hierarquia (3>2>A>K>Q>J>7>6>5>4).
-- Penalidade: |declarado - ganho| subtraído dos pontos.
+- Manilha: próximo valor na hierarquia (3>2>A>K>Q>J>10>9>8>7>6>5>4).
+- Penalidade: |declarado - feito| subtraído dos pontos.
 - 1ª rodada especial: não vê própria carta, mas vê as dos outros.
 
-Para regras completas, abra `index.html` no navegador.
+Para regras completas, leia `REGRAS.md`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues são gerenciadas no GitHub do repositório (`Dhinihan/fdp-online`). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Usa os labels canônicos, com `ready-for-agent` mapeado para `sandcastle:run`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Layout `single-context`: um contexto global no root quando existir. See `docs/agents/domain.md`.
