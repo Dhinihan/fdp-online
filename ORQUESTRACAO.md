@@ -1,6 +1,6 @@
 # Orquestração do Sandcastle
 
-> Como o Hermes orquestra o Sandcastle para implementar issues e revisões do FDP.
+> Estado atual do fluxo automatizado do Sandcastle no FDP.
 
 ---
 
@@ -9,19 +9,28 @@
 | Entidade       | Função                                                                                             |
 | -------------- | -------------------------------------------------------------------------------------------------- |
 | **Vinícius**   | Dono do produto. Revisa PRs direto no GitHub.                                                      |
-| **Hermes**     | Orquestrador. Prepara ambiente, dispara o cron, monitora resultado e reporta ao Vinícius.          |
+| **Hermes**     | Papel ainda em definição. O workflow oficial do Hermes será documentado no futuro.                 |
 | **Sandcastle** | Executor do agente. Sobe sandbox Docker, cria branch isolada e roda o Codex com prompt controlado. |
 | **Codex**      | Coding agent que implementa código, cria commits e atualiza o branch da issue.                     |
 | **GitHub**     | Repo, issues, PRs e labels. Fonte da verdade.                                                      |
 
 ---
 
-## Fluxo Real no Repositório
+## Escopo Deste Documento
 
-Hoje o fluxo automatizado usa a pasta `.sandcastle/` e os scripts do `package.json`.
+- Este documento descreve apenas o fluxo atual do Sandcastle.
+- O papel do Hermes no processo ainda não está fechado e não deve ser inferido a partir deste arquivo.
+- Sempre que houver conflito entre este documento e a implementação em `.sandcastle/`, a implementação atual prevalece até a documentação ser atualizada.
+
+---
+
+## Fluxo Atual no Repositório
+
+Hoje o fluxo automatizado usa a pasta `.sandcastle/`, os scripts do `package.json` e um cron externo executado a cada **5 minutos**.
 
 ### Seleção de issues
 
+- A cada 5 minutos, o cron dispara uma nova rodada do Sandcastle.
 - O cron busca issues abertas com a label `sandcastle:run`.
 - Antes da execução, adiciona `sandcastle:running` e remove `sandcastle:run`.
 - Em cada rodada, processa no máximo **3 issues**, priorizando as mais antigas.
@@ -117,22 +126,21 @@ Mostra quais issues seriam enviadas ao agente sem executar sandbox, sem criar br
 ```mermaid
 sequenceDiagram
     participant V as Vinícius
-    participant H as Hermes
     participant GH as GitHub
+    participant X as Cron Externo
     participant S as Sandcastle
     participant C as Codex
 
     V->>GH: Aplica label sandcastle:run na issue
-    H->>H: Roda pnpm sandcastle:cron:lock
-    H->>GH: Lista issues abertas com sandcastle:run
-    H->>GH: Remove sandcastle:run e adiciona sandcastle:running
-    H->>S: Executa issue em sandbox Docker
+    X->>S: A cada 5 min roda pnpm sandcastle:cron:lock
+    S->>GH: Lista issues abertas com sandcastle:run
+    S->>GH: Remove sandcastle:run e adiciona sandcastle:running
+    S->>S: Prepara sandbox Docker e contexto
     S->>C: Entrega prompt + contexto da issue
     Note over C: Lê AGENTS.md<br/>Lê ARQUITETURA.md<br/>Implementa<br/>Commita no branch da issue
     C->>GH: Push dos commits e atualização do branch
-    S->>H: Retorna branch, commits e log
-    H->>GH: Remove label sandcastle:running
-    H->>V: Reporta resultado da execução
+    S->>GH: Remove label sandcastle:running
+    S->>X: Retorna branch, commits e log
 ```
 
 ---
@@ -158,6 +166,6 @@ sequenceDiagram
 
 ## Próximos Passos
 
-1. Separar este documento em runbook operacional e decisões históricas, se a complexidade crescer.
+1. Definir futuramente o papel do Hermes no processo e documentá-lo sem misturar com o fluxo atual do Sandcastle.
 2. Documentar a política de criação de PR pelo agente quando esse fluxo estiver estável.
 3. Adicionar cleanup explícito de branches e estratégia de retry, se isso virar necessidade real.
