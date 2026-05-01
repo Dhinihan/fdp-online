@@ -44,8 +44,8 @@ src/
 
 - **Core**: TDD obrigatório. 1 teste → 1 implementação → repete.
 - **Test runner**: Vitest.
-- **E2E**: Playwright com seed fixa (`VITE_TEST_SEED=1337`).
-- **Adapter (Phaser)**: não faz TDD. Coberto por E2E + screenshots.
+- **E2E**: Playwright com seed fixa (`VITE_TEST_SEED=1337`) para fluxos jogáveis e regressões visuais com valor real.
+- **Adapter (Phaser)**: não faz TDD. E2E/screenshot entram quando houver fluxo de jogo ou risco concreto de regressão visual, como telas com progressão do jogador ou conclusão de rodada; placeholder isolado e protótipo simples, como arte temporária estática ou spike técnico sem integração de UI, não exigem E2E por padrão.
 - Todo código do core precisa de teste antes do PR.
 
 ---
@@ -60,14 +60,14 @@ src/
 
 ## 5. Ferramentas
 
-| Tarefa | Comando |
-|--------|---------|
-| Instalar deps | `pnpm install` |
-| Dev server | `pnpm dev` |
-| Testes | `pnpm test` |
-| Typecheck | `pnpm typecheck` |
-| Lint | `pnpm lint` |
-| Build | `pnpm build` |
+| Tarefa                      | Comando          |
+| --------------------------- | ---------------- |
+| Instalar deps               | `pnpm install`   |
+| Servidor de desenvolvimento | `pnpm dev`       |
+| Testes                      | `pnpm test`      |
+| Typecheck                   | `pnpm typecheck` |
+| Lint                        | `pnpm lint`      |
+| Build                       | `pnpm build`     |
 
 ---
 
