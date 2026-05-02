@@ -8,16 +8,20 @@ function esperarInvalido(corpo: string, motivo: string): void {
   });
 }
 
+function esperarLinhaInvalida(linha: string): void {
+  esperarInvalido(`## Blocked by\n\n${linha}`, 'secao `## Blocked by` contem linha ilegivel sem referencia `#123`');
+}
+
+function esperarValido(corpo: string, dependencias: number[]): void {
+  expect(analisarBlockedBy(corpo)).toEqual({
+    status: 'valido',
+    dependencias,
+  });
+}
+
 describe('analisarBlockedBy', () => {
   it('aceita uma secao valida com referencias de issue', () => {
-    const resultado = analisarBlockedBy(
-      ['## What to build', 'texto', '', '## Blocked by', '', '- #12', '- #34'].join('\n'),
-    );
-
-    expect(resultado).toEqual({
-      status: 'valido',
-      dependencias: [12, 34],
-    });
+    esperarValido(['## What to build', 'texto', '', '## Blocked by', '', '- #12', '- #34'].join('\n'), [12, 34]);
   });
 
   it('marca como invalido quando a secao esta ausente', () => {
@@ -33,10 +37,13 @@ describe('analisarBlockedBy', () => {
   });
 
   it('marca como invalido quando uma linha nao tem referencia numerica', () => {
-    esperarInvalido(
-      '## Blocked by\n\n- depende da base',
-      'secao `## Blocked by` contem linha ilegivel sem referencia `#123`',
-    );
+    esperarLinhaInvalida('- depende da base');
+  });
+
+  it('marca como invalido quando a linha tem texto extra alem da referencia canonica', () => {
+    esperarLinhaInvalida('- depende de `#12`');
+    esperarLinhaInvalida('#12 `#34`');
+    esperarLinhaInvalida('#12 texto');
   });
 
   it('marca como invalido quando a secao cita PR explicitamente', () => {

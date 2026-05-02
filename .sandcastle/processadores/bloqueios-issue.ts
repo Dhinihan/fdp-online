@@ -12,7 +12,7 @@ export type ResultadoBlockedBy = ResultadoBlockedByValido | ResultadoBlockedByIn
 
 const REGEX_SECAO_BLOCKED_BY = /^## Blocked by\s*$/gm;
 const REGEX_CABECALHO_SECAO = /^##\s+/gm;
-const REGEX_REFERENCIA_ISSUE = /#(\d+)/g;
+const REGEX_LINHA_REFERENCIA_ISSUE = /^(?:[-*]\s*)?#(\d+)\s*$/;
 const REGEX_REFERENCIA_PR_TEXTO = /\bpr\s*#\d+\b|\bpull request\b|\/pull\/\d+/i;
 
 export function analisarBlockedBy(corpo: string): ResultadoBlockedBy {
@@ -89,13 +89,13 @@ function extrairDependencias(secao: string): ResultadoBlockedBy {
 }
 
 function extrairReferenciasLinha(linha: string): ResultadoBlockedBy {
-  const dependencias = [...linha.matchAll(REGEX_REFERENCIA_ISSUE)].map((match) => Number(match[1]));
+  const correspondencia = linha.match(REGEX_LINHA_REFERENCIA_ISSUE);
 
-  if (dependencias.length === 0) {
+  if (!correspondencia) {
     return invalido('secao `## Blocked by` contem linha ilegivel sem referencia `#123`');
   }
 
-  return { status: 'valido', dependencias };
+  return { status: 'valido', dependencias: [Number(correspondencia[1])] };
 }
 
 function invalido(motivo: string): ResultadoBlockedByInvalido {
