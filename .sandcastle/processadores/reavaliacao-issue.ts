@@ -7,6 +7,7 @@ import {
   issueEhPullRequest,
   lerIssue,
   listarIssuesEmEspera,
+  obterEstadoOperacionalIssue,
   removerLabelIssue,
   type IssueGitHub,
 } from '../github';
@@ -14,6 +15,10 @@ import { analisarBlockedBy } from './bloqueios-issue';
 
 export function reavaliarIssuesEmEspera(): void {
   for (const issue of listarIssuesEmEspera()) {
+    if (obterEstadoOperacionalIssue(issue) !== 'waiting') {
+      continue;
+    }
+
     const resultado = avaliarIssueEmEspera(issue);
 
     if (resultado.status === 'bloquear') {

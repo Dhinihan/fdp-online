@@ -1,5 +1,16 @@
-import { expect, it } from 'vitest';
-import { atualizarSecaoBlockedBy } from './issue';
+import { beforeEach, expect, it, vi } from 'vitest';
+
+const { executarGh, executarGhJson, executarGhSemErro } = vi.hoisted(() => ({
+  executarGh: vi.fn(),
+  executarGhJson: vi.fn(),
+  executarGhSemErro: vi.fn(),
+}));
+
+vi.mock('./base', () => ({
+  executarGh,
+  executarGhJson,
+  executarGhSemErro,
+}));
 
 const CORPO_BASE = [
   '## What to build',
@@ -77,20 +88,75 @@ const CORPO_ESPERADO_COM_SUBTITULO_PRESERVADO = [
   'Nao remover este trecho.',
 ].join('\n');
 
+async function importarModuloIssue() {
+  return import('./issue');
+}
+
 it('cria a secao no fim do corpo quando ela nao existe', () => {
-  expect(atualizarSecaoBlockedBy(CORPO_BASE, [49, 52])).toBe(CORPO_ESPERADO_COM_NOVA_SECAO);
+  return importarModuloIssue().then(({ atualizarSecaoBlockedBy }) => {
+    expect(atualizarSecaoBlockedBy(CORPO_BASE, [49, 52])).toBe(CORPO_ESPERADO_COM_NOVA_SECAO);
+  });
 });
 
 it('atualiza a secao existente sem duplicar o titulo', () => {
-  expect(atualizarSecaoBlockedBy(CORPO_COM_BLOCKED_BY, [52])).toBe(CORPO_ESPERADO_COM_SECAO_ATUALIZADA);
+  return importarModuloIssue().then(({ atualizarSecaoBlockedBy }) => {
+    expect(atualizarSecaoBlockedBy(CORPO_COM_BLOCKED_BY, [52])).toBe(CORPO_ESPERADO_COM_SECAO_ATUALIZADA);
+  });
 });
 
 it('preserva o restante do corpo ao encontrar subtitulos markdown apos a secao', () => {
-  expect(atualizarSecaoBlockedBy(CORPO_COM_SUBTITULO_APOS_BLOCKED_BY, [52])).toBe(
-    CORPO_ESPERADO_COM_SUBTITULO_PRESERVADO,
-  );
+  return importarModuloIssue().then(({ atualizarSecaoBlockedBy }) => {
+    expect(atualizarSecaoBlockedBy(CORPO_COM_SUBTITULO_APOS_BLOCKED_BY, [52])).toBe(
+      CORPO_ESPERADO_COM_SUBTITULO_PRESERVADO,
+    );
+  });
 });
 
 it('normaliza dependencias repetidas e ordena as referencias', () => {
-  expect(atualizarSecaoBlockedBy('', [52, 49, 52])).toBe(['## Blocked by', '', '- #49', '- #52'].join('\n'));
+  return importarModuloIssue().then(({ atualizarSecaoBlockedBy }) => {
+    expect(atualizarSecaoBlockedBy('', [52, 49, 52])).toBe(['## Blocked by', '', '- #49', '- #52'].join('\n'));
+  });
+});
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
+it('prioriza blocked sobre running, waiting e run', () => {
+  return importarModuloIssue().then(({ obterEstadoOperacionalIssue }) => {
+    expect(
+      obterEstadoOperacionalIssue({
+        labels: [
+          { name: 'sandcastle:run' },
+          { name: 'sandcastle:waiting' },
+          { name: 'sandcastle:running' },
+          { name: 'sandcastle:blocked' },
+        ],
+      }),
+    ).toBe('blocked');
+  });
+});
+
+it('lista como candidatas apenas issues efetivamente em run', () => {
+  executarGhJson.mockReturnValue([
+    { number: 1, labels: [{ name: 'sandcastle:run' }] },
+    { number: 2, labels: [{ name: 'sandcastle:run' }, { name: 'sandcastle:waiting' }] },
+    { number: 3, labels: [{ name: 'sandcastle:run' }, { name: 'sandcastle:blocked' }] },
+  ]);
+
+  return importarModuloIssue().then(({ listarIssuesCandidatas }) => {
+    expect(listarIssuesCandidatas()).toEqual([{ number: 1, labels: [{ name: 'sandcastle:run' }] }]);
+  });
+});
+
+it('lista como waiting apenas issues sem conflito com blocked ou running', () => {
+  executarGhJson.mockReturnValue([
+    { number: 1, labels: [{ name: 'sandcastle:waiting' }] },
+    { number: 2, labels: [{ name: 'sandcastle:waiting' }, { name: 'sandcastle:running' }] },
+    { number: 3, labels: [{ name: 'sandcastle:waiting' }, { name: 'sandcastle:blocked' }] },
+  ]);
+
+  return importarModuloIssue().then(({ listarIssuesEmEspera }) => {
+    expect(listarIssuesEmEspera()).toEqual([{ number: 1, labels: [{ name: 'sandcastle:waiting' }] }]);
+  });
 });

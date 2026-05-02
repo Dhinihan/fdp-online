@@ -5,6 +5,12 @@ export const LABEL_EXECUTANDO_SANDCASTLE = 'sandcastle:running';
 export const LABEL_BLOQUEIO_SANDCASTLE = 'sandcastle:blocked';
 export const LABEL_ESPERA_SANDCASTLE = 'sandcastle:waiting';
 const TITULO_SECAO_BLOCKED_BY = '## Blocked by';
+const LABELS_ESTADO_PRIORIZADOS = [
+  LABEL_BLOQUEIO_SANDCASTLE,
+  LABEL_EXECUTANDO_SANDCASTLE,
+  LABEL_ESPERA_SANDCASTLE,
+  LABEL_EXECUCAO_SANDCASTLE,
+] as const;
 
 export interface IssueGitHub {
   number: number;
@@ -24,8 +30,10 @@ export interface ComentarioGitHub {
   author: { login: string };
 }
 
+export type EstadoOperacionalIssue = 'blocked' | 'running' | 'waiting' | 'run' | 'neutro';
+
 export function listarIssuesCandidatas(limite = 100): IssueGitHub[] {
-  return executarGhJson([
+  const issues = executarGhJson([
     'issue',
     'list',
     '--state',
@@ -37,10 +45,12 @@ export function listarIssuesCandidatas(limite = 100): IssueGitHub[] {
     '--json',
     'number,title,body,state,createdAt,updatedAt,labels',
   ]) as IssueGitHub[];
+
+  return issues.filter((issue) => obterEstadoOperacionalIssue(issue) === 'run');
 }
 
 export function listarIssuesEmEspera(limite = 100): IssueGitHub[] {
-  return executarGhJson([
+  const issues = executarGhJson([
     'issue',
     'list',
     '--state',
@@ -52,6 +62,8 @@ export function listarIssuesEmEspera(limite = 100): IssueGitHub[] {
     '--json',
     'number,title,body,state,createdAt,updatedAt,labels',
   ]) as IssueGitHub[];
+
+  return issues.filter((issue) => obterEstadoOperacionalIssue(issue) === 'waiting');
 }
 
 export function lerIssue(numero: number): IssueGitHub {
@@ -149,10 +161,31 @@ export function comentarIssue(numero: number, comentario: string): void {
   executarGh(['issue', 'comment', String(numero), '--body', comentario]);
 }
 
+export function obterEstadoOperacionalIssue(issue: Pick<IssueGitHub, 'labels'>): EstadoOperacionalIssue {
+  const label = LABELS_ESTADO_PRIORIZADOS.find((item) => possuiLabelIssue(issue, item));
+
+  switch (label) {
+    case LABEL_BLOQUEIO_SANDCASTLE:
+      return 'blocked';
+    case LABEL_EXECUTANDO_SANDCASTLE:
+      return 'running';
+    case LABEL_ESPERA_SANDCASTLE:
+      return 'waiting';
+    case LABEL_EXECUCAO_SANDCASTLE:
+      return 'run';
+    default:
+      return 'neutro';
+  }
+}
+
 export function issueEhPullRequest(numero: number): boolean {
   const resultado = executarGhSemErro(['pr', 'view', String(numero), '--json', 'number']);
 
   return resultado.status === 0;
+}
+
+export function possuiLabelIssue(issue: Pick<IssueGitHub, 'labels'>, label: string): boolean {
+  return issue.labels.some((item) => item.name === label);
 }
 
 function erroLabelAusente(resultado: ResultadoGh): boolean {

@@ -1,11 +1,14 @@
 import {
+  type EstadoOperacionalIssue,
   LABEL_BLOQUEIO_SANDCASTLE,
   LABEL_EXECUCAO_SANDCASTLE,
   LABEL_EXECUTANDO_SANDCASTLE,
+  LABEL_ESPERA_SANDCASTLE,
   adicionarLabelIssue,
   lerComentariosIssue,
   lerIssue,
   listarIssuesCandidatas,
+  obterEstadoOperacionalIssue,
   removerLabelIssue,
   type ComentarioGitHub,
   type IssueGitHub,
@@ -51,16 +54,11 @@ function avaliarElegibilidade(issue: IssueGitHub): string | null {
     return `Issue #${String(issue.number)} nao esta aberta. Estado atual: ${issue.state}.`;
   }
 
-  if (possuiLabel(issue, LABEL_EXECUTANDO_SANDCASTLE)) {
-    return `Issue #${String(issue.number)} ja esta em execucao com a label ${LABEL_EXECUTANDO_SANDCASTLE}.`;
-  }
+  const estadoOperacional = obterEstadoOperacionalIssue(issue);
+  const motivoEstado = descreverEstadoNaoExecutavel(issue.number, estadoOperacional);
 
-  if (possuiLabel(issue, LABEL_BLOQUEIO_SANDCASTLE)) {
-    return `Issue #${String(issue.number)} esta bloqueada com a label ${LABEL_BLOQUEIO_SANDCASTLE}.`;
-  }
-
-  if (!possuiLabel(issue, LABEL_EXECUCAO_SANDCASTLE)) {
-    return `Issue #${String(issue.number)} nao esta liberada. Adicione a label ${LABEL_EXECUCAO_SANDCASTLE}.`;
+  if (motivoEstado) {
+    return motivoEstado;
   }
 
   return null;
@@ -131,6 +129,17 @@ function formatarLabels(issue: IssueGitHub): string {
   return issue.labels.map((label) => label.name).join(', ') || 'nenhuma';
 }
 
-function possuiLabel(issue: IssueGitHub, label: string): boolean {
-  return issue.labels.some((item) => item.name === label);
+function descreverEstadoNaoExecutavel(numero: number, estado: EstadoOperacionalIssue): string | null {
+  switch (estado) {
+    case 'running':
+      return `Issue #${String(numero)} ja esta em execucao com a label ${LABEL_EXECUTANDO_SANDCASTLE}.`;
+    case 'blocked':
+      return `Issue #${String(numero)} esta bloqueada com a label ${LABEL_BLOQUEIO_SANDCASTLE}.`;
+    case 'waiting':
+      return `Issue #${String(numero)} esta aguardando dependencias com a label ${LABEL_ESPERA_SANDCASTLE}.`;
+    case 'neutro':
+      return `Issue #${String(numero)} nao esta liberada. Adicione a label ${LABEL_EXECUCAO_SANDCASTLE}.`;
+    default:
+      return null;
+  }
 }

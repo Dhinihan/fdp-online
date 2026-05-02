@@ -17,3 +17,7 @@ Estados operacionais do Sandcastle fora da triagem canônica:
 - `sandcastle:running`: item atualmente em execução.
 - `sandcastle:waiting`: item aguardando dependência de outra issue aberta; deve sair da fila do agente sem virar bloqueio manual.
 - `sandcastle:blocked`: item bloqueado por ambiente ou por bloqueio manual de escopo.
+
+Quando esses labels aparecem juntos por transição incompleta ou corrida, a precedência operacional é:
+
+- `sandcastle:blocked` > `sandcastle:running` > `sandcastle:waiting` > `sandcastle:run`

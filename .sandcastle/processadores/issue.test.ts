@@ -7,6 +7,7 @@ const lerComentariosIssue = vi.fn();
 const lerIssue = vi.fn();
 const listarIssuesEmEspera = vi.fn();
 const listarIssuesCandidatas = vi.fn();
+const obterEstadoOperacionalIssue = vi.fn();
 const removerLabelIssue = vi.fn();
 
 vi.mock('../github', () => ({
@@ -21,6 +22,7 @@ vi.mock('../github', () => ({
   lerIssue,
   listarIssuesEmEspera,
   listarIssuesCandidatas,
+  obterEstadoOperacionalIssue,
   removerLabelIssue,
 }));
 
@@ -31,13 +33,37 @@ vi.mock('../runner', () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   issueEhPullRequest.mockReturnValue(false);
+  obterEstadoOperacionalIssue.mockImplementation(calcularEstadoOperacional);
 });
 
-function mockIssueEmEspera(body = '## Blocked by\n\n- #50\n- #49\n') {
+function calcularEstadoOperacional(issue: { labels?: { name: string }[] }) {
+  const labels = issue.labels?.map((label) => label.name) ?? [];
+
+  if (labels.includes('sandcastle:blocked')) {
+    return 'blocked';
+  }
+
+  if (labels.includes('sandcastle:running')) {
+    return 'running';
+  }
+
+  if (labels.includes('sandcastle:waiting')) {
+    return 'waiting';
+  }
+
+  if (labels.includes('sandcastle:run')) {
+    return 'run';
+  }
+
+  return 'neutro';
+}
+
+function mockIssueEmEspera(body = '## Blocked by\n\n- #50\n- #49\n', labels = ['sandcastle:waiting']) {
   listarIssuesEmEspera.mockReturnValue([
     {
       number: 51,
       body,
+      labels: labels.map((name) => ({ name })),
     },
   ]);
 }
@@ -94,6 +120,21 @@ describe('reavaliacao de issues ainda bloqueadas', () => {
     const { reavaliarIssuesEmEspera } = await importarReavaliacao();
     reavaliarIssuesEmEspera();
 
+    esperarIssueEmEspera();
+  });
+
+  it('nao altera issue em espera que tambem esteja em execucao', async () => {
+    mockIssueEmEspera('## Blocked by\n\n- #10', ['sandcastle:waiting', 'sandcastle:running']);
+    const { reavaliarIssuesEmEspera } = await importarReavaliacao();
+    reavaliarIssuesEmEspera();
+    esperarIssueEmEspera();
+  });
+
+  it('nao reativa issue em espera quando ela tambem esta bloqueada manualmente', async () => {
+    mockIssueEmEspera('## Blocked by\n\n- #10', ['sandcastle:waiting', 'sandcastle:blocked']);
+    lerIssue.mockReturnValue({ number: 10, state: 'CLOSED' });
+    const { reavaliarIssuesEmEspera } = await importarReavaliacao();
+    reavaliarIssuesEmEspera();
     esperarIssueEmEspera();
   });
 });
