@@ -145,10 +145,11 @@ function reavaliarIssuesEmEspera(): void {
       continue;
     }
 
+    const comentario = montarComentarioBloqueioBlockedBy(motivo);
+    comentarIssue(issue.number, comentario);
     adicionarLabelIssue(issue.number, LABEL_BLOQUEIO_SANDCASTLE);
     removerLabelIssue(issue.number, LABEL_ESPERA_SANDCASTLE);
     removerLabelIssue(issue.number, LABEL_EXECUCAO_SANDCASTLE);
-    comentarIssue(issue.number, montarComentarioBloqueioBlockedBy(motivo));
   }
 }
 

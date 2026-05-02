@@ -72,12 +72,13 @@ describe('adaptadorIssue', () => {
     const adaptadorIssue = await importarAdaptador();
 
     expect(adaptadorIssue.listarElegiveis()).toEqual([]);
+    expect(comentarIssue).toHaveBeenCalledOnce();
     expect(adicionarLabelIssue).toHaveBeenCalledWith(52, 'sandcastle:blocked');
     expect(removerLabelIssue).toHaveBeenCalledWith(52, 'sandcastle:waiting');
     expect(removerLabelIssue).toHaveBeenCalledWith(52, 'sandcastle:run');
-    expect(comentarIssue).toHaveBeenCalledOnce();
     expect(comentarIssue.mock.calls[0][1]).toContain('Bloqueio manual aplicado');
     expect(comentarIssue.mock.calls[0][1]).toContain('secao `## Blocked by` ausente');
+    expect(comentarIssue.mock.invocationCallOrder[0]).toBeLessThan(adicionarLabelIssue.mock.invocationCallOrder[0]);
   });
 
   it('mantem issue em waiting quando o Blocked by e valido', async () => {
