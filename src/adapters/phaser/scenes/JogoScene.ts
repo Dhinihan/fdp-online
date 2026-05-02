@@ -1,187 +1,69 @@
-import type { GameObjects, Tweens } from 'phaser';
 import { Scene } from 'phaser';
-import { emissorEventos } from '@/store/emissor-eventos';
-import { prepararSomUi, tocarSomUi } from '../audio/som-ui';
-import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
+import { criarBaralho, distribuir } from '@/core/Baralho';
+import type { Jogador } from '@/types/entidades';
+import type { MaoJogador } from '@/types/estado-partida';
+import { renderizarLabel, renderizarMao, type PosicaoMao } from '../renderers/mao-renderer';
 
-type Container = GameObjects.Container;
-type Graphics = GameObjects.Graphics;
-type Text = GameObjects.Text;
-type Tween = Tweens.Tween;
-type Zone = GameObjects.Zone;
+const JOGADORES: Jogador[] = [
+  { id: 'humano', nome: 'Você', pontos: 5 },
+  { id: 'bot1', nome: 'Bot 1', pontos: 5 },
+  { id: 'bot2', nome: 'Bot 2', pontos: 5 },
+  { id: 'bot3', nome: 'Bot 3', pontos: 5 },
+];
 
-const CARTA_ID = 'placeholder-carta';
-const DURACAO_FLIP_MS = 280;
-const LARGURA_CARTA = 80;
-const ALTURA_CARTA = 120;
-const RAIO_CARTA = 8;
-const MARGEM_TOQUE_CARTA = 12;
+interface PosicaoTela {
+  labelX: number;
+  labelY: number;
+  mao: PosicaoMao;
+}
 
 export class JogoScene extends Scene {
-  private carta?: Container;
-  private areaDaCarta?: Zone;
-  private frenteDaCarta?: Graphics;
-  private versoDaCarta?: Graphics;
-  private textoDaCarta?: Text;
-  private redesenhar?: ResizeDebouncer;
-  private tweenVirada?: Tween;
-  private animandoVirada = false;
-  private mostrandoVerso = false;
-  private proximoEstadoVerso = false;
+  private objetos: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
     super({ key: 'JogoScene' });
   }
 
   create(): void {
-    prepararSomUi(this);
-    this.criarCartaPlaceholder();
+    this.cameras.main.setBackgroundColor('#1a1a2e');
+    this.desenharMaos(this.montarMaos());
+  }
 
-    this.redesenhar = criarDebounceResize(this, this.recriarCartaPlaceholder);
+  private montarMaos(): MaoJogador[] {
+    const cartas = distribuir(criarBaralho(), 4, 4);
+    return JOGADORES.map((jogador, i) => ({
+      jogador,
+      cartas: cartas[i],
+      visivel: jogador.id === 'humano',
+    }));
+  }
 
-    this.scale.on('resize', this.redesenhar);
-    this.events.on('shutdown', () => {
-      this.shutdown();
+  private desenharMaos(maos: MaoJogador[]): void {
+    const cx = this.cameras.main.centerX;
+    const cy = this.cameras.main.centerY;
+    const posicoes = this.posicoes(cx, cy);
+    maos.forEach((mao, i) => {
+      const p = posicoes[i];
+      this.objetos.push(renderizarLabel({ cena: this, x: p.labelX, y: p.labelY, texto: mao.jogador.nome }));
+      this.objetos.push(...renderizarMao({ cena: this, posicao: p.mao, cartas: mao.cartas, visivel: mao.visivel }));
     });
+  }
+
+  private posicoes(cx: number, cy: number): PosicaoTela[] {
+    const d = 130;
+    const e = 40;
+    return [
+      { labelX: cx, labelY: cy + d + 30, mao: { x: cx - 60, y: cy + d, espacamento: e, direcao: 'horizontal' } },
+      { labelX: cx - d - 30, labelY: cy, mao: { x: cx - d, y: cy - 60, espacamento: e, direcao: 'vertical' } },
+      { labelX: cx, labelY: cy - d - 30, mao: { x: cx - 60, y: cy - d, espacamento: e, direcao: 'horizontal' } },
+      { labelX: cx + d + 30, labelY: cy, mao: { x: cx + d, y: cy - 60, espacamento: e, direcao: 'vertical' } },
+    ];
   }
 
   shutdown(): void {
-    this.limparAnimacaoVirada();
-
-    if (this.redesenhar) {
-      this.scale.off('resize', this.redesenhar);
-      this.redesenhar.limpar();
-      this.redesenhar = undefined;
-    }
-
-    this.mostrandoVerso = false;
-    this.proximoEstadoVerso = false;
-    this.carta = undefined;
-    this.areaDaCarta = undefined;
-    this.frenteDaCarta = undefined;
-    this.versoDaCarta = undefined;
-    this.textoDaCarta = undefined;
-  }
-
-  private criarCartaPlaceholder(): void {
-    const centroX = this.cameras.main.centerX;
-    const centroY = this.cameras.main.centerY;
-
-    this.frenteDaCarta = this.criarFaceCarta(0xffffff, 0x333333);
-    this.versoDaCarta = this.criarFaceCarta(0x1f4e79, 0xd9e8f5);
-    this.versoDaCarta.setVisible(false);
-    this.textoDaCarta = this.add
-      .text(0, 0, 'A\u2660', {
-        fontSize: '24px',
-        fontStyle: 'bold',
-        color: '#000000',
-      })
-      .setOrigin(0.5);
-
-    this.carta = this.criarContainerCarta(centroX, centroY);
-    this.areaDaCarta = this.criarAreaInterativaCarta(centroX, centroY);
-
-    this.atualizarFaces();
-  }
-
-  private recriarCartaPlaceholder = (): void => {
-    this.limparAnimacaoVirada();
-    this.carta?.destroy();
-    this.areaDaCarta?.destroy();
-    this.criarCartaPlaceholder();
-  };
-
-  private criarContainerCarta(centroX: number, centroY: number): Container {
-    const frenteDaCarta = this.frenteDaCarta;
-    const versoDaCarta = this.versoDaCarta;
-    const textoDaCarta = this.textoDaCarta;
-
-    if (!frenteDaCarta || !versoDaCarta || !textoDaCarta) {
-      throw new Error('Carta placeholder incompleta.');
-    }
-
-    return this.add
-      .container(centroX, centroY, [frenteDaCarta, versoDaCarta, textoDaCarta])
-      .setSize(LARGURA_CARTA, ALTURA_CARTA);
-  }
-
-  private criarAreaInterativaCarta(centroX: number, centroY: number): Zone {
-    return this.add
-      .zone(centroX, centroY, LARGURA_CARTA + MARGEM_TOQUE_CARTA * 2, ALTURA_CARTA + MARGEM_TOQUE_CARTA * 2)
-      .setInteractive()
-      .on('pointerdown', this.aoInteragirComCarta);
-  }
-
-  private criarFaceCarta(corFundo: number, corBorda: number): Graphics {
-    const face = this.add.graphics();
-    face.fillStyle(corFundo, 1);
-    face.fillRoundedRect(-LARGURA_CARTA / 2, -ALTURA_CARTA / 2, LARGURA_CARTA, ALTURA_CARTA, RAIO_CARTA);
-    face.lineStyle(2, corBorda, 1);
-    face.strokeRoundedRect(-LARGURA_CARTA / 2, -ALTURA_CARTA / 2, LARGURA_CARTA, ALTURA_CARTA, RAIO_CARTA);
-    return face;
-  }
-
-  private aoInteragirComCarta = (): void => {
-    if (this.animandoVirada || !this.carta) return;
-
-    tocarSomUi(this);
-    this.virarCarta();
-  };
-
-  private virarCarta(): void {
-    this.emitirEventosVirada();
-    this.animandoVirada = true;
-    this.proximoEstadoVerso = !this.mostrandoVerso;
-    this.tweenVirada = this.tweens.add({
-      targets: this.carta,
-      scaleX: 0,
-      duration: DURACAO_FLIP_MS / 2,
-      onComplete: this.concluirVirada,
+    this.objetos.forEach((o) => {
+      o.destroy();
     });
-  }
-
-  private emitirEventosVirada(): void {
-    if (!this.carta) return;
-
-    const posicao = { x: this.carta.x, y: this.carta.y };
-    const timestamp = Date.now();
-    emissorEventos.emit({ id: crypto.randomUUID(), timestamp, tipo: 'TOQUE_CARTA', cartaId: CARTA_ID, posicao });
-    emissorEventos.emit({
-      id: crypto.randomUUID(),
-      timestamp,
-      tipo: 'EFEITO_CARTA_VIRADA',
-      elementoId: CARTA_ID,
-      duracaoMs: DURACAO_FLIP_MS,
-    });
-  }
-
-  private concluirVirada = (): void => {
-    this.mostrandoVerso = this.proximoEstadoVerso;
-    this.atualizarFaces();
-
-    this.tweenVirada = this.tweens.add({
-      targets: this.carta,
-      scaleX: 1,
-      duration: DURACAO_FLIP_MS / 2,
-      onComplete: this.finalizarAnimacaoVirada,
-    });
-  };
-
-  private finalizarAnimacaoVirada = (): void => {
-    this.tweenVirada = undefined;
-    this.animandoVirada = false;
-  };
-
-  private limparAnimacaoVirada(): void {
-    this.tweenVirada?.remove();
-    this.tweenVirada = undefined;
-    this.animandoVirada = false;
-    this.proximoEstadoVerso = this.mostrandoVerso;
-  }
-
-  private atualizarFaces(): void {
-    this.frenteDaCarta?.setVisible(!this.mostrandoVerso);
-    this.textoDaCarta?.setVisible(!this.mostrandoVerso);
-    this.versoDaCarta?.setVisible(this.mostrandoVerso);
+    this.objetos = [];
   }
 }
