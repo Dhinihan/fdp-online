@@ -39,6 +39,7 @@ export class JogoScene extends Scene {
     this.desenharMaos(this.maos);
     this.redesenhar = criarDebounceResize(this, this.redesenharMaos);
     this.scale.on('resize', this.redesenhar);
+    this.events.once('shutdown', this.aoEncerrar);
   }
 
   private montarMaos(): MaoJogador[] {
@@ -97,14 +98,14 @@ export class JogoScene extends Scene {
     ];
   }
 
-  shutdown(): void {
+  private aoEncerrar = (): void => {
     if (this.redesenhar) {
       this.scale.off('resize', this.redesenhar);
       this.redesenhar.limpar();
       this.redesenhar = undefined;
     }
     this.limparObjetos();
-  }
+  };
 
   private limparObjetos(): void {
     this.objetos.forEach((o) => {
