@@ -31,6 +31,8 @@ Hoje o fluxo automatizado usa a pasta `.sandcastle/`, os scripts do `package.jso
 ### Seleção de issues
 
 - A cada 5 minutos, o cron dispara uma nova rodada do Sandcastle.
+- Antes de montar a fila executável, o cron reavalia issues abertas com `sandcastle:waiting` que tenham `## Blocked by` válido.
+- Se todos os bloqueadores listados em `## Blocked by` estiverem fechados, a issue volta para `sandcastle:run` na mesma rodada.
 - O cron busca issues abertas com a label `sandcastle:run`.
 - Antes da execução, adiciona `sandcastle:running` e remove `sandcastle:run`.
 - Em cada rodada, processa no máximo **3 issues**, priorizando as mais antigas.
@@ -42,7 +44,7 @@ Hoje o fluxo automatizado usa a pasta `.sandcastle/`, os scripts do `package.jso
 - `sandcastle:waiting`: issue temporariamente fora da fila porque depende de outra issue aberta.
 - `sandcastle:blocked`: issue bloqueada por problema operacional ou bloqueio manual de escopo.
 
-Quando o agente identificar dependência de outra issue aberta, ele deve usar `sandcastle:waiting`, remover `sandcastle:run`, comentar objetivamente quais bloqueadores seguem abertos e por que a issue entrou em espera, e persistir a dependência no corpo canônico `## Blocked by` usando referências `#123` do mesmo repositório. Se a seção já existir, o fluxo deve atualizá-la sem duplicação; se não existir, deve criá-la no fim do corpo, preservando o restante da descrição.
+Quando o agente identificar dependência de outra issue aberta, ele deve usar `sandcastle:waiting`, remover `sandcastle:run`, registrar os bloqueadores no campo canônico `## Blocked by` e comentar objetivamente quais bloqueadores seguem abertos e por que a issue entrou em espera.
 
 ### Branch de execução
 
@@ -166,6 +168,7 @@ sequenceDiagram
 
     V->>GH: Aplica label sandcastle:run na issue
     X->>S: A cada 5 min roda pnpm sandcastle:cron:lock
+    S->>GH: Reavalia issues com sandcastle:waiting
     S->>GH: Lista issues abertas com sandcastle:run
     S->>GH: Remove sandcastle:run e adiciona sandcastle:running
     S->>S: Prepara sandbox Docker e contexto

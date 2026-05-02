@@ -58,6 +58,7 @@ export async function executarRunner(opcoes: OpcoesRunner): Promise<void> {
     prepararExecucaoReal();
   }
 
+  await prepararRodada(opcoes.adaptadores);
   const fila = await montarFila(opcoes.adaptadores, opcoes.limite ?? LIMITE_ITENS_POR_RODADA);
 
   if (fila.length === 0) {
@@ -71,6 +72,10 @@ export async function executarRunner(opcoes: OpcoesRunner): Promise<void> {
       `Falha ao processar ${entrada.item.tipo} #${String(entrada.item.numero)}.`,
     );
   }
+}
+
+async function prepararRodada(adaptadores: AdaptadorGenerico[]): Promise<void> {
+  await Promise.all(adaptadores.map((adaptador) => Promise.resolve(adaptador.prepararRodada?.())));
 }
 
 async function montarFila(adaptadores: AdaptadorGenerico[], limite: number): Promise<EntradaFila[]> {

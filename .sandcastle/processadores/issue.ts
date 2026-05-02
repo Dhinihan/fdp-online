@@ -2,10 +2,12 @@ import {
   LABEL_BLOQUEIO_SANDCASTLE,
   LABEL_EXECUCAO_SANDCASTLE,
   LABEL_EXECUTANDO_SANDCASTLE,
+  LABEL_ESPERA_SANDCASTLE,
   adicionarLabelIssue,
   lerComentariosIssue,
   lerIssue,
   listarIssuesCandidatas,
+  listarIssuesEmEspera,
   removerLabelIssue,
   type ComentarioGitHub,
   type IssueGitHub,
@@ -22,6 +24,7 @@ interface ContextoIssue {
 
 export const adaptadorIssue: AdaptadorProcessamento<IssueGitHub, ContextoIssue> = {
   tipo: 'issue',
+  prepararRodada: reavaliarIssuesEmEspera,
   listarElegiveis,
   carregarItem: lerIssue,
   avaliarElegibilidade,
@@ -32,6 +35,17 @@ export const adaptadorIssue: AdaptadorProcessamento<IssueGitHub, ContextoIssue> 
   montarPrompt,
   obterBranch,
 };
+
+export function reavaliarIssuesEmEspera(): void {
+  const issuesEmEspera = listarIssuesEmEspera();
+
+  for (const issue of issuesEmEspera) {
+    if (todosBloqueadoresFechados(issue.body)) {
+      removerLabelIssue(issue.number, LABEL_ESPERA_SANDCASTLE);
+      adicionarLabelIssue(issue.number, LABEL_EXECUCAO_SANDCASTLE);
+    }
+  }
+}
 
 function listarElegiveis(): ItemFila[] {
   return listarIssuesCandidatas().map((issue) => ({
@@ -96,6 +110,49 @@ function montarPrompt(issue: IssueGitHub, contexto: ContextoIssue): string {
 
 function obterBranch(issue: IssueGitHub): string {
   return `sandcastle-issue-${String(issue.number)}`;
+}
+
+function todosBloqueadoresFechados(corpo: string): boolean {
+  const bloqueadores = extrairBloqueadores(corpo);
+
+  return bloqueadores.length > 0 && bloqueadores.every(estaFechado);
+}
+
+function extrairBloqueadores(corpo: string): number[] {
+  const linhas = corpo.split('\n');
+  const inicio = linhas.findIndex((linha) => linha.trim() === '## Blocked by');
+
+  if (inicio < 0) {
+    return [];
+  }
+
+  const bloqueadores: number[] = [];
+
+  for (const linha of linhas.slice(inicio + 1)) {
+    if (ehTituloMarkdown(linha)) {
+      break;
+    }
+
+    const match = linha.match(/^\s*-\s+#(\d+)\s*$/);
+
+    if (match) {
+      bloqueadores.push(Number(match[1]));
+    }
+  }
+
+  return bloqueadores;
+}
+
+function estaFechado(numero: number): boolean {
+  try {
+    return lerIssue(numero).state === 'CLOSED';
+  } catch {
+    return false;
+  }
+}
+
+function ehTituloMarkdown(linha: string): boolean {
+  return /^#{1,6}\s+/.test(linha.trim());
 }
 
 function aplicarPlaceholdersPrompt(promptBase: string): string {
