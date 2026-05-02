@@ -20,6 +20,10 @@ _Avoid_: Rodada
 Vencer um turno de jogada ao jogar a carta vencedora daquela disputa.
 _Avoid_: Jogar um turno, completar um turno
 
+**Vaza**:
+Conjunto de cartas jogadas em um turno que são recolhidas pelo vencedor daquele turno. Cada vaza conquistada incrementa o **Feito** do jogador ao final da rodada.
+_Avoid_: Trick, baza, monte
+
 **Declarado**:
 Quantidade de turnos que um jogador afirma que fará em uma rodada.
 _Avoid_: Aposta, lance
@@ -44,6 +48,7 @@ _Avoid_: Vida, score
 
 - Uma **Partida** contém uma ou mais **Rodadas**.
 - Uma **Rodada** contém um **Turno 0** de declaração e **N Turnos** de jogada.
+- O vencedor de um **Turno** recolhe as cartas jogadas como uma **Vaza**.
 - Cada jogador registra um **Declarado** e um **Feito** em cada **Rodada**.
 - Cada **Rodada** define uma **Manilha**.
 - A diferença absoluta entre **Declarado** e **Feito** reduz os **Pontos** do jogador ao final da **Rodada**.
