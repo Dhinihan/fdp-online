@@ -67,9 +67,9 @@ export class JogoScene extends Scene {
     const e = 40;
     return [
       { labelX: cx, labelY: cy + d + 30, mao: { x: cx - 60, y: cy + d, espacamento: e, direcao: 'horizontal' } },
-      { labelX: cx - d - 30, labelY: cy, mao: { x: cx - d, y: cy - 60, espacamento: e, direcao: 'vertical' } },
+      { labelX: cx - d - 30, labelY: cy - 100, mao: { x: cx - d, y: cy - 60, espacamento: e, direcao: 'vertical' } },
       { labelX: cx, labelY: cy - d - 30, mao: { x: cx - 60, y: cy - d, espacamento: e, direcao: 'horizontal' } },
-      { labelX: cx + d + 30, labelY: cy, mao: { x: cx + d, y: cy - 60, espacamento: e, direcao: 'vertical' } },
+      { labelX: cx + d + 30, labelY: cy - 100, mao: { x: cx + d, y: cy - 60, espacamento: e, direcao: 'vertical' } },
     ];
   }
 
