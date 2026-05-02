@@ -39,7 +39,7 @@ Se a issue for executável:
    - `git merge origin/main`
 4. Se o merge for limpo (fast-forward ou merge automático sem conflito), prossiga com o push normalmente.
 5. Se houver conflito resolvível, resolva o conflito, faça commit da resolução e prossiga com o push.
-6. Se houver conflito irrecuperável, execute `git merge --abort`, adicione a label `sandcastle:blocked`, garanta que a label `{{label_execucao}}` não esteja mais presente, comente objetivamente o motivo do bloqueio e pare.
+6. Se houver conflito irrecuperável, execute `git merge --abort`, adicione a label `sandcastle:blocked`, garanta que a label `{{label_execucao}}` não esteja mais presente, comente objetivamente o motivo do bloqueio, escreva exatamente `<promise>COMPLETE</promise>` na resposta final e pare.
 7. Se alguma verificação falhar por ambiente, trate como bloqueio e siga o fluxo de bloqueio.
 8. Se a implementação estiver pronta, faça push da branch atual.
 9. Abra ou atualize uma PR com `Closes #<numero>`.
