@@ -38,6 +38,21 @@ export function listarIssuesCandidatas(limite = 100): IssueGitHub[] {
   ]) as IssueGitHub[];
 }
 
+export function listarIssuesAguardando(limite = 100): IssueGitHub[] {
+  return executarGhJson([
+    'issue',
+    'list',
+    '--state',
+    'open',
+    '--label',
+    LABEL_ESPERA_SANDCASTLE,
+    '--limit',
+    String(limite),
+    '--json',
+    'number,title,body,state,createdAt,updatedAt,labels',
+  ]) as IssueGitHub[];
+}
+
 export function lerIssue(numero: number): IssueGitHub {
   return executarGhJson([
     'issue',
@@ -66,6 +81,16 @@ export function removerLabelIssue(numero: number, label: string): void {
 
 export function adicionarLabelIssue(numero: number, label: string): void {
   executarGh(['issue', 'edit', String(numero), '--add-label', label]);
+}
+
+export function comentarIssue(numero: number, comentario: string): void {
+  executarGh(['issue', 'comment', String(numero), '--body', comentario]);
+}
+
+export function issueEhPullRequest(numero: number): boolean {
+  const resultado = executarGhSemErro(['pr', 'view', String(numero), '--json', 'number']);
+
+  return resultado.status === 0;
 }
 
 function erroLabelAusente(resultado: ResultadoGh): boolean {

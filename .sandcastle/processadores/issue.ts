@@ -2,15 +2,20 @@ import {
   LABEL_BLOQUEIO_SANDCASTLE,
   LABEL_EXECUCAO_SANDCASTLE,
   LABEL_EXECUTANDO_SANDCASTLE,
+  LABEL_ESPERA_SANDCASTLE,
   adicionarLabelIssue,
+  comentarIssue,
+  issueEhPullRequest,
   lerComentariosIssue,
   lerIssue,
+  listarIssuesAguardando,
   listarIssuesCandidatas,
   removerLabelIssue,
   type ComentarioGitHub,
   type IssueGitHub,
 } from '../github';
 import { lerArquivo } from '../runner';
+import { analisarBlockedBy } from './bloqueios-issue';
 import type { AdaptadorProcessamento, ItemFila } from './tipos';
 
 const LIMITE_COMENTARIOS_CONTEXTO = 5;
@@ -34,6 +39,8 @@ export const adaptadorIssue: AdaptadorProcessamento<IssueGitHub, ContextoIssue> 
 };
 
 function listarElegiveis(): ItemFila[] {
+  reavaliarIssuesEmEspera();
+
   return listarIssuesCandidatas().map((issue) => ({
     tipo: 'issue',
     numero: issue.number,
@@ -128,4 +135,49 @@ function formatarLabels(issue: IssueGitHub): string {
 
 function possuiLabel(issue: IssueGitHub, label: string): boolean {
   return issue.labels.some((item) => item.name === label);
+}
+
+function reavaliarIssuesEmEspera(): void {
+  for (const issue of listarIssuesAguardando()) {
+    const motivo = avaliarBlockedByInvalido(issue);
+
+    if (!motivo) {
+      continue;
+    }
+
+    adicionarLabelIssue(issue.number, LABEL_BLOQUEIO_SANDCASTLE);
+    removerLabelIssue(issue.number, LABEL_ESPERA_SANDCASTLE);
+    removerLabelIssue(issue.number, LABEL_EXECUCAO_SANDCASTLE);
+    comentarIssue(issue.number, montarComentarioBloqueioBlockedBy(motivo));
+  }
+}
+
+function avaliarBlockedByInvalido(issue: IssueGitHub): string | null {
+  const resultado = analisarBlockedBy(issue.body || '');
+
+  if (resultado.status === 'invalido') {
+    return resultado.motivo;
+  }
+
+  for (const dependencia of resultado.dependencias) {
+    if (issueEhPullRequest(dependencia)) {
+      return `secao \`## Blocked by\` referencia a PR #${String(dependencia)} em vez de issue`;
+    }
+
+    try {
+      lerIssue(dependencia);
+    } catch {
+      return `secao \`## Blocked by\` referencia #${String(dependencia)} que nao pode ser lida como issue`;
+    }
+  }
+
+  return null;
+}
+
+function montarComentarioBloqueioBlockedBy(motivo: string): string {
+  return [
+    'Bloqueio manual aplicado: o campo `## Blocked by` desta issue esta invalido para o fluxo automatico.',
+    `Motivo: ${motivo}.`,
+    'Para destravar, corrija a secao para listar apenas issues deste repositorio no formato `#123`, uma por linha, ou remova `sandcastle:waiting` se esta issue nao estiver aguardando dependencias.',
+  ].join('\n');
 }
