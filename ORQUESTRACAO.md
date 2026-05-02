@@ -79,6 +79,7 @@ Variáveis suportadas no cron:
 - `SANDCASTLE_AGENT`: agente global da rodada. Valores suportados: `codex` e `pi`. Padrão: `codex`
 - `OPENAI_API_KEY`: opcional para `codex` quando `codex login` já foi feito no host
 - `OPENCODE_API_KEY`: obrigatória para `pi`
+- `SANDCASTLE_PI_MODEL`: opcional para `pi`; padrão `opencode-go/mimo-v2-pro`. Deve ser um modelo válido do `pi --list-models`.
 
 ### 3. Rodar o cron com lock e branch protegida
 

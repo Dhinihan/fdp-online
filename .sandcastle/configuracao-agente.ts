@@ -1,8 +1,9 @@
 export const AGENTES_SUPORTADOS = ['codex', 'pi'] as const;
 export const ESFORCO_CODEX_PADRAO = 'low';
 export const MODELO_CODEX_PADRAO = 'gpt-5.4';
-export const MODELO_PI_PADRAO = 'opencode-go';
+export const MODELO_PI_PADRAO = 'opencode-go/mimo-v2-pro';
 const NOME_VARIAVEL_AGENTE = 'SANDCASTLE_AGENT';
+const NOME_VARIAVEL_MODELO_PI = 'SANDCASTLE_PI_MODEL';
 
 export type AgenteSandcastle = (typeof AGENTES_SUPORTADOS)[number];
 
@@ -28,7 +29,7 @@ export function lerConfiguracaoAgente(env = process.env): ConfiguracaoAgente {
   if (agente === 'pi') {
     return {
       agente,
-      modelo: MODELO_PI_PADRAO,
+      modelo: lerModeloPi(env),
     };
   }
 
@@ -37,6 +38,10 @@ export function lerConfiguracaoAgente(env = process.env): ConfiguracaoAgente {
     modelo: MODELO_CODEX_PADRAO,
     esforco: ESFORCO_CODEX_PADRAO,
   };
+}
+
+function lerModeloPi(env: NodeJS.ProcessEnv): string {
+  return env[NOME_VARIAVEL_MODELO_PI]?.trim() || MODELO_PI_PADRAO;
 }
 
 function lerAgente(env: NodeJS.ProcessEnv): AgenteSandcastle {
