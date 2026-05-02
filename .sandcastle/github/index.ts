@@ -1,5 +1,6 @@
 export { validarGhDisponivel } from './base';
 export {
+  type EstadoOperacionalIssue,
   LABEL_BLOQUEIO_SANDCASTLE,
   LABEL_EXECUCAO_SANDCASTLE,
   LABEL_EXECUTANDO_SANDCASTLE,
@@ -14,6 +15,8 @@ export {
   lerIssue,
   listarIssuesCandidatas,
   listarIssuesEmEspera,
+  obterEstadoOperacionalIssue,
+  possuiLabelIssue,
   removerLabelIssue,
   type ComentarioGitHub,
   type IssueGitHub,
