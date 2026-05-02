@@ -37,8 +37,15 @@ garantir_arvore_limpa() {
 }
 
 atualizar_branch_base() {
-  git fetch origin "${BRANCH_BASE}"
-  git pull --ff-only origin "${BRANCH_BASE}"
+  local referencia_local referencia_remota
+
+  git fetch --quiet origin "${BRANCH_BASE}"
+  referencia_local="$(git rev-parse "${BRANCH_BASE}")"
+  referencia_remota="$(git rev-parse "origin/${BRANCH_BASE}")"
+
+  if [[ "${referencia_local}" != "${referencia_remota}" ]]; then
+    git pull --ff-only origin "${BRANCH_BASE}"
+  fi
 }
 
 adquirir_lock() {

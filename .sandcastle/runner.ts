@@ -53,7 +53,7 @@ export async function executarRunner(opcoes: OpcoesRunner): Promise<void> {
   const fila = await montarFila(opcoes.adaptadores, opcoes.limite ?? LIMITE_ITENS_POR_RODADA);
 
   if (fila.length === 0) {
-    console.log('Nenhum item elegivel para o Sandcastle.');
+    console.log('OK');
     return;
   }
 
@@ -95,7 +95,6 @@ async function processarEntrada(entrada: EntradaFila, dryRun: boolean): Promise<
   }
 
   if (dryRun) {
-    console.log(entrada.adaptador.formatarDryRun(item, contexto));
     return;
   }
 
