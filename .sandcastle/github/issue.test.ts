@@ -50,6 +50,32 @@ const CORPO_ESPERADO_COM_SECAO_ATUALIZADA = [
   '',
   '- [ ] Funciona',
 ].join('\n');
+const CORPO_COM_SUBTITULO_APOS_BLOCKED_BY = [
+  '## What to build',
+  '',
+  'Implementar o fluxo.',
+  '',
+  '## Blocked by',
+  '',
+  '- #40',
+  '',
+  '### Contexto adicional',
+  '',
+  'Nao remover este trecho.',
+].join('\n');
+const CORPO_ESPERADO_COM_SUBTITULO_PRESERVADO = [
+  '## What to build',
+  '',
+  'Implementar o fluxo.',
+  '',
+  '## Blocked by',
+  '',
+  '- #52',
+  '',
+  '### Contexto adicional',
+  '',
+  'Nao remover este trecho.',
+].join('\n');
 
 it('cria a secao no fim do corpo quando ela nao existe', () => {
   expect(atualizarSecaoBlockedBy(CORPO_BASE, [49, 52])).toBe(CORPO_ESPERADO_COM_NOVA_SECAO);
@@ -57,6 +83,12 @@ it('cria a secao no fim do corpo quando ela nao existe', () => {
 
 it('atualiza a secao existente sem duplicar o titulo', () => {
   expect(atualizarSecaoBlockedBy(CORPO_COM_BLOCKED_BY, [52])).toBe(CORPO_ESPERADO_COM_SECAO_ATUALIZADA);
+});
+
+it('preserva o restante do corpo ao encontrar subtitulos markdown apos a secao', () => {
+  expect(atualizarSecaoBlockedBy(CORPO_COM_SUBTITULO_APOS_BLOCKED_BY, [52])).toBe(
+    CORPO_ESPERADO_COM_SUBTITULO_PRESERVADO,
+  );
 });
 
 it('normaliza dependencias repetidas e ordena as referencias', () => {

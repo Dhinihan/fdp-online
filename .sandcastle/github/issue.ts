@@ -127,7 +127,7 @@ function encontrarFimSecao(linhas: string[], inicioBusca: number): number {
 }
 
 function ehTituloMarkdown(linha: string): boolean {
-  return linha.trim().startsWith('## ');
+  return /^#{1,6}\s+/.test(linha.trim());
 }
 
 function erroLabelAusente(resultado: ResultadoGh): boolean {
