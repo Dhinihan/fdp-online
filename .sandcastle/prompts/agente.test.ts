@@ -14,4 +14,22 @@ describe('prompt do agente de issue', () => {
     expect(prompt).toContain('Se a seção já existir, atualize sem duplicá-la');
     expect(prompt).toContain('Pare. Não implemente workaround paralelo.');
   });
+
+  it('instrui sincronizar com origin/main antes do push final', () => {
+    const prompt = readFileSync(CAMINHO_PROMPT, 'utf8');
+
+    expect(prompt).toContain(
+      'Antes do push final, sincronize a branch atual com `origin/main` executando nesta ordem:',
+    );
+    expect(prompt).toContain('`git fetch origin`');
+    expect(prompt).toContain('`git merge origin/main`');
+    expect(prompt).toContain(
+      'Se o merge for limpo (fast-forward ou merge automático sem conflito), prossiga com o push normalmente.',
+    );
+    expect(prompt).toContain(
+      'Se houver conflito resolvível, resolva o conflito, faça commit da resolução e prossiga com o push.',
+    );
+    expect(prompt).toContain('Se houver conflito irrecuperável, execute `git merge --abort`');
+    expect(prompt).toContain('adicione a label `sandcastle:blocked`');
+  });
 });

@@ -34,11 +34,17 @@ Se a issue for executável:
 
 1. Implemente apenas o necessário para a issue.
 2. Rode apenas as verificações relevantes que já estiverem disponíveis no ambiente.
-3. Se alguma verificação falhar por ambiente, trate como bloqueio e siga o fluxo de bloqueio.
-4. Se a implementação estiver pronta, faça push da branch atual.
-5. Abra ou atualize uma PR com `Closes #<numero>`.
-6. Garanta que a label `{{label_execucao}}` não esteja mais presente.
-7. Escreva exatamente `<promise>COMPLETE</promise>` na resposta final.
+3. Antes do push final, sincronize a branch atual com `origin/main` executando nesta ordem:
+   - `git fetch origin`
+   - `git merge origin/main`
+4. Se o merge for limpo (fast-forward ou merge automático sem conflito), prossiga com o push normalmente.
+5. Se houver conflito resolvível, resolva o conflito, faça commit da resolução e prossiga com o push.
+6. Se houver conflito irrecuperável, execute `git merge --abort`, adicione a label `sandcastle:blocked`, garanta que a label `{{label_execucao}}` não esteja mais presente, comente objetivamente o motivo do bloqueio e pare.
+7. Se alguma verificação falhar por ambiente, trate como bloqueio e siga o fluxo de bloqueio.
+8. Se a implementação estiver pronta, faça push da branch atual.
+9. Abra ou atualize uma PR com `Closes #<numero>`.
+10. Garanta que a label `{{label_execucao}}` não esteja mais presente.
+11. Escreva exatamente `<promise>COMPLETE</promise>` na resposta final.
 
 Regras adicionais:
 
