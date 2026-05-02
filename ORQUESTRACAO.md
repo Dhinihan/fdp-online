@@ -43,6 +43,7 @@ Hoje o fluxo automatizado usa a pasta `.sandcastle/`, os scripts do `package.jso
 - `sandcastle:blocked`: issue bloqueada por problema operacional ou bloqueio manual de escopo.
 
 Quando o agente identificar dependência de outra issue aberta, ele deve usar `sandcastle:waiting`, remover `sandcastle:run` e comentar objetivamente quais bloqueadores seguem abertos e por que a issue entrou em espera. Esse protocolo não implica escrever ou atualizar `## Blocked by` no corpo da issue.
+Quando a dependência for descoberta pelo agente durante a execução, ele também deve persisti-la no corpo canônico da issue em `## Blocked by`, usando referências `#123` do mesmo repositório. Se a seção já existir, o fluxo deve atualizá-la sem duplicação; se não existir, deve criá-la no fim do corpo preservando o restante da descrição.
 
 ### Branch de execução
 

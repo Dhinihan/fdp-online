@@ -4,6 +4,7 @@ export const LABEL_EXECUCAO_SANDCASTLE = 'sandcastle:run';
 export const LABEL_EXECUTANDO_SANDCASTLE = 'sandcastle:running';
 export const LABEL_BLOQUEIO_SANDCASTLE = 'sandcastle:blocked';
 export const LABEL_ESPERA_SANDCASTLE = 'sandcastle:waiting';
+const TITULO_SECAO_BLOCKED_BY = '## Blocked by';
 
 export interface IssueGitHub {
   number: number;
@@ -66,6 +67,67 @@ export function removerLabelIssue(numero: number, label: string): void {
 
 export function adicionarLabelIssue(numero: number, label: string): void {
   executarGh(['issue', 'edit', String(numero), '--add-label', label]);
+}
+
+export function atualizarCorpoIssue(numero: number, corpo: string): void {
+  executarGh(['issue', 'edit', String(numero), '--body', corpo]);
+}
+
+export function atualizarIssueComDependencias(numero: number, corpoAtual: string, dependencias: number[]): void {
+  atualizarCorpoIssue(numero, atualizarSecaoBlockedBy(corpoAtual, dependencias));
+}
+
+export function atualizarSecaoBlockedBy(corpoAtual: string, dependencias: number[]): string {
+  const secoes = separarSecaoBlockedBy(corpoAtual);
+  const secao = montarSecaoBlockedBy(dependencias);
+
+  if (secoes) {
+    return [secoes.antes.trimEnd(), secao, secoes.depois.trimStart()]
+      .filter((trecho) => trecho.length > 0)
+      .join('\n\n');
+  }
+
+  return [corpoAtual.trimEnd(), secao].filter((trecho) => trecho.length > 0).join('\n\n');
+}
+
+function montarSecaoBlockedBy(dependencias: number[]): string {
+  const itens = normalizarDependencias(dependencias).map((dependencia) => `- #${String(dependencia)}`);
+
+  return [TITULO_SECAO_BLOCKED_BY, '', itens.join('\n') || 'None - can start immediately'].join('\n');
+}
+
+function normalizarDependencias(dependencias: number[]): number[] {
+  return [...new Set(dependencias)].sort((primeira, segunda) => primeira - segunda);
+}
+
+function separarSecaoBlockedBy(corpoAtual: string): { antes: string; depois: string } | null {
+  const linhas = corpoAtual.split('\n');
+  const indiceInicio = linhas.findIndex((linha) => linha.trim() === TITULO_SECAO_BLOCKED_BY);
+
+  if (indiceInicio < 0) {
+    return null;
+  }
+
+  const indiceFim = encontrarFimSecao(linhas, indiceInicio + 1);
+
+  return {
+    antes: linhas.slice(0, indiceInicio).join('\n'),
+    depois: linhas.slice(indiceFim).join('\n'),
+  };
+}
+
+function encontrarFimSecao(linhas: string[], inicioBusca: number): number {
+  for (let indice = inicioBusca; indice < linhas.length; indice += 1) {
+    if (ehTituloMarkdown(linhas[indice])) {
+      return indice;
+    }
+  }
+
+  return linhas.length;
+}
+
+function ehTituloMarkdown(linha: string): boolean {
+  return linha.trim().startsWith('## ');
 }
 
 function erroLabelAusente(resultado: ResultadoGh): boolean {
