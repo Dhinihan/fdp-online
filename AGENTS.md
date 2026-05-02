@@ -87,6 +87,12 @@ Para regras completas, leia `REGRAS.md`.
 
 ## Agent skills
 
+### Hermes (planejamento)
+
+Hermes auxilia Vinícius no planejamento e refinamento de
+issues. Consulte `docs/agents/hermes.md` para o workflow
+completo.
+
 ### Issue tracker
 
 Issues são gerenciadas no GitHub do repositório (`Dhinihan/fdp-online`). See `docs/agents/issue-tracker.md`.
