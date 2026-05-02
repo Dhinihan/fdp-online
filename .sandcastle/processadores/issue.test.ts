@@ -125,16 +125,16 @@ describe('reavaliacao de issues ainda bloqueadas', () => {
 
   it('nao altera issue em espera que tambem esteja em execucao', async () => {
     mockIssueEmEspera('## Blocked by\n\n- #10', ['sandcastle:waiting', 'sandcastle:running']);
-    const reavaliar = await importarReavaliacao();
-    reavaliar();
+    const { reavaliarIssuesEmEspera } = await importarReavaliacao();
+    reavaliarIssuesEmEspera();
     esperarIssueEmEspera();
   });
 
   it('nao reativa issue em espera quando ela tambem esta bloqueada manualmente', async () => {
     mockIssueEmEspera('## Blocked by\n\n- #10', ['sandcastle:waiting', 'sandcastle:blocked']);
     lerIssue.mockReturnValue({ number: 10, state: 'CLOSED' });
-    const reavaliar = await importarReavaliacao();
-    reavaliar();
+    const { reavaliarIssuesEmEspera } = await importarReavaliacao();
+    reavaliarIssuesEmEspera();
     esperarIssueEmEspera();
   });
 });
