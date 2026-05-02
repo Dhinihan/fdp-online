@@ -38,6 +38,21 @@ export function listarIssuesCandidatas(limite = 100): IssueGitHub[] {
   ]) as IssueGitHub[];
 }
 
+export function listarIssuesEmEspera(limite = 100): IssueGitHub[] {
+  return executarGhJson([
+    'issue',
+    'list',
+    '--state',
+    'open',
+    '--label',
+    LABEL_ESPERA_SANDCASTLE,
+    '--limit',
+    String(limite),
+    '--json',
+    'number,title,body,state,createdAt,updatedAt,labels',
+  ]) as IssueGitHub[];
+}
+
 export function lerIssue(numero: number): IssueGitHub {
   return executarGhJson([
     'issue',

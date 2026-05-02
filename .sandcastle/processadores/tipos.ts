@@ -6,6 +6,7 @@ export interface ItemFila {
 
 export interface AdaptadorProcessamento<TItem, TContexto> {
   tipo: ItemFila['tipo'];
+  prepararRodada?(): Promise<void> | void;
   listarElegiveis(): Promise<ItemFila[]> | ItemFila[];
   carregarItem(numero: number): Promise<TItem> | TItem;
   avaliarElegibilidade(item: TItem): string | null;

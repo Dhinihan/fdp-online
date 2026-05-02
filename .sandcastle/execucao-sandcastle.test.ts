@@ -11,7 +11,7 @@ describe('formatarResultadoAgente', () => {
       branch: 'sandcastle-issue-41',
       commits: [{ hash: 'abc123' }],
       logFilePath: '/tmp/sandcastle.log',
-    } as RunResult;
+    } as unknown as RunResult;
 
     expect(formatarResultadoAgente('issue', 41, resultado)).toBe(
       [

@@ -62,3 +62,36 @@ describe('execucao real com pi', () => {
     expect(validarAutenticacaoCodex).not.toHaveBeenCalled();
   });
 });
+
+describe('preparacao da rodada', () => {
+  it('reavalia adaptadores antes de montar a fila executavel', async () => {
+    const ordem: string[] = [];
+    const { executarRunner } = await import('./runner');
+
+    await executarRunner({
+      dryRun: true,
+      adaptadores: [
+        {
+          tipo: 'issue',
+          prepararRodada: () => {
+            ordem.push('preparar');
+          },
+          listarElegiveis: () => {
+            ordem.push('listar');
+            return [];
+          },
+          carregarItem: vi.fn(),
+          avaliarElegibilidade: vi.fn(),
+          coletarContexto: vi.fn(),
+          formatarDryRun: vi.fn(),
+          fazerLock: vi.fn(),
+          desfazerLock: vi.fn(),
+          montarPrompt: vi.fn(),
+          obterBranch: vi.fn(),
+        },
+      ],
+    });
+
+    expect(ordem).toEqual(['preparar', 'listar']);
+  });
+});
