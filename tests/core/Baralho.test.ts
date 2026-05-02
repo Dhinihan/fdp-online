@@ -37,4 +37,9 @@ describe('distribuir', () => {
     const chaves = todas.map((c) => `${c.valor}${c.naipe}`);
     expect(new Set(chaves).size).toBe(16);
   });
+
+  it('deve lancar erro quando nao houver cartas suficientes', () => {
+    const baralho = criarBaralho();
+    expect(() => distribuir(baralho, 20, 4)).toThrow(/Não há cartas suficientes/);
+  });
 });

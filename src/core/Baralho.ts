@@ -14,6 +14,11 @@ export function criarBaralho(): Carta[] {
 }
 
 export function distribuir(cartas: Carta[], numeroCartas: number, numeroJogadores: number): Carta[][] {
+  if (numeroCartas * numeroJogadores > cartas.length) {
+    throw new Error(
+      `Não há cartas suficientes para distribuir ${numeroCartas.toString()} cartas para ${numeroJogadores.toString()} jogadores. Cartas disponíveis: ${cartas.length.toString()}.`,
+    );
+  }
   const maos: Carta[][] = Array.from({ length: numeroJogadores }, () => []);
   for (let i = 0; i < numeroCartas; i++) {
     for (let j = 0; j < numeroJogadores; j++) {
