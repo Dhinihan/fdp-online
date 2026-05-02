@@ -37,12 +37,12 @@
 
 **Entregáveis:**
 
-- [ ] Carta placeholder renderizada na tela (sprite ou retângulo)
-- [ ] Toque na carta dispara evento
-- [ ] Carta "vira" (troca de sprite ou animação simples) ao tocar
-- [ ] Som ao tocar (SFX placeholder)
-- [ ] Menu inicial básico (botão "Jogar")
-- [ ] Tela reage corretamente a resize/orientação mobile
+- [x] Carta placeholder renderizada na tela (sprite ou retângulo)
+- [x] Toque na carta dispara evento
+- [x] Carta "vira" (troca de sprite ou animação simples) ao tocar
+- [x] Som ao tocar (SFX placeholder)
+- [x] Menu inicial básico (botão "Jogar")
+- [x] Tela reage corretamente a resize/orientação mobile
 
 **Valida:** O adapter Phaser recebe input e dá feedback visual/sonoro.
 
@@ -58,7 +58,7 @@
 
 - [ ] Entidade `Carta` (valor, naipe) no core com testes
 - [ ] Entidade `Baralho` com Fisher-Yates e testes
-- [ ] Distribuição de 1 carta para 4 jogadores
+- [ ] Distribuição de 4 cartas para 4 jogadores
 - [ ] 1 turno: cada jogador joga 1 carta na mesa
 - [ ] Determinação do vencedor do turno (maior carta, sem manilha ainda)
 - [ ] Estado do jogo mantido entre turnos
