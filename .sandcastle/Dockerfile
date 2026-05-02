@@ -21,11 +21,11 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
   && rm -rf /var/lib/apt/lists/*
 
 RUN usermod -d /home/agent -m -l agent node
-RUN npm install -g @openai/codex
+RUN npm install -g @openai/codex @mariozechner/pi-coding-agent
 RUN npm install -g playwright@1.59.1
 RUN playwright install --with-deps chromium
 RUN corepack enable
-RUN mkdir -p /home/agent/.codex && chown -R 1000:1000 /home/agent/.codex
+RUN mkdir -p /home/agent/.codex /home/agent/.pi/agent && chown -R 1000:1000 /home/agent/.codex /home/agent/.pi
 RUN mkdir -p /home/agent/.pnpm-store /home/agent/.local/share/pnpm \
   && chown -R 1000:1000 /home/agent/.pnpm-store /home/agent/.local
 RUN mkdir -p /ms-playwright && chown -R 1000:1000 /ms-playwright
