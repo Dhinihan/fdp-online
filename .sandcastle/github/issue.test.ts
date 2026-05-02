@@ -160,3 +160,27 @@ it('lista como waiting apenas issues sem conflito com blocked ou running', () =>
     expect(listarIssuesEmEspera()).toEqual([{ number: 1, labels: [{ name: 'sandcastle:waiting' }] }]);
   });
 });
+
+it('retorna true quando o numero existe como PR', () => {
+  executarGhSemErro.mockReturnValue({ status: 0, stdout: '{"number":79,"title":"feat"}', stderr: '' });
+
+  return importarModuloIssue().then(({ issueEhPullRequest }) => {
+    expect(issueEhPullRequest(79)).toBe(true);
+  });
+});
+
+it('retorna false quando o numero existe como issue mas nao como PR', () => {
+  executarGhSemErro.mockReturnValue({ status: 1, stdout: '', stderr: 'GraphQL: Could not resolve...' });
+
+  return importarModuloIssue().then(({ issueEhPullRequest }) => {
+    expect(issueEhPullRequest(75)).toBe(false);
+  });
+});
+
+it('retorna false quando o numero nao existe', () => {
+  executarGhSemErro.mockReturnValue({ status: 1, stdout: '', stderr: 'GraphQL: Could not resolve...' });
+
+  return importarModuloIssue().then(({ issueEhPullRequest }) => {
+    expect(issueEhPullRequest(99999)).toBe(false);
+  });
+});
