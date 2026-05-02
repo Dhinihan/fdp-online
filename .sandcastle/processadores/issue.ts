@@ -129,7 +129,7 @@ function extrairBloqueadores(corpo: string): number[] {
   const bloqueadores: number[] = [];
 
   for (const linha of linhas.slice(inicio + 1)) {
-    if (linha.startsWith('## ')) {
+    if (ehTituloMarkdown(linha)) {
       break;
     }
 
@@ -149,6 +149,10 @@ function estaFechado(numero: number): boolean {
   } catch {
     return false;
   }
+}
+
+function ehTituloMarkdown(linha: string): boolean {
+  return /^#{1,6}\s+/.test(linha.trim());
 }
 
 function aplicarPlaceholdersPrompt(promptBase: string): string {

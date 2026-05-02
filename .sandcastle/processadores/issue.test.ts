@@ -37,6 +37,15 @@ function mockIssueEmEspera() {
   ]);
 }
 
+function mockIssueEmEsperaComSubsecao() {
+  listarIssuesEmEspera.mockReturnValue([
+    {
+      number: 51,
+      body: '## Blocked by\n\n- #50\n\n### Contexto\n\n- #49\n',
+    },
+  ]);
+}
+
 async function importarReavaliacao() {
   const { reavaliarIssuesEmEspera } = await import('./issue');
 
@@ -101,5 +110,22 @@ describe('reavaliacao com bloqueador invalido', () => {
       reavaliarIssuesEmEspera();
     }).not.toThrow();
     esperarIssueEmEspera();
+  });
+});
+
+describe('reavaliacao com subsecoes apos blocked by', () => {
+  it('ignora bullets apos qualquer heading markdown', async () => {
+    mockIssueEmEsperaComSubsecao();
+    lerIssue.mockImplementation((numero: number) => ({
+      number: numero,
+      state: numero === 50 ? 'CLOSED' : 'OPEN',
+    }));
+
+    const reavaliarIssuesEmEspera = await importarReavaliacao();
+
+    reavaliarIssuesEmEspera();
+
+    expect(removerLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:waiting');
+    expect(adicionarLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:run');
   });
 });
