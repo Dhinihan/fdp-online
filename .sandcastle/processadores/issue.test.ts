@@ -73,9 +73,9 @@ function mockIssueEmEsperaComSubsecao() {
 }
 
 async function importarReavaliacao() {
-  const { reavaliarIssuesEmEspera } = await import('./issue');
+  const { listarDryRunIssuesEmEspera, reavaliarIssuesEmEspera } = await import('./reavaliacao-issue');
 
-  return reavaliarIssuesEmEspera;
+  return { listarDryRunIssuesEmEspera, reavaliarIssuesEmEspera };
 }
 
 function esperarIssueEmEspera() {
@@ -101,8 +101,8 @@ describe('reavaliacao de issues em espera', () => {
       state: 'CLOSED',
     }));
 
-    const reavaliar = await importarReavaliacao();
-    reavaliar();
+    const { reavaliarIssuesEmEspera } = await importarReavaliacao();
+    reavaliarIssuesEmEspera();
 
     expect(removerLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:waiting');
     expect(adicionarLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:run');
@@ -117,8 +117,8 @@ describe('reavaliacao de issues ainda bloqueadas', () => {
       state: numero === 50 ? 'OPEN' : 'CLOSED',
     }));
 
-    const reavaliar = await importarReavaliacao();
-    reavaliar();
+    const { reavaliarIssuesEmEspera } = await importarReavaliacao();
+    reavaliarIssuesEmEspera();
 
     esperarIssueEmEspera();
   });
@@ -153,9 +153,9 @@ describe('reavaliacao com bloqueador nao legivel', () => {
       };
     });
 
-    const reavaliar = await importarReavaliacao();
+    const { reavaliarIssuesEmEspera } = await importarReavaliacao();
     expect(() => {
-      reavaliar();
+      reavaliarIssuesEmEspera();
     }).not.toThrow();
     esperarIssueEmEspera();
   });
@@ -164,8 +164,8 @@ describe('reavaliacao com bloqueador nao legivel', () => {
 describe('reavaliacao com blocked by ausente ou valido', () => {
   it('bloqueia manualmente quando a secao blocked by esta ausente', async () => {
     mockIssueEmEspera('## What to build\n\ntexto');
-    const reavaliar = await importarReavaliacao();
-    reavaliar();
+    const { reavaliarIssuesEmEspera } = await importarReavaliacao();
+    reavaliarIssuesEmEspera();
     esperarBloqueioManual(51, 'secao `## Blocked by` ausente');
     expect(comentarIssue.mock.invocationCallOrder[0]).toBeLessThan(adicionarLabelIssue.mock.invocationCallOrder[0]);
   });
@@ -173,16 +173,16 @@ describe('reavaliacao com blocked by ausente ou valido', () => {
   it('mantem em espera quando blocked by e valido e bloqueador ainda aberto', async () => {
     mockIssueEmEspera('## Blocked by\n\n- #10');
     lerIssue.mockReturnValue({ number: 10, state: 'OPEN' });
-    const reavaliar = await importarReavaliacao();
-    reavaliar();
+    const { reavaliarIssuesEmEspera } = await importarReavaliacao();
+    reavaliarIssuesEmEspera();
     esperarIssueEmEspera();
   });
 
   it('reativa a issue quando blocked by valido usa referencia sem bullet', async () => {
     mockIssueEmEspera('## Blocked by\n\n#10');
     lerIssue.mockReturnValue({ number: 10, state: 'CLOSED' });
-    const reavaliar = await importarReavaliacao();
-    reavaliar();
+    const { reavaliarIssuesEmEspera } = await importarReavaliacao();
+    reavaliarIssuesEmEspera();
     expect(removerLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:waiting');
     expect(adicionarLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:run');
   });
@@ -194,8 +194,8 @@ describe('reavaliacao com dependencia inexistente ou erro operacional', () => {
     lerIssue.mockImplementation(() => {
       throw new Error('Falha ao executar gh issue view 10 --json ...: HTTP 404 Not Found');
     });
-    const reavaliar = await importarReavaliacao();
-    reavaliar();
+    const { reavaliarIssuesEmEspera } = await importarReavaliacao();
+    reavaliarIssuesEmEspera();
     esperarBloqueioManual(51, 'referencia #10 que nao pode ser lida como issue');
   });
 
@@ -204,9 +204,9 @@ describe('reavaliacao com dependencia inexistente ou erro operacional', () => {
     lerIssue.mockImplementation(() => {
       throw new Error('Falha ao executar gh issue view 10 --json ...: rate limit exceeded');
     });
-    const reavaliar = await importarReavaliacao();
+    const { reavaliarIssuesEmEspera } = await importarReavaliacao();
     expect(() => {
-      reavaliar();
+      reavaliarIssuesEmEspera();
     }).not.toThrow();
     esperarIssueEmEspera();
   });
@@ -220,8 +220,8 @@ describe('reavaliacao com subsecoes apos blocked by', () => {
       state: numero === 50 ? 'CLOSED' : 'OPEN',
     }));
 
-    const reavaliar = await importarReavaliacao();
-    reavaliar();
+    const { reavaliarIssuesEmEspera } = await importarReavaliacao();
+    reavaliarIssuesEmEspera();
 
     expect(removerLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:waiting');
     expect(adicionarLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:run');

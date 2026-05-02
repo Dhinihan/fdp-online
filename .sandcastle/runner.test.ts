@@ -23,17 +23,66 @@ beforeEach(() => {
   delete process.env.SANDCASTLE_AGENT;
 });
 
-describe('dry run do runner', () => {
-  it('no dry run valida GitHub e Docker sem exigir autenticacao do agente', async () => {
-    const { executarRunner } = await import('./runner');
+function criarAdaptadorBase() {
+  return {
+    tipo: 'issue' as const,
+    listarElegiveis: () => [],
+    carregarItem: vi.fn(),
+    avaliarElegibilidade: vi.fn(),
+    coletarContexto: vi.fn(),
+    formatarDryRun: vi.fn(),
+    fazerLock: vi.fn(),
+    desfazerLock: vi.fn(),
+    montarPrompt: vi.fn(),
+    obterBranch: vi.fn(),
+  };
+}
 
-    await executarRunner({ adaptadores: [], dryRun: true });
+async function executarDryRunComLog(adaptador: ReturnType<typeof criarAdaptadorBase>) {
+  const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  const { executarRunner } = await import('./runner');
 
-    expect(validarGhDisponivel).toHaveBeenCalledOnce();
-    expect(validarDocker).toHaveBeenCalledOnce();
-    expect(validarAutenticacaoCodex).not.toHaveBeenCalled();
-    expect(validarAutenticacaoPi).not.toHaveBeenCalled();
+  await executarRunner({ dryRun: true, adaptadores: [adaptador] });
+
+  return logSpy;
+}
+
+it('no dry run valida GitHub e Docker sem exigir autenticacao do agente', async () => {
+  const { executarRunner } = await import('./runner');
+
+  await executarRunner({ adaptadores: [], dryRun: true });
+
+  expect(validarGhDisponivel).toHaveBeenCalledOnce();
+  expect(validarDocker).toHaveBeenCalledOnce();
+  expect(validarAutenticacaoCodex).not.toHaveBeenCalled();
+  expect(validarAutenticacaoPi).not.toHaveBeenCalled();
+});
+
+it('no dry run imprime a simulacao da preparacao sem executar mutacoes reais', async () => {
+  const adaptador = criarAdaptadorBase();
+  adaptador.prepararRodada = vi.fn(() => {
+    throw new Error('nao deveria rodar no dry run');
   });
+  adaptador.formatarDryRunPreparacao = () => ['DRY RUN: waiting #10 continuaria em espera.'];
+
+  const logSpy = await executarDryRunComLog(adaptador);
+
+  expect(logSpy).toHaveBeenCalledWith('DRY RUN: waiting #10 continuaria em espera.');
+  logSpy.mockRestore();
+});
+
+it('no dry run imprime o destino da entrada elegivel', async () => {
+  const adaptador = criarAdaptadorBase();
+  adaptador.listarElegiveis = () => [{ tipo: 'issue', numero: 7, criadoEm: '2026-05-02T00:00:00Z' }];
+  adaptador.carregarItem = () => ({ number: 7 });
+  adaptador.avaliarElegibilidade = () => null;
+  adaptador.coletarContexto = () => ({ comentarios: [] });
+  adaptador.formatarDryRun = () => 'DRY RUN: issue #7 seria enviada ao agente.';
+
+  const logSpy = await executarDryRunComLog(adaptador);
+
+  expect(logSpy).toHaveBeenCalledWith('DRY RUN: issue #7 seria enviada ao agente.');
+  logSpy.mockRestore();
 });
 
 describe('execucao real com codex', () => {
@@ -69,7 +118,7 @@ describe('preparacao da rodada', () => {
     const { executarRunner } = await import('./runner');
 
     await executarRunner({
-      dryRun: true,
+      dryRun: false,
       adaptadores: [
         {
           tipo: 'issue',

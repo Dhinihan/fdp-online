@@ -14,7 +14,7 @@ import {
   type IssueGitHub,
 } from '../github';
 import { lerArquivo } from '../runner';
-import { reavaliarIssuesEmEspera } from './reavaliacao-issue';
+import { listarDryRunIssuesEmEspera, reavaliarIssuesEmEspera } from './reavaliacao-issue';
 import type { AdaptadorProcessamento, ItemFila } from './tipos';
 
 const LIMITE_COMENTARIOS_CONTEXTO = 5;
@@ -27,6 +27,7 @@ interface ContextoIssue {
 export const adaptadorIssue: AdaptadorProcessamento<IssueGitHub, ContextoIssue> = {
   tipo: 'issue',
   prepararRodada: reavaliarIssuesEmEspera,
+  formatarDryRunPreparacao: listarDryRunIssuesEmEspera,
   listarElegiveis,
   carregarItem: lerIssue,
   avaliarElegibilidade,
