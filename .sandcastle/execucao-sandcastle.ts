@@ -115,6 +115,12 @@ function montarHooksSandbox(): {
 }
 
 function montarMountsDocker(): { hostPath: string; sandboxPath: string; readonly?: boolean }[] {
+  const configuracao = lerConfiguracaoAgente();
+
+  if (configuracao.agente !== 'codex') {
+    return [];
+  }
+
   if (process.env.OPENAI_API_KEY || !existsSync(CAMINHO_AUTH_CODEX)) {
     return [];
   }

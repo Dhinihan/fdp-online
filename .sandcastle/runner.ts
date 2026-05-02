@@ -28,8 +28,12 @@ interface EntradaFila {
 export function prepararAmbiente(): void {
   carregarEnvLocal();
   validarGhDisponivel();
-  validarAutenticacaoAgente();
   validarDocker();
+}
+
+export function prepararExecucaoReal(): void {
+  prepararAmbiente();
+  validarAutenticacaoAgente();
 }
 
 export function lerArquivo(caminho: URL): string {
@@ -48,7 +52,11 @@ export async function executarEntrada(executar: () => Promise<void>, mensagemErr
 }
 
 export async function executarRunner(opcoes: OpcoesRunner): Promise<void> {
-  prepararAmbiente();
+  if (opcoes.dryRun) {
+    prepararAmbiente();
+  } else {
+    prepararExecucaoReal();
+  }
 
   const fila = await montarFila(opcoes.adaptadores, opcoes.limite ?? LIMITE_ITENS_POR_RODADA);
 

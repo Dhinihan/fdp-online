@@ -108,6 +108,7 @@ pnpm sandcastle:cron -- --dry-run
 ```
 
 Mostra quais issues seriam enviadas ao agente sem executar sandbox, sem criar branch e sem alterar labels.
+Nesse modo, o preflight continua validando `gh`, Docker e a imagem `sandcastle:fdp-online`, mas nao exige autenticacao do agente ativo.
 
 ---
 
