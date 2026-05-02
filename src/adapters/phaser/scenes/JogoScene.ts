@@ -12,6 +12,12 @@ const JOGADORES: Jogador[] = [
   { id: 'bot3', nome: 'Bot 3', pontos: 5 },
 ];
 
+const MARGEM = 60;
+const MARGEM_INFERIOR = 80;
+const ESPACAMENTO_CARTAS = 40;
+const ALTURA_CARTA = 75;
+const GAP_LABEL = 20;
+
 interface PosicaoTela {
   labelX: number;
   labelY: number;
@@ -52,24 +58,42 @@ export class JogoScene extends Scene {
   };
 
   private desenharMaos(maos: MaoJogador[]): void {
-    const cx = this.cameras.main.centerX;
-    const cy = this.cameras.main.centerY;
-    const posicoes = this.posicoes(cx, cy);
+    const posicoes = this.posicoes();
     maos.forEach((mao, i) => {
       const p = posicoes[i];
-      this.objetos.push(renderizarLabel({ cena: this, x: p.labelX, y: p.labelY, texto: mao.jogador.nome }));
+      const label = renderizarLabel({ cena: this, x: p.labelX, y: p.labelY, texto: mao.jogador.nome });
+      label.setDepth(10);
+      this.objetos.push(label);
       this.objetos.push(...renderizarMao({ cena: this, posicao: p.mao, cartas: mao.cartas, visivel: mao.visivel }));
     });
   }
 
-  private posicoes(cx: number, cy: number): PosicaoTela[] {
-    const d = 130;
-    const e = 40;
+  private posicoes(): PosicaoTela[] {
+    const largura = this.cameras.main.width;
+    const altura = this.cameras.main.height;
+    const cx = largura / 2;
+    const cy = altura / 2;
     return [
-      { labelX: cx, labelY: cy + d + 30, mao: { x: cx - 60, y: cy + d, espacamento: e, direcao: 'horizontal' } },
-      { labelX: cx - d - 30, labelY: cy - 100, mao: { x: cx - d, y: cy - 60, espacamento: e, direcao: 'vertical' } },
-      { labelX: cx, labelY: cy - d - 30, mao: { x: cx - 60, y: cy - d, espacamento: e, direcao: 'horizontal' } },
-      { labelX: cx + d + 30, labelY: cy - 100, mao: { x: cx + d, y: cy - 60, espacamento: e, direcao: 'vertical' } },
+      {
+        labelX: cx,
+        labelY: altura - MARGEM_INFERIOR - ALTURA_CARTA - GAP_LABEL,
+        mao: { x: cx - 60, y: altura - MARGEM_INFERIOR, espacamento: ESPACAMENTO_CARTAS, direcao: 'horizontal' },
+      },
+      {
+        labelX: MARGEM,
+        labelY: cy - ALTURA_CARTA - GAP_LABEL,
+        mao: { x: MARGEM, y: cy - 60, espacamento: ESPACAMENTO_CARTAS, direcao: 'vertical' },
+      },
+      {
+        labelX: cx,
+        labelY: MARGEM + ALTURA_CARTA + GAP_LABEL,
+        mao: { x: cx - 60, y: MARGEM, espacamento: ESPACAMENTO_CARTAS, direcao: 'horizontal' },
+      },
+      {
+        labelX: largura - MARGEM,
+        labelY: cy - ALTURA_CARTA - GAP_LABEL,
+        mao: { x: largura - MARGEM, y: cy - 60, espacamento: ESPACAMENTO_CARTAS, direcao: 'vertical' },
+      },
     ];
   }
 
