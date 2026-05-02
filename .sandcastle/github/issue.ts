@@ -3,6 +3,7 @@ import { executarGh, executarGhJson, executarGhSemErro, type ResultadoGh } from 
 export const LABEL_EXECUCAO_SANDCASTLE = 'sandcastle:run';
 export const LABEL_EXECUTANDO_SANDCASTLE = 'sandcastle:running';
 export const LABEL_BLOQUEIO_SANDCASTLE = 'sandcastle:blocked';
+export const LABEL_ESPERA_SANDCASTLE = 'sandcastle:waiting';
 
 export interface IssueGitHub {
   number: number;
