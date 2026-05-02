@@ -16,10 +16,11 @@ Se houver dependência de outra issue aberta em qualquer passo:
 
 1. Adicione a label `sandcastle:waiting`.
 2. Garanta que a label `{{label_execucao}}` não esteja mais presente.
-3. Não adicione `sandcastle:blocked` apenas por estar aguardando outra issue.
-4. Comente objetivamente quais issues ainda bloqueiam este trabalho e por que ele entrou em espera.
-5. Escreva exatamente `<promise>COMPLETE</promise>` na resposta final.
-6. Pare. Não implemente workaround paralelo nem altere o corpo da issue para escrever ou atualizar `## Blocked by`.
+3. Registre as dependências descobertas no campo canônico `## Blocked by` do corpo da issue usando referências `#123` deste repositório. Se a seção já existir, atualize sem duplicá-la; se não existir, crie a seção no fim do corpo preservando o restante da descrição.
+4. Não adicione `sandcastle:blocked` apenas por estar aguardando outra issue.
+5. Comente objetivamente quais issues ainda bloqueiam este trabalho e por que ele entrou em espera.
+6. Escreva exatamente `<promise>COMPLETE</promise>` na resposta final.
+7. Pare. Não implemente workaround paralelo.
 
 Se houver bloqueio em qualquer passo:
 
