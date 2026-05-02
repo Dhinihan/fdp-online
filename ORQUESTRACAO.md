@@ -135,6 +135,8 @@ pnpm sandcastle:cron -- --dry-run
 
 Mostra quais issues seriam enviadas ao agente sem executar sandbox, sem criar branch e sem alterar labels.
 
+O `dry-run` tambem simula a reavaliacao de issues em `sandcastle:waiting`: mostra quais voltariam para `sandcastle:run`, quais continuariam aguardando e quais virariam `sandcastle:blocked`, sempre sem comentar, sem trocar labels e sem criar efeitos colaterais no GitHub.
+
 Nesse modo, o preflight valida `gh`, Docker e a imagem `sandcastle:fdp-online`, mas **não** valida a autenticação do agente ativo. Isso permite inspecionar a fila mesmo sem credenciais do Codex ou do Pi configuradas.
 
 ---

@@ -14,10 +14,10 @@ import { analisarBlockedBy } from './bloqueios-issue';
 
 export function reavaliarIssuesEmEspera(): void {
   for (const issue of listarIssuesEmEspera()) {
-    const motivoBloqueio = avaliarBlockedByInvalido(issue);
+    const resultado = avaliarIssueEmEspera(issue);
 
-    if (motivoBloqueio) {
-      const comentario = montarComentarioBloqueioBlockedBy(motivoBloqueio);
+    if (resultado.status === 'bloquear') {
+      const comentario = montarComentarioBloqueioBlockedBy(resultado.motivo);
       comentarIssue(issue.number, comentario);
       adicionarLabelIssue(issue.number, LABEL_BLOQUEIO_SANDCASTLE);
       removerLabelIssue(issue.number, LABEL_ESPERA_SANDCASTLE);
@@ -25,11 +25,54 @@ export function reavaliarIssuesEmEspera(): void {
       continue;
     }
 
-    if (todosBloqueadoresFechados(issue.body)) {
+    if (resultado.status === 'reativar') {
       removerLabelIssue(issue.number, LABEL_ESPERA_SANDCASTLE);
       adicionarLabelIssue(issue.number, LABEL_EXECUCAO_SANDCASTLE);
     }
   }
+}
+
+export function listarDryRunIssuesEmEspera(): string[] {
+  return listarIssuesEmEspera().map((issue) => formatarDryRunIssueEmEspera(issue, avaliarIssueEmEspera(issue)));
+}
+
+function formatarDryRunIssueEmEspera(issue: IssueGitHub, resultado: ResultadoReavaliacaoIssueEmEspera): string {
+  const cabecalho = `DRY RUN: issue #${String(issue.number)} em ${LABEL_ESPERA_SANDCASTLE}.`;
+
+  if (resultado.status === 'reativar') {
+    return [
+      cabecalho,
+      `Resultado: voltaria para ${LABEL_EXECUCAO_SANDCASTLE}.`,
+      'Motivo: todos os bloqueadores estao fechados.',
+    ].join('\n');
+  }
+
+  if (resultado.status === 'bloquear') {
+    return [cabecalho, `Resultado: viraria ${LABEL_BLOQUEIO_SANDCASTLE}.`, `Motivo: ${resultado.motivo}.`].join('\n');
+  }
+
+  return [cabecalho, `Resultado: continuaria em ${LABEL_ESPERA_SANDCASTLE}.`, `Motivo: ${resultado.motivo}.`].join(
+    '\n',
+  );
+}
+
+type ResultadoReavaliacaoIssueEmEspera =
+  | { status: 'reativar' }
+  | { status: 'manter'; motivo: string }
+  | { status: 'bloquear'; motivo: string };
+
+function avaliarIssueEmEspera(issue: IssueGitHub): ResultadoReavaliacaoIssueEmEspera {
+  const motivoBloqueio = avaliarBlockedByInvalido(issue);
+
+  if (motivoBloqueio) {
+    return { status: 'bloquear', motivo: motivoBloqueio };
+  }
+
+  if (todosBloqueadoresFechados(issue.body)) {
+    return { status: 'reativar' };
+  }
+
+  return { status: 'manter', motivo: 'ainda existe bloqueador aberto ou temporariamente indisponivel' };
 }
 
 function todosBloqueadoresFechados(corpo: string): boolean {

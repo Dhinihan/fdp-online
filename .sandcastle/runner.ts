@@ -58,7 +58,11 @@ export async function executarRunner(opcoes: OpcoesRunner): Promise<void> {
     prepararExecucaoReal();
   }
 
-  await prepararRodada(opcoes.adaptadores);
+  if (opcoes.dryRun) {
+    await imprimirDryRunPreparacao(opcoes.adaptadores);
+  } else {
+    await prepararRodada(opcoes.adaptadores);
+  }
   const fila = await montarFila(opcoes.adaptadores, opcoes.limite ?? LIMITE_ITENS_POR_RODADA);
 
   if (fila.length === 0) {
@@ -76,6 +80,16 @@ export async function executarRunner(opcoes: OpcoesRunner): Promise<void> {
 
 async function prepararRodada(adaptadores: AdaptadorGenerico[]): Promise<void> {
   await Promise.all(adaptadores.map((adaptador) => Promise.resolve(adaptador.prepararRodada?.())));
+}
+
+async function imprimirDryRunPreparacao(adaptadores: AdaptadorGenerico[]): Promise<void> {
+  const blocos = await Promise.all(
+    adaptadores.map((adaptador) => Promise.resolve(adaptador.formatarDryRunPreparacao?.() ?? [])),
+  );
+
+  for (const bloco of blocos.flat()) {
+    console.log(bloco);
+  }
 }
 
 async function montarFila(adaptadores: AdaptadorGenerico[], limite: number): Promise<EntradaFila[]> {
@@ -108,6 +122,7 @@ async function processarEntrada(entrada: EntradaFila, dryRun: boolean): Promise<
   }
 
   if (dryRun) {
+    console.log(entrada.adaptador.formatarDryRun(item, contexto));
     return;
   }
 
