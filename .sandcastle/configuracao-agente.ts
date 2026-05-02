@@ -1,7 +1,7 @@
 export const AGENTES_SUPORTADOS = ['codex', 'pi'] as const;
 export const ESFORCO_CODEX_PADRAO = 'low';
 export const MODELO_CODEX_PADRAO = 'gpt-5.4';
-export const MODELO_PI_PADRAO = 'opencode/kimi-k2.6';
+export const MODELO_PI_PADRAO = 'opencode-go';
 const NOME_VARIAVEL_AGENTE = 'SANDCASTLE_AGENT';
 
 export type AgenteSandcastle = (typeof AGENTES_SUPORTADOS)[number];
