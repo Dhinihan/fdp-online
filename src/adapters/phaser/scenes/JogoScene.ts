@@ -2,6 +2,7 @@ import { Scene } from 'phaser';
 import { criarBaralho, distribuir } from '@/core/Baralho';
 import type { Jogador } from '@/types/entidades';
 import type { MaoJogador } from '@/types/estado-partida';
+import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 import { renderizarLabel, renderizarMao, type PosicaoMao } from '../renderers/mao-renderer';
 
 const JOGADORES: Jogador[] = [
@@ -19,6 +20,8 @@ interface PosicaoTela {
 
 export class JogoScene extends Scene {
   private objetos: Phaser.GameObjects.GameObject[] = [];
+  private maos?: MaoJogador[];
+  private redesenhar?: ResizeDebouncer;
 
   constructor() {
     super({ key: 'JogoScene' });
@@ -26,7 +29,10 @@ export class JogoScene extends Scene {
 
   create(): void {
     this.cameras.main.setBackgroundColor('#1a1a2e');
-    this.desenharMaos(this.montarMaos());
+    this.maos = this.montarMaos();
+    this.desenharMaos(this.maos);
+    this.redesenhar = criarDebounceResize(this, this.redesenharMaos);
+    this.scale.on('resize', this.redesenhar);
   }
 
   private montarMaos(): MaoJogador[] {
@@ -37,6 +43,13 @@ export class JogoScene extends Scene {
       visivel: jogador.id === 'humano',
     }));
   }
+
+  private redesenharMaos = (): void => {
+    this.limparObjetos();
+    if (this.maos) {
+      this.desenharMaos(this.maos);
+    }
+  };
 
   private desenharMaos(maos: MaoJogador[]): void {
     const cx = this.cameras.main.centerX;
@@ -61,6 +74,15 @@ export class JogoScene extends Scene {
   }
 
   shutdown(): void {
+    if (this.redesenhar) {
+      this.scale.off('resize', this.redesenhar);
+      this.redesenhar.limpar();
+      this.redesenhar = undefined;
+    }
+    this.limparObjetos();
+  }
+
+  private limparObjetos(): void {
     this.objetos.forEach((o) => {
       o.destroy();
     });
