@@ -136,6 +136,15 @@ describe('reavaliacao com blocked by ausente ou valido', () => {
     reavaliar();
     esperarIssueEmEspera();
   });
+
+  it('reativa a issue quando blocked by valido usa referencia sem bullet', async () => {
+    mockIssueEmEspera('## Blocked by\n\n#10');
+    lerIssue.mockReturnValue({ number: 10, state: 'CLOSED' });
+    const reavaliar = await importarReavaliacao();
+    reavaliar();
+    expect(removerLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:waiting');
+    expect(adicionarLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:run');
+  });
 });
 
 describe('reavaliacao com dependencia inexistente ou erro operacional', () => {

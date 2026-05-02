@@ -39,28 +39,13 @@ function todosBloqueadoresFechados(corpo: string): boolean {
 }
 
 function extrairBloqueadores(corpo: string): number[] {
-  const linhas = corpo.split('\n');
-  const inicio = linhas.findIndex((linha) => linha.trim() === '## Blocked by');
+  const resultado = analisarBlockedBy(corpo);
 
-  if (inicio < 0) {
+  if (resultado.status === 'invalido') {
     return [];
   }
 
-  const bloqueadores: number[] = [];
-
-  for (const linha of linhas.slice(inicio + 1)) {
-    if (ehTituloMarkdown(linha)) {
-      break;
-    }
-
-    const match = linha.match(/^\s*-\s+#(\d+)\s*$/);
-
-    if (match) {
-      bloqueadores.push(Number(match[1]));
-    }
-  }
-
-  return bloqueadores;
+  return resultado.dependencias;
 }
 
 function estaFechado(numero: number): boolean {
@@ -69,10 +54,6 @@ function estaFechado(numero: number): boolean {
   } catch {
     return false;
   }
-}
-
-function ehTituloMarkdown(linha: string): boolean {
-  return /^#{1,6}\s+/.test(linha.trim());
 }
 
 function avaliarBlockedByInvalido(issue: IssueGitHub): string | null {
