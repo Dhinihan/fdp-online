@@ -1,15 +1,19 @@
 export const AGENTES_SUPORTADOS = ['codex', 'pi'] as const;
 export const ESFORCOS_CODEX_SUPORTADOS = ['low', 'medium', 'high', 'xhigh'] as const;
+export const ESFORCOS_PI_SUPORTADOS = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh'] as const;
 export const ESFORCO_CODEX_PADRAO = 'low';
+export const ESFORCO_PI_PADRAO = 'medium';
 export const MODELO_CODEX_PADRAO = 'gpt-5.4';
 export const MODELO_PI_PADRAO = 'opencode-go/mimo-v2-pro';
 const NOME_VARIAVEL_AGENTE = 'SANDCASTLE_AGENT';
 const NOME_VARIAVEL_MODELO_CODEX = 'SANDCASTLE_CODEX_MODEL';
 const NOME_VARIAVEL_ESFORCO_CODEX = 'SANDCASTLE_CODEX_EFFORT';
 const NOME_VARIAVEL_MODELO_PI = 'SANDCASTLE_PI_MODEL';
+const NOME_VARIAVEL_ESFORCO_PI = 'SANDCASTLE_PI_EFFORT';
 
 export type AgenteSandcastle = (typeof AGENTES_SUPORTADOS)[number];
 export type EsforcoCodex = (typeof ESFORCOS_CODEX_SUPORTADOS)[number];
+export type EsforcoPi = (typeof ESFORCOS_PI_SUPORTADOS)[number];
 
 interface ConfiguracaoBaseAgente {
   agente: AgenteSandcastle;
@@ -23,6 +27,7 @@ export interface ConfiguracaoCodex extends ConfiguracaoBaseAgente {
 
 export interface ConfiguracaoPi extends ConfiguracaoBaseAgente {
   agente: 'pi';
+  esforco: EsforcoPi;
 }
 
 export type ConfiguracaoAgente = ConfiguracaoCodex | ConfiguracaoPi;
@@ -34,6 +39,7 @@ export function lerConfiguracaoAgente(env = process.env): ConfiguracaoAgente {
     return {
       agente,
       modelo: lerModeloPi(env),
+      esforco: lerEsforcoPi(env),
     };
   }
 
@@ -67,7 +73,35 @@ function lerEsforcoCodex(env: NodeJS.ProcessEnv): EsforcoCodex {
 }
 
 function lerModeloPi(env: NodeJS.ProcessEnv): string {
-  return env[NOME_VARIAVEL_MODELO_PI]?.trim() || MODELO_PI_PADRAO;
+  const valor = env[NOME_VARIAVEL_MODELO_PI];
+
+  if (valor === undefined) {
+    return MODELO_PI_PADRAO;
+  }
+
+  const trimado = valor.trim();
+
+  if (!trimado) {
+    throw new Error(`Valor invalido para ${NOME_VARIAVEL_MODELO_PI}: modelo nao pode ser vazio.`);
+  }
+
+  return trimado;
+}
+
+function lerEsforcoPi(env: NodeJS.ProcessEnv): EsforcoPi {
+  const valor = env[NOME_VARIAVEL_ESFORCO_PI]?.trim().toLowerCase();
+
+  if (!valor) {
+    return ESFORCO_PI_PADRAO;
+  }
+
+  if (ESFORCOS_PI_SUPORTADOS.includes(valor as EsforcoPi)) {
+    return valor as EsforcoPi;
+  }
+
+  throw new Error(
+    `Valor invalido para ${NOME_VARIAVEL_ESFORCO_PI}: ${valor}. Valores suportados: ${ESFORCOS_PI_SUPORTADOS.join(', ')}.`,
+  );
 }
 
 function lerAgente(env: NodeJS.ProcessEnv): AgenteSandcastle {
