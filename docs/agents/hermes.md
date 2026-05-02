@@ -27,6 +27,10 @@ responsabilidade do Sandcastle + CodeRabbit.
    quebrar o PRD em vertical slices independentes.
 5. **Registro de decisões** — Atualiza CONTEXT.md e ADRs
    quando uma decisão cristaliza.
+6. **PRs de documentação** — Abre PRs com atualizações de
+   documentação geradas durante as sessões de planejamento
+   (workflows, ADRs, CONTEXT.md). Segue o mesmo fluxo: Hermes
+   propõe, Vinícius autoriza, Hermes sobe a PR.
 
 ---
 
