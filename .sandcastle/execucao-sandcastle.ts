@@ -4,6 +4,7 @@ import { homedir } from 'node:os';
 import { codex, pi, run, type AgentProvider, type RunResult } from '@ai-hero/sandcastle';
 import { docker } from '@ai-hero/sandcastle/sandboxes/docker';
 import { lerConfiguracaoAgente } from './configuracao-agente';
+import { montarEnvAgente, montarEnvSandbox } from './env-sandcastle';
 
 const NOME_IMAGEM_SANDCASTLE = 'sandcastle:fdp-online';
 const CAMINHO_AUTH_CODEX = `${homedir()}/.codex/auth.json`;
@@ -80,21 +81,6 @@ function montarAgente(configuracao: ReturnType<typeof lerConfiguracaoAgente>): A
 
 function montarNomeExecucao(branch: string): string {
   return `sandcastle-${branch}-${String(Date.now())}`;
-}
-
-function montarEnvAgente(): Record<string, string> {
-  return {
-    ...(process.env.OPENAI_API_KEY ? { OPENAI_API_KEY: process.env.OPENAI_API_KEY } : {}),
-    ...(process.env.OPENCODE_API_KEY ? { OPENCODE_API_KEY: process.env.OPENCODE_API_KEY } : {}),
-  };
-}
-
-function montarEnvSandbox(): Record<string, string> {
-  return {
-    ...(process.env.GITHUB_TOKEN ? { GH_TOKEN: process.env.GITHUB_TOKEN } : {}),
-    ...(process.env.GITHUB_TOKEN ? { GITHUB_TOKEN: process.env.GITHUB_TOKEN } : {}),
-    ...(process.env.OPENCODE_API_KEY ? { OPENCODE_API_KEY: process.env.OPENCODE_API_KEY } : {}),
-  };
 }
 
 function montarHooksSandbox(): {
