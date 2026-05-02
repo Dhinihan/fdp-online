@@ -46,6 +46,8 @@ Hoje o fluxo automatizado usa a pasta `.sandcastle/`, os scripts do `package.jso
 
 Quando o agente identificar dependência de outra issue aberta, ele deve usar `sandcastle:waiting`, remover `sandcastle:run`, registrar os bloqueadores no campo canônico `## Blocked by` e comentar objetivamente quais bloqueadores seguem abertos e por que a issue entrou em espera.
 
+Antes de montar a fila executável, o cron também reavalia issues em `sandcastle:waiting` como fail-safe. Se a seção `## Blocked by` estiver ausente, duplicada, vazia, ilegível, apontando para PR ou incompatível com o fluxo automático, a issue sai de `sandcastle:waiting`, entra em `sandcastle:blocked` e recebe um comentário curto com o motivo e a correção esperada.
+
 ### Branch de execução
 
 - Cada issue roda em um branch isolado no formato `sandcastle-issue-<id>`.

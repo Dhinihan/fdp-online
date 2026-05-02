@@ -8,6 +8,8 @@ export {
   atualizarCorpoIssue,
   atualizarIssueComDependencias,
   atualizarSecaoBlockedBy,
+  comentarIssue,
+  issueEhPullRequest,
   lerComentariosIssue,
   lerIssue,
   listarIssuesCandidatas,

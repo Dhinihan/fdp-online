@@ -145,6 +145,16 @@ function ehTituloMarkdown(linha: string): boolean {
   return /^#{1,6}\s+/.test(linha.trim());
 }
 
+export function comentarIssue(numero: number, comentario: string): void {
+  executarGh(['issue', 'comment', String(numero), '--body', comentario]);
+}
+
+export function issueEhPullRequest(numero: number): boolean {
+  const resultado = executarGhSemErro(['pr', 'view', String(numero), '--json', 'number']);
+
+  return resultado.status === 0;
+}
+
 function erroLabelAusente(resultado: ResultadoGh): boolean {
   const detalhe = `${resultado.stderr}\n${resultado.stdout}`.toLowerCase();
 
