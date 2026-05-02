@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { codex, pi, run, type AgentProvider, type RunResult } from '@ai-hero/sandcastle';
 import { docker } from '@ai-hero/sandcastle/sandboxes/docker';
-import { lerConfiguracaoAgente } from './configuracao-agente';
+import { lerConfiguracaoAgente, type EsforcoPi } from './configuracao-agente';
 import { montarEnvAgente, montarEnvSandbox } from './env-sandcastle';
 
 const NOME_IMAGEM_SANDCASTLE = 'sandcastle:fdp-online';
@@ -73,10 +73,31 @@ async function rodarAgente(prompt: string, branch: string): Promise<RunResult> {
 
 function montarAgente(configuracao: ReturnType<typeof lerConfiguracaoAgente>): AgentProvider {
   if (configuracao.agente === 'pi') {
-    return pi(configuracao.modelo, { env: montarEnvAgente() });
+    return montarAgentePi(configuracao.modelo, configuracao.esforco, montarEnvAgente());
   }
 
   return codex(configuracao.modelo, { effort: configuracao.esforco, env: montarEnvAgente() });
+}
+
+function montarAgentePi(modelo: string, esforco: EsforcoPi, env: Record<string, string>): AgentProvider {
+  const base = pi(modelo, { env });
+
+  return {
+    ...base,
+    buildPrintCommand(options) {
+      const resultado = base.buildPrintCommand(options);
+
+      return {
+        ...resultado,
+        command: `${resultado.command} --thinking ${esforco}`,
+      };
+    },
+    buildInteractiveArgs(options) {
+      const args = base.buildInteractiveArgs?.(options) ?? ['pi', '--model', modelo];
+
+      return [...args, '--thinking', esforco];
+    },
+  };
 }
 
 function montarNomeExecucao(branch: string): string {
