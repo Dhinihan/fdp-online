@@ -11,3 +11,9 @@ As skills usam cinco papéis canônicos de triagem. Este arquivo mapeia esses pa
 | `wontfix`         | `wontfix`           | Não será executada                                 |
 
 Quando uma skill mencionar um papel de triagem, use o label correspondente desta tabela.
+
+Estados operacionais do Sandcastle fora da triagem canônica:
+
+- `sandcastle:running`: item atualmente em execução.
+- `sandcastle:waiting`: item aguardando dependência de outra issue aberta; deve sair da fila do agente sem virar bloqueio manual.
+- `sandcastle:blocked`: item bloqueado por ambiente ou por bloqueio manual de escopo.
