@@ -16,7 +16,6 @@ const MARGEM = 60;
 const MARGEM_INFERIOR = 80;
 const ESPACAMENTO_CARTAS = 40;
 const ALTURA_CARTA = 75;
-const GAP_LABEL = 20;
 
 interface PosicaoTela {
   labelX: number;
@@ -74,25 +73,26 @@ export class JogoScene extends Scene {
     const altura = this.cameras.main.height;
     const cx = largura / 2;
     const cy = altura / 2;
+    const deslocamentoLabel = ALTURA_CARTA / 2 + 10;
     return [
       {
         labelX: cx,
-        labelY: altura - MARGEM_INFERIOR - ALTURA_CARTA - GAP_LABEL,
+        labelY: altura - MARGEM_INFERIOR + deslocamentoLabel,
         mao: { x: cx - 60, y: altura - MARGEM_INFERIOR, espacamento: ESPACAMENTO_CARTAS, direcao: 'horizontal' },
       },
       {
         labelX: MARGEM,
-        labelY: cy - ALTURA_CARTA - GAP_LABEL,
+        labelY: cy - 60 - deslocamentoLabel,
         mao: { x: MARGEM, y: cy - 60, espacamento: ESPACAMENTO_CARTAS, direcao: 'vertical' },
       },
       {
         labelX: cx,
-        labelY: MARGEM + ALTURA_CARTA + GAP_LABEL,
+        labelY: MARGEM - deslocamentoLabel,
         mao: { x: cx - 60, y: MARGEM, espacamento: ESPACAMENTO_CARTAS, direcao: 'horizontal' },
       },
       {
         labelX: largura - MARGEM,
-        labelY: cy - ALTURA_CARTA - GAP_LABEL,
+        labelY: cy - 60 - deslocamentoLabel,
         mao: { x: largura - MARGEM, y: cy - 60, espacamento: ESPACAMENTO_CARTAS, direcao: 'vertical' },
       },
     ];
