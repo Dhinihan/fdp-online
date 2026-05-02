@@ -179,7 +179,7 @@ export function obterEstadoOperacionalIssue(issue: Pick<IssueGitHub, 'labels'>):
 }
 
 export function issueEhPullRequest(numero: number): boolean {
-  const resultado = executarGhSemErro(['pr', 'view', String(numero), '--json', 'number']);
+  const resultado = executarGhSemErro(['pr', 'view', String(numero), '--json', 'number,title']);
 
   return resultado.status === 0;
 }
