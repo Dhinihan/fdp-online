@@ -40,8 +40,11 @@ export async function rodarAgenteSandcastle(prompt: string, branch: string): Pro
 }
 
 export function formatarResultadoAgente(prefixo: string, numero: number, resultado: RunResult): string {
+  const configuracao = lerConfiguracaoAgente();
+
   return [
     `${prefixo} #${String(numero)} processado pelo Sandcastle.`,
+    `Executor: agente=${configuracao.agente} modelo=${configuracao.modelo}`,
     `Branch: ${resultado.branch}`,
     `Commits: ${String(resultado.commits.length)}`,
     resultado.logFilePath ? `Log: ${resultado.logFilePath}` : null,
