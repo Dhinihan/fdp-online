@@ -46,6 +46,13 @@ async function importarAdaptador() {
   return adaptadorIssue;
 }
 
+async function listarElegiveis(body: string) {
+  listarIssuesAguardando.mockReturnValue([criarIssueAguardando(body)]);
+  const adaptadorIssue = await importarAdaptador();
+
+  return adaptadorIssue.listarElegiveis();
+}
+
 function prepararMocksBase(): void {
   vi.resetModules();
   vi.clearAllMocks();
@@ -62,32 +69,50 @@ function prepararMocksBase(): void {
   listarIssuesCandidatas.mockReturnValue([]);
 }
 
+function esperarBloqueioManual(motivo: string): void {
+  expect(comentarIssue).toHaveBeenCalledOnce();
+  expect(adicionarLabelIssue).toHaveBeenCalledWith(52, 'sandcastle:blocked');
+  expect(removerLabelIssue).toHaveBeenCalledWith(52, 'sandcastle:waiting');
+  expect(removerLabelIssue).toHaveBeenCalledWith(52, 'sandcastle:run');
+  expect(comentarIssue.mock.calls[0][1]).toContain('Bloqueio manual aplicado');
+  expect(comentarIssue.mock.calls[0][1]).toContain(motivo);
+}
+
+function esperarSemMutacao(): void {
+  expect(adicionarLabelIssue).not.toHaveBeenCalled();
+  expect(removerLabelIssue).not.toHaveBeenCalled();
+  expect(comentarIssue).not.toHaveBeenCalled();
+}
+
 describe('adaptadorIssue', () => {
-  beforeEach(() => {
-    prepararMocksBase();
-  });
+  beforeEach(prepararMocksBase);
 
   it('converte issue em waiting com Blocked by invalido para blocked e comenta o motivo', async () => {
-    listarIssuesAguardando.mockReturnValue([criarIssueAguardando('## What to build\n\ntexto')]);
-    const adaptadorIssue = await importarAdaptador();
-
-    expect(adaptadorIssue.listarElegiveis()).toEqual([]);
-    expect(comentarIssue).toHaveBeenCalledOnce();
-    expect(adicionarLabelIssue).toHaveBeenCalledWith(52, 'sandcastle:blocked');
-    expect(removerLabelIssue).toHaveBeenCalledWith(52, 'sandcastle:waiting');
-    expect(removerLabelIssue).toHaveBeenCalledWith(52, 'sandcastle:run');
-    expect(comentarIssue.mock.calls[0][1]).toContain('Bloqueio manual aplicado');
-    expect(comentarIssue.mock.calls[0][1]).toContain('secao `## Blocked by` ausente');
+    expect(await listarElegiveis('## What to build\n\ntexto')).toEqual([]);
+    esperarBloqueioManual('secao `## Blocked by` ausente');
     expect(comentarIssue.mock.invocationCallOrder[0]).toBeLessThan(adicionarLabelIssue.mock.invocationCallOrder[0]);
   });
 
   it('mantem issue em waiting quando o Blocked by e valido', async () => {
-    listarIssuesAguardando.mockReturnValue([criarIssueAguardando('## Blocked by\n\n- #10')]);
-    const adaptadorIssue = await importarAdaptador();
+    expect(await listarElegiveis('## Blocked by\n\n- #10')).toEqual([]);
+    esperarSemMutacao();
+  });
 
-    expect(adaptadorIssue.listarElegiveis()).toEqual([]);
-    expect(adicionarLabelIssue).not.toHaveBeenCalled();
-    expect(removerLabelIssue).not.toHaveBeenCalled();
-    expect(comentarIssue).not.toHaveBeenCalled();
+  it('converte issue em waiting para blocked quando a dependencia nao existe', async () => {
+    lerIssue.mockImplementation(() => {
+      throw new Error('Falha ao executar gh issue view 10 --json ...: HTTP 404 Not Found');
+    });
+
+    expect(await listarElegiveis('## Blocked by\n\n- #10')).toEqual([]);
+    esperarBloqueioManual('referencia #10 que nao pode ser lida como issue');
+  });
+
+  it('propaga erro operacional ao reler dependencia de waiting', async () => {
+    lerIssue.mockImplementation(() => {
+      throw new Error('Falha ao executar gh issue view 10 --json ...: rate limit exceeded');
+    });
+
+    await expect(listarElegiveis('## Blocked by\n\n- #10')).rejects.toThrow('rate limit exceeded');
+    esperarSemMutacao();
   });
 });

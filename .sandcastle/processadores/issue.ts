@@ -167,12 +167,31 @@ function avaliarBlockedByInvalido(issue: IssueGitHub): string | null {
 
     try {
       lerIssue(dependencia);
-    } catch {
+    } catch (erro) {
+      if (!ehErroDependenciaInvalida(erro)) {
+        throw erro;
+      }
+
       return `secao \`## Blocked by\` referencia #${String(dependencia)} que nao pode ser lida como issue`;
     }
   }
 
   return null;
+}
+
+function ehErroDependenciaInvalida(erro: unknown): boolean {
+  if (!(erro instanceof Error)) {
+    return false;
+  }
+
+  const mensagem = erro.message.toLowerCase();
+
+  return (
+    mensagem.includes('404') ||
+    mensagem.includes('not found') ||
+    mensagem.includes('could not resolve to an issue') ||
+    mensagem.includes('could not resolve to issue')
+  );
 }
 
 function montarComentarioBloqueioBlockedBy(motivo: string): string {
