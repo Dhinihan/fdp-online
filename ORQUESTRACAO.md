@@ -48,6 +48,24 @@ Hoje o fluxo automatizado usa a pasta `.sandcastle/`, os scripts do `package.jso
   - labels atuais
   - até 5 comentários recentes
 
+### Configuração do agente e overrides
+
+O agente ativo é definido pela variável `SANDCASTLE_AGENT`. Valores suportados: `codex` e `pi`. Padrão: `codex`.
+
+Alternar entre agentes não exige mudança de código: basta ajustar o valor em `.sandcastle/.env` (ou no ambiente do host) antes de rodar o cron.
+
+| Agente    | Modelo padrão             | Esforço padrão | Autenticação                               |
+| --------- | ------------------------- | -------------- | ------------------------------------------ |
+| **Codex** | `gpt-5.4`                 | `low`          | `codex login` no host, ou `OPENAI_API_KEY` |
+| **Pi**    | `opencode-go/mimo-v2-pro` | `medium`       | `OPENCODE_API_KEY` (obrigatória)           |
+
+Overrides de modelo e esforço são aplicados por variáveis de ambiente, sem alterar código:
+
+- Codex: `SANDCASTLE_CODEX_MODEL` e `SANDCASTLE_CODEX_EFFORT` (`low` | `medium` | `high` | `xhigh`)
+- Pi: `SANDCASTLE_PI_MODEL` e `SANDCASTLE_PI_EFFORT` (`off` | `minimal` | `low` | `medium` | `high` | `xhigh`)
+
+O preflight valida apenas o agente ativo: se `SANDCASTLE_AGENT=pi`, a autenticação do Codex não é verificada (e vice-versa).
+
 ---
 
 ## Comandos
@@ -70,16 +88,11 @@ Esse comando:
 
 1. Carrega `.sandcastle/.env`, se existir.
 2. Valida `gh auth status`.
-3. Valida o agente global configurado em `SANDCASTLE_AGENT` (`codex` por padrão, ou `pi`).
-4. Valida Docker e a imagem `sandcastle:fdp-online`.
+3. Valida Docker e a imagem `sandcastle:fdp-online`.
+4. Valida apenas a autenticação do agente ativo configurado em `SANDCASTLE_AGENT`.
 5. Busca issues candidatas no GitHub e executa o agente.
 
-Variáveis suportadas no cron:
-
-- `SANDCASTLE_AGENT`: agente global da rodada. Valores suportados: `codex` e `pi`. Padrão: `codex`
-- `OPENAI_API_KEY`: opcional para `codex` quando `codex login` já foi feito no host
-- `OPENCODE_API_KEY`: obrigatória para `pi`
-- `SANDCASTLE_PI_MODEL`: opcional para `pi`; padrão `opencode-go/mimo-v2-pro`. Deve ser um modelo válido do `pi --list-models`.
+Veja a seção [Configuração do agente e overrides](#configuração-do-agente-e-overrides) para as variáveis suportadas.
 
 ### 3. Rodar o cron com lock e branch protegida
 
@@ -108,7 +121,8 @@ pnpm sandcastle:cron -- --dry-run
 ```
 
 Mostra quais issues seriam enviadas ao agente sem executar sandbox, sem criar branch e sem alterar labels.
-Nesse modo, o preflight continua validando `gh`, Docker e a imagem `sandcastle:fdp-online`, mas nao exige autenticacao do agente ativo.
+
+Nesse modo, o preflight valida `gh`, Docker e a imagem `sandcastle:fdp-online`, mas **não** valida a autenticação do agente ativo. Isso permite inspecionar a fila mesmo sem credenciais do Codex ou do Pi configuradas.
 
 ---
 
@@ -158,7 +172,8 @@ sequenceDiagram
 ## Pré-requisitos
 
 - `gh` instalado e autenticado.
-- `codex login` feito, ou `OPENAI_API_KEY` definido em `.sandcastle/.env`.
+- **Para Codex**: `codex login` feito no host, ou `OPENAI_API_KEY` definido em `.sandcastle/.env`.
+- **Para Pi**: `OPENCODE_API_KEY` definida em `.sandcastle/.env`.
 - Docker funcional.
 - Imagem `sandcastle:fdp-online` criada com `pnpm sandcastle:build`.
 
