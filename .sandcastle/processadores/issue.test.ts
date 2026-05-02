@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const adicionarLabelIssue = vi.fn();
+const comentarIssue = vi.fn();
+const issueEhPullRequest = vi.fn();
 const lerComentariosIssue = vi.fn();
 const lerIssue = vi.fn();
-const listarIssuesCandidatas = vi.fn();
 const listarIssuesEmEspera = vi.fn();
+const listarIssuesCandidatas = vi.fn();
 const removerLabelIssue = vi.fn();
 
 vi.mock('../github', () => ({
@@ -13,10 +15,12 @@ vi.mock('../github', () => ({
   LABEL_EXECUTANDO_SANDCASTLE: 'sandcastle:running',
   LABEL_ESPERA_SANDCASTLE: 'sandcastle:waiting',
   adicionarLabelIssue,
+  comentarIssue,
+  issueEhPullRequest,
   lerComentariosIssue,
   lerIssue,
-  listarIssuesCandidatas,
   listarIssuesEmEspera,
+  listarIssuesCandidatas,
   removerLabelIssue,
 }));
 
@@ -26,24 +30,20 @@ vi.mock('../runner', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  issueEhPullRequest.mockReturnValue(false);
 });
 
-function mockIssueEmEspera() {
+function mockIssueEmEspera(body = '## Blocked by\n\n- #50\n- #49\n') {
   listarIssuesEmEspera.mockReturnValue([
     {
       number: 51,
-      body: '## Blocked by\n\n- #50\n- #49\n',
+      body,
     },
   ]);
 }
 
 function mockIssueEmEsperaComSubsecao() {
-  listarIssuesEmEspera.mockReturnValue([
-    {
-      number: 51,
-      body: '## Blocked by\n\n- #50\n\n### Contexto\n\n- #49\n',
-    },
-  ]);
+  mockIssueEmEspera('## Blocked by\n\n- #50\n\n### Contexto\n\n- #49\n');
 }
 
 async function importarReavaliacao() {
@@ -55,6 +55,16 @@ async function importarReavaliacao() {
 function esperarIssueEmEspera() {
   expect(removerLabelIssue).not.toHaveBeenCalled();
   expect(adicionarLabelIssue).not.toHaveBeenCalled();
+  expect(comentarIssue).not.toHaveBeenCalled();
+}
+
+function esperarBloqueioManual(numero: number, motivo: string) {
+  expect(comentarIssue).toHaveBeenCalledOnce();
+  expect(adicionarLabelIssue).toHaveBeenCalledWith(numero, 'sandcastle:blocked');
+  expect(removerLabelIssue).toHaveBeenCalledWith(numero, 'sandcastle:waiting');
+  expect(removerLabelIssue).toHaveBeenCalledWith(numero, 'sandcastle:run');
+  expect(comentarIssue.mock.calls[0][1]).toContain('Bloqueio manual aplicado');
+  expect(comentarIssue.mock.calls[0][1]).toContain(motivo);
 }
 
 describe('reavaliacao de issues em espera', () => {
@@ -65,9 +75,8 @@ describe('reavaliacao de issues em espera', () => {
       state: 'CLOSED',
     }));
 
-    const reavaliarIssuesEmEspera = await importarReavaliacao();
-
-    reavaliarIssuesEmEspera();
+    const reavaliar = await importarReavaliacao();
+    reavaliar();
 
     expect(removerLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:waiting');
     expect(adicionarLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:run');
@@ -82,16 +91,15 @@ describe('reavaliacao de issues ainda bloqueadas', () => {
       state: numero === 50 ? 'OPEN' : 'CLOSED',
     }));
 
-    const reavaliarIssuesEmEspera = await importarReavaliacao();
-
-    reavaliarIssuesEmEspera();
+    const reavaliar = await importarReavaliacao();
+    reavaliar();
 
     esperarIssueEmEspera();
   });
 });
 
-describe('reavaliacao com bloqueador invalido', () => {
-  it('mantem a issue em espera quando um bloqueador nao pode ser lido', async () => {
+describe('reavaliacao com bloqueador nao legivel', () => {
+  it('mantem a issue em espera quando um bloqueador nao pode ser lido por erro generico', async () => {
     mockIssueEmEspera();
     lerIssue.mockImplementation((numero: number) => {
       if (numero === 50) {
@@ -104,10 +112,51 @@ describe('reavaliacao com bloqueador invalido', () => {
       };
     });
 
-    const reavaliarIssuesEmEspera = await importarReavaliacao();
-
+    const reavaliar = await importarReavaliacao();
     expect(() => {
-      reavaliarIssuesEmEspera();
+      reavaliar();
+    }).not.toThrow();
+    esperarIssueEmEspera();
+  });
+});
+
+describe('reavaliacao com blocked by ausente ou valido', () => {
+  it('bloqueia manualmente quando a secao blocked by esta ausente', async () => {
+    mockIssueEmEspera('## What to build\n\ntexto');
+    const reavaliar = await importarReavaliacao();
+    reavaliar();
+    esperarBloqueioManual(51, 'secao `## Blocked by` ausente');
+    expect(comentarIssue.mock.invocationCallOrder[0]).toBeLessThan(adicionarLabelIssue.mock.invocationCallOrder[0]);
+  });
+
+  it('mantem em espera quando blocked by e valido e bloqueador ainda aberto', async () => {
+    mockIssueEmEspera('## Blocked by\n\n- #10');
+    lerIssue.mockReturnValue({ number: 10, state: 'OPEN' });
+    const reavaliar = await importarReavaliacao();
+    reavaliar();
+    esperarIssueEmEspera();
+  });
+});
+
+describe('reavaliacao com dependencia inexistente ou erro operacional', () => {
+  it('bloqueia manualmente quando a dependencia nao existe (404)', async () => {
+    mockIssueEmEspera('## Blocked by\n\n- #10');
+    lerIssue.mockImplementation(() => {
+      throw new Error('Falha ao executar gh issue view 10 --json ...: HTTP 404 Not Found');
+    });
+    const reavaliar = await importarReavaliacao();
+    reavaliar();
+    esperarBloqueioManual(51, 'referencia #10 que nao pode ser lida como issue');
+  });
+
+  it('mantem em espera quando ocorre erro operacional ao reler dependencia', async () => {
+    mockIssueEmEspera('## Blocked by\n\n- #10');
+    lerIssue.mockImplementation(() => {
+      throw new Error('Falha ao executar gh issue view 10 --json ...: rate limit exceeded');
+    });
+    const reavaliar = await importarReavaliacao();
+    expect(() => {
+      reavaliar();
     }).not.toThrow();
     esperarIssueEmEspera();
   });
@@ -121,9 +170,8 @@ describe('reavaliacao com subsecoes apos blocked by', () => {
       state: numero === 50 ? 'CLOSED' : 'OPEN',
     }));
 
-    const reavaliarIssuesEmEspera = await importarReavaliacao();
-
-    reavaliarIssuesEmEspera();
+    const reavaliar = await importarReavaliacao();
+    reavaliar();
 
     expect(removerLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:waiting');
     expect(adicionarLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:run');
