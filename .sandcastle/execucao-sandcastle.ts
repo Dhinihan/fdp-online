@@ -85,6 +85,7 @@ function montarNomeExecucao(branch: string): string {
 function montarEnvAgente(): Record<string, string> {
   return {
     ...(process.env.OPENAI_API_KEY ? { OPENAI_API_KEY: process.env.OPENAI_API_KEY } : {}),
+    ...(process.env.OPENCODE_API_KEY ? { OPENCODE_API_KEY: process.env.OPENCODE_API_KEY } : {}),
   };
 }
 
