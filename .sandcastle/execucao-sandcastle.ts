@@ -1,10 +1,10 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { codex, run, type RunResult } from '@ai-hero/sandcastle';
+import { codex, pi, run, type AgentProvider, type RunResult } from '@ai-hero/sandcastle';
 import { docker } from '@ai-hero/sandcastle/sandboxes/docker';
+import { lerConfiguracaoAgente } from './configuracao-agente';
 
-const MODELO_CODEX = 'gpt-5.4';
 const NOME_IMAGEM_SANDCASTLE = 'sandcastle:fdp-online';
 const CAMINHO_AUTH_CODEX = `${homedir()}/.codex/auth.json`;
 const CAMINHO_CONFIG_DOCKER = `${homedir()}/.docker/config.json`;
@@ -19,6 +19,14 @@ export function validarAutenticacaoCodex(): void {
   if (!existsSync(CAMINHO_AUTH_CODEX)) {
     throw new Error('Rode `codex login` ou defina OPENAI_API_KEY em .sandcastle/.env antes do cron.');
   }
+}
+
+export function validarAutenticacaoPi(): void {
+  if (process.env.OPENCODE_API_KEY?.trim()) {
+    return;
+  }
+
+  throw new Error('Defina OPENCODE_API_KEY em .sandcastle/.env antes de rodar o cron com SANDCASTLE_AGENT=pi.');
 }
 
 export function validarDocker(): void {
@@ -42,8 +50,10 @@ export function formatarResultadoAgente(prefixo: string, numero: number, resulta
 }
 
 async function rodarAgente(prompt: string, branch: string): Promise<RunResult> {
+  const configuracao = lerConfiguracaoAgente();
+
   return run({
-    agent: codex(MODELO_CODEX, { effort: 'low', env: montarEnvAgente() }),
+    agent: montarAgente(configuracao),
     sandbox: docker({
       imageName: NOME_IMAGEM_SANDCASTLE,
       mounts: montarMountsDocker(),
@@ -58,6 +68,14 @@ async function rodarAgente(prompt: string, branch: string): Promise<RunResult> {
     logging: { type: 'stdout' },
     name: montarNomeExecucao(branch),
   });
+}
+
+function montarAgente(configuracao: ReturnType<typeof lerConfiguracaoAgente>): AgentProvider {
+  if (configuracao.agente === 'pi') {
+    return pi(configuracao.modelo, { env: montarEnvAgente() });
+  }
+
+  return codex(configuracao.modelo, { effort: configuracao.esforco, env: montarEnvAgente() });
 }
 
 function montarNomeExecucao(branch: string): string {

@@ -1,7 +1,9 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { loadEnvFile } from 'node:process';
+import { lerConfiguracaoAgente } from './configuracao-agente';
 import {
   validarAutenticacaoCodex,
+  validarAutenticacaoPi,
   validarDocker,
   formatarResultadoAgente,
   rodarAgenteSandcastle,
@@ -26,7 +28,7 @@ interface EntradaFila {
 export function prepararAmbiente(): void {
   carregarEnvLocal();
   validarGhDisponivel();
-  validarAutenticacaoCodex();
+  validarAutenticacaoAgente();
   validarDocker();
 }
 
@@ -129,4 +131,15 @@ function carregarEnvLocal(): void {
   if (existsSync(CAMINHO_ENV)) {
     loadEnvFile(CAMINHO_ENV);
   }
+}
+
+function validarAutenticacaoAgente(): void {
+  const configuracao = lerConfiguracaoAgente();
+
+  if (configuracao.agente === 'pi') {
+    validarAutenticacaoPi();
+    return;
+  }
+
+  validarAutenticacaoCodex();
 }

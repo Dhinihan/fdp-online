@@ -6,13 +6,13 @@
 
 ## Visão Geral
 
-| Entidade       | Função                                                                                             |
-| -------------- | -------------------------------------------------------------------------------------------------- |
-| **Vinícius**   | Dono do produto. Revisa PRs direto no GitHub.                                                      |
-| **Hermes**     | Papel ainda em definição. O workflow oficial do Hermes será documentado no futuro.                 |
-| **Sandcastle** | Executor do agente. Sobe sandbox Docker, cria branch isolada e roda o Codex com prompt controlado. |
-| **Codex**      | Coding agent que implementa código, cria commits e atualiza o branch da issue.                     |
-| **GitHub**     | Repo, issues, PRs e labels. Fonte da verdade.                                                      |
+| Entidade       | Função                                                                                                          |
+| -------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Vinícius**   | Dono do produto. Revisa PRs direto no GitHub.                                                                   |
+| **Hermes**     | Papel ainda em definição. O workflow oficial do Hermes será documentado no futuro.                              |
+| **Sandcastle** | Executor do agente. Sobe sandbox Docker, cria branch isolada e roda o agente configurado com prompt controlado. |
+| **Codex / Pi** | Agentes de execução suportados no cron atual.                                                                   |
+| **GitHub**     | Repo, issues, PRs e labels. Fonte da verdade.                                                                   |
 
 ---
 
@@ -70,9 +70,15 @@ Esse comando:
 
 1. Carrega `.sandcastle/.env`, se existir.
 2. Valida `gh auth status`.
-3. Valida autenticação do Codex (`OPENAI_API_KEY` ou `~/.codex/auth.json`).
+3. Valida o agente global configurado em `SANDCASTLE_AGENT` (`codex` por padrão, ou `pi`).
 4. Valida Docker e a imagem `sandcastle:fdp-online`.
 5. Busca issues candidatas no GitHub e executa o agente.
+
+Variáveis suportadas no cron:
+
+- `SANDCASTLE_AGENT`: agente global da rodada. Valores suportados: `codex` e `pi`. Padrão: `codex`
+- `OPENAI_API_KEY`: opcional para `codex` quando `codex login` já foi feito no host
+- `OPENCODE_API_KEY`: obrigatória para `pi`
 
 ### 3. Rodar o cron com lock e branch protegida
 
