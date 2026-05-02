@@ -9,7 +9,7 @@
 | Entidade       | Função                                                                                                          |
 | -------------- | --------------------------------------------------------------------------------------------------------------- |
 | **Vinícius**   | Dono do produto. Revisa PRs direto no GitHub.                                                                   |
-| **Hermes**     | Papel ainda em definição. O workflow oficial do Hermes será documentado no futuro.                              |
+| **Hermes**     | Planejamento e refinamento de issues. Consulte `docs/agents/hermes.md`.                                         |
 | **Sandcastle** | Executor do agente. Sobe sandbox Docker, cria branch isolada e roda o agente configurado com prompt controlado. |
 | **Codex / Pi** | Agentes de execução suportados no cron atual.                                                                   |
 | **GitHub**     | Repo, issues, PRs e labels. Fonte da verdade.                                                                   |
@@ -19,7 +19,6 @@
 ## Escopo Deste Documento
 
 - Este documento descreve apenas o fluxo atual do Sandcastle.
-- O papel do Hermes no processo ainda não está fechado e não deve ser inferido a partir deste arquivo.
 - Sempre que houver conflito entre este documento e a implementação em `.sandcastle/`, a implementação atual prevalece até a documentação ser atualizada.
 
 ---
@@ -214,6 +213,5 @@ sequenceDiagram
 
 ## Próximos Passos
 
-1. Definir futuramente o papel do Hermes no processo e documentá-lo sem misturar com o fluxo atual do Sandcastle.
-2. Documentar a política de criação de PR pelo agente quando esse fluxo estiver estável.
-3. Adicionar cleanup explícito de branches e estratégia de retry, se isso virar necessidade real.
+1. Documentar a política de criação de PR pelo agente quando esse fluxo estiver estável.
+2. Adicionar cleanup explícito de branches e estratégia de retry, se isso virar necessidade real.
