@@ -37,6 +37,17 @@ function mockIssueEmEspera() {
   ]);
 }
 
+async function importarReavaliacao() {
+  const { reavaliarIssuesEmEspera } = await import('./issue');
+
+  return reavaliarIssuesEmEspera;
+}
+
+function esperarIssueEmEspera() {
+  expect(removerLabelIssue).not.toHaveBeenCalled();
+  expect(adicionarLabelIssue).not.toHaveBeenCalled();
+}
+
 describe('reavaliacao de issues em espera', () => {
   it('reativa a issue quando todos os bloqueadores estao fechados', async () => {
     mockIssueEmEspera();
@@ -45,14 +56,16 @@ describe('reavaliacao de issues em espera', () => {
       state: 'CLOSED',
     }));
 
-    const { reavaliarIssuesEmEspera } = await import('./issue');
+    const reavaliarIssuesEmEspera = await importarReavaliacao();
 
     reavaliarIssuesEmEspera();
 
     expect(removerLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:waiting');
     expect(adicionarLabelIssue).toHaveBeenCalledWith(51, 'sandcastle:run');
   });
+});
 
+describe('reavaliacao de issues ainda bloqueadas', () => {
   it('mantem a issue em espera quando ainda existe bloqueador aberto', async () => {
     mockIssueEmEspera();
     lerIssue.mockImplementation((numero: number) => ({
@@ -60,11 +73,33 @@ describe('reavaliacao de issues em espera', () => {
       state: numero === 50 ? 'OPEN' : 'CLOSED',
     }));
 
-    const { reavaliarIssuesEmEspera } = await import('./issue');
+    const reavaliarIssuesEmEspera = await importarReavaliacao();
 
     reavaliarIssuesEmEspera();
 
-    expect(removerLabelIssue).not.toHaveBeenCalled();
-    expect(adicionarLabelIssue).not.toHaveBeenCalled();
+    esperarIssueEmEspera();
+  });
+});
+
+describe('reavaliacao com bloqueador invalido', () => {
+  it('mantem a issue em espera quando um bloqueador nao pode ser lido', async () => {
+    mockIssueEmEspera();
+    lerIssue.mockImplementation((numero: number) => {
+      if (numero === 50) {
+        throw new Error('issue nao encontrada');
+      }
+
+      return {
+        number: numero,
+        state: 'CLOSED',
+      };
+    });
+
+    const reavaliarIssuesEmEspera = await importarReavaliacao();
+
+    expect(() => {
+      reavaliarIssuesEmEspera();
+    }).not.toThrow();
+    esperarIssueEmEspera();
   });
 });

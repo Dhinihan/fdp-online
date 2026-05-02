@@ -115,7 +115,7 @@ function obterBranch(issue: IssueGitHub): string {
 function todosBloqueadoresFechados(corpo: string): boolean {
   const bloqueadores = extrairBloqueadores(corpo);
 
-  return bloqueadores.length > 0 && bloqueadores.every((numero) => lerIssue(numero).state === 'CLOSED');
+  return bloqueadores.length > 0 && bloqueadores.every(estaFechado);
 }
 
 function extrairBloqueadores(corpo: string): number[] {
@@ -141,6 +141,14 @@ function extrairBloqueadores(corpo: string): number[] {
   }
 
   return bloqueadores;
+}
+
+function estaFechado(numero: number): boolean {
+  try {
+    return lerIssue(numero).state === 'CLOSED';
+  } catch {
+    return false;
+  }
 }
 
 function aplicarPlaceholdersPrompt(promptBase: string): string {
