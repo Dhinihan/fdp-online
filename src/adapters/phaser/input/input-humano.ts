@@ -18,7 +18,10 @@ export function configurarInteracaoHumano(config: ConfigInteracaoHumano): void {
   objetosMao.forEach((objeto, j) => {
     const container = objeto as Phaser.GameObjects.Container;
     container.setInteractive();
-    const carta = cartas[j];
+    const carta = cartas.at(j);
+    if (!carta) {
+      return;
+    }
     container.setData('carta', carta);
     container.on('pointerdown', () => {
       aoClicarCarta({ cena, container, carta, partida, decisorHumano, destaque });
