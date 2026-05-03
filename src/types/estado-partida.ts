@@ -1,7 +1,7 @@
 import type { Carta } from '@/core/Carta';
 import type { Jogador } from './entidades';
 
-export type FasePartida = 'aguardandoJogada';
+export type FasePartida = 'distribuindo' | 'aguardandoJogada' | 'processandoTurno' | 'turnoConcluido';
 
 export interface MaoJogador {
   jogador: Jogador;
@@ -11,5 +11,7 @@ export interface MaoJogador {
 
 export interface EstadoPartida {
   fase: FasePartida;
+  jogadorAtual: number;
   mesa: Carta[];
+  maos: MaoJogador[];
 }
