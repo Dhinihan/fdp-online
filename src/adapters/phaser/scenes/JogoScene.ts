@@ -52,8 +52,11 @@ export class JogoScene extends Scene {
       .decidirJogada(maoHumano, {})
       .then((carta) => {
         this.aoJogarCarta(carta);
+        this.iniciarInteracao();
       })
-      .catch(() => {});
+      .catch((erro: unknown) => {
+        console.error('Falha ao processar jogada humana', erro);
+      });
   }
 
   private aoJogarCarta(carta: Carta): void {
