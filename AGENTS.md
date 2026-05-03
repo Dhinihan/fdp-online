@@ -44,11 +44,21 @@ src/
 
 ## 3. Testes
 
-- **Core**: TDD obrigatório. 1 teste → 1 implementação → repete.
-- **Test runner**: Vitest.
-- **E2E**: Playwright com seed fixa (`VITE_TEST_SEED=1337`) para fluxos jogáveis e regressões visuais com valor real.
-- **Adapter (Phaser)**: não faz TDD. E2E/screenshot entram quando houver fluxo de jogo ou risco concreto de regressão visual, como telas com progressão do jogador ou conclusão de rodada; placeholder isolado e protótipo simples, como arte temporária estática ou spike técnico sem integração de UI, não exigem E2E por padrão.
+### Core (`src/core/`, `src/store/`)
+
+- **TDD obrigatório.** 1 teste → 1 implementação → repete.
+- Test runner: **Vitest**.
 - Todo código do core precisa de teste antes do PR.
+- Nomes de teste em português descritivos (ex: `deve retornar true quando 3 compara com 2`).
+
+### Adapter (`src/adapters/`)
+
+⚠️ **NUNCA escreva testes unitários (Vitest) para código em `src/adapters/`.**
+
+- O Phaser depende de WebGL/Canvas e **não inicializa em Node**. Testes em Vitest quebram ou falseiam resultado.
+- A validação é **visual**: o Vercel gera deploy preview automaticamente. O revisor humano verifica no browser.
+- **Exceção:** `BotDeterministico.ts` e outros adapters **sem dependência do Phaser** podem ter teste unitário normalmente.
+- E2E com Playwright (`VITE_TEST_SEED=1337`) entra na Fase 5, para fluxos jogáveis completos e regressão visual com valor real. Não use antes disso.
 
 ---
 
