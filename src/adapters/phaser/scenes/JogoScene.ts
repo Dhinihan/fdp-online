@@ -1,6 +1,8 @@
 import { Scene } from 'phaser';
-import { criarBaralho, distribuir, embaralhar } from '@/core/Baralho';
+import { BotDeterministico } from '@/adapters/bots/BotDeterministico';
 import type { Carta } from '@/core/Carta';
+import { Partida } from '@/core/Partida';
+import { createEmissorEventos } from '@/store/emissor-eventos';
 import type { Jogador } from '@/types/entidades';
 import type { MaoJogador } from '@/types/estado-partida';
 import { DecisorHumano } from '../DecisorHumano';
@@ -24,12 +26,13 @@ const ALTURA_CARTA = 75;
 
 export class JogoScene extends Scene {
   private objetos: Phaser.GameObjects.GameObject[] = [];
-  private maos?: MaoJogador[];
   private redesenhar?: ResizeDebouncer;
-  private decisor = new DecisorHumano();
-  private mesa: Carta[] = [];
+  private decisorHumano = new DecisorHumano();
   private mesaObjetos: Phaser.GameObjects.GameObject[] = [];
   private destaque: EstadoDestaque = {};
+  private partida?: Partida;
+  private labels: Phaser.GameObjects.Text[] = [];
+  private tweenVez?: Phaser.Tweens.Tween;
 
   constructor() {
     super({ key: 'JogoScene' });
@@ -37,59 +40,83 @@ export class JogoScene extends Scene {
 
   create(): void {
     this.cameras.main.setBackgroundColor('#1a1a2e');
-    this.maos = this.montarMaos();
-    this.desenharMaos(this.maos);
-    this.iniciarInteracao();
-    this.redesenhar = criarDebounceResize(this, this.redesenharMaos);
+    this.partida = this.criarPartida();
+    this.partida.distribuir(4);
+    this.desenharMaos(this.partida.estado.maos);
+    this.atualizarIndicadorVez();
+    void this.iniciarProcessamentoTurno();
+    this.redesenhar = criarDebounceResize(this, this.redesenharTela);
     this.scale.on('resize', this.redesenhar);
     this.events.once('shutdown', this.aoEncerrar);
   }
 
-  private iniciarInteracao(): void {
-    if (!this.maos) return;
-    const maoHumano = this.maos[0].cartas;
-    if (maoHumano.length === 0) return;
-    this.decisor
-      .decidirJogada(maoHumano, {})
-      .then((carta) => {
-        this.aoJogarCarta(carta);
-        this.iniciarInteracao();
-      })
-      .catch((erro: unknown) => {
-        console.error('Falha ao processar jogada humana', erro);
-      });
+  private criarPartida(): Partida {
+    const emissor = createEmissorEventos();
+    emissor.on('CARTA_JOGADA', () => {
+      this.atualizarMesa();
+    });
+    const decisores = new Map<string, import('@/core/portas/DecisorJogada').DecisorJogada>([
+      ['humano', this.decisorHumano],
+      ['bot1', new BotDeterministico()],
+      ['bot2', new BotDeterministico()],
+      ['bot3', new BotDeterministico()],
+    ]);
+    return new Partida(JOGADORES, decisores, emissor);
   }
 
-  private aoJogarCarta(carta: Carta): void {
-    this.mesa.push(carta);
-    if (this.maos) {
-      this.maos[0].cartas = this.maos[0].cartas.filter((c) => c !== carta);
+  private async iniciarProcessamentoTurno(): Promise<void> {
+    while (this.partida && this.partida.estado.fase !== 'turnoConcluido') {
+      const jogadorAtual = this.partida.estado.jogadorAtual;
+      const ehBot = this.partida.estado.maos[jogadorAtual].jogador.id !== 'humano';
+      if (ehBot) await this.esperar(500);
+      await this.partida.jogarTurno();
+      this.atualizarIndicadorVez();
     }
-    this.redesenharMaos();
   }
 
-  private montarMaos(): MaoJogador[] {
-    const cartas = distribuir(embaralhar(criarBaralho()), 4, 4);
-    return JOGADORES.map((jogador, i) => ({
-      jogador,
-      cartas: cartas[i],
-      visivel: jogador.id === 'humano',
-    }));
+  private esperar(ms: number): Promise<void> {
+    return new Promise((resolve) => this.time.delayedCall(ms, resolve));
   }
 
-  private redesenharMaos = (): void => {
+  private atualizarMesa(): void {
+    this.limparMesa();
+    if (this.partida) renderizarMesa({ cena: this, mesa: this.partida.estado.mesa, objetos: this.mesaObjetos });
+  }
+
+  private atualizarIndicadorVez(): void {
+    this.labels.forEach((label, i) => {
+      label.setColor(this.partida && i === this.partida.estado.jogadorAtual ? '#ffff00' : '#ffffff');
+    });
+    if (this.tweenVez) {
+      this.tweenVez.stop();
+      this.tweenVez.remove();
+      this.tweenVez = undefined;
+    }
+    if (this.partida) {
+      this.tweenVez = this.tweens.add({
+        targets: this.labels[this.partida.estado.jogadorAtual],
+        scale: { from: 1, to: 1.2 },
+        duration: 500,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+    }
+  }
+
+  private redesenharTela = (): void => {
     destruirDestaque(this.destaque);
     this.limparObjetos();
     this.limparMesa();
-    if (this.maos) {
-      this.desenharMaos(this.maos);
-    }
-    if (this.mesa.length > 0) {
-      renderizarMesa({ cena: this, mesa: this.mesa, objetos: this.mesaObjetos });
+    if (this.partida) {
+      this.desenharMaos(this.partida.estado.maos);
+      this.atualizarMesa();
+      this.atualizarIndicadorVez();
     }
   };
 
   private desenharMaos(maos: MaoJogador[]): void {
+    this.labels = [];
     const posicoes = calcularPosicoes({
       largura: this.cameras.main.width,
       altura: this.cameras.main.height,
@@ -103,14 +130,11 @@ export class JogoScene extends Scene {
       const label = renderizarLabel({ cena: this, x: p.labelX, y: p.labelY, texto: mao.jogador.nome });
       label.setDepth(10);
       this.objetos.push(label);
+      this.labels.push(label);
       const objetosMao = renderizarMao({ cena: this, posicao: p.mao, cartas: mao.cartas, visivel: mao.visivel });
       this.objetos.push(...objetosMao);
-
-      if (mao.jogador.id === 'humano') {
-        this.configurarInteracaoHumano(objetosMao, mao.cartas);
-      }
+      if (mao.jogador.id === 'humano') this.configurarInteracaoHumano(objetosMao, mao.cartas);
     });
-
     this.criarFundoInterativo();
   }
 
@@ -140,15 +164,15 @@ export class JogoScene extends Scene {
 
   private aoClicarCarta(container: Phaser.GameObjects.Container, carta: Carta): void {
     if (this.destaque.container === container) {
-      this.decisor.confirmar();
+      this.decisorHumano.confirmar();
       return;
     }
-    this.decisor.selecionar(carta);
+    this.decisorHumano.selecionar(carta);
     destacarCarta(this, container, this.destaque);
   }
 
   private aoClicarFundo(): void {
-    this.decisor.desmarcar();
+    this.decisorHumano.desmarcar();
     removerDestaque(this.destaque);
   }
 
@@ -157,6 +181,11 @@ export class JogoScene extends Scene {
       this.scale.off('resize', this.redesenhar);
       this.redesenhar.limpar();
       this.redesenhar = undefined;
+    }
+    if (this.tweenVez) {
+      this.tweenVez.stop();
+      this.tweenVez.remove();
+      this.tweenVez = undefined;
     }
     this.limparObjetos();
     this.limparMesa();
