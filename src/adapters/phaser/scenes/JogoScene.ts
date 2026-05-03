@@ -110,6 +110,10 @@ export class JogoScene extends Scene {
       }
     });
 
+    this.criarFundoInterativo();
+  }
+
+  private criarFundoInterativo(): void {
     const { width: largura, height: altura } = this.cameras.main;
     const fundo = this.add
       .rectangle(largura / 2, altura / 2, largura, altura, 0x000000, 0)
