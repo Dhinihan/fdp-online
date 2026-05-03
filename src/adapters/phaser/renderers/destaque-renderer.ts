@@ -13,6 +13,7 @@ export function destacarCarta(cena: Scene, container: Phaser.GameObjects.Contain
 
   if (!estado.highlight) {
     estado.highlight = cena.add.graphics();
+    estado.highlight.setDepth(100);
   }
   estado.highlight.clear();
   estado.highlight.lineStyle(3, 0xffff00, 1);
