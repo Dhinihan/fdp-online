@@ -53,7 +53,7 @@ export class JogoScene extends Scene {
   private criarPartida(): Partida {
     const emissor = createEmissorEventos();
     emissor.on('CARTA_JOGADA', () => {
-      this.atualizarMesa();
+      this.redesenharTela();
     });
     const decisores = new Map<string, import('@/core/portas/DecisorJogada').DecisorJogada>([
       ['humano', this.decisorHumano],
