@@ -21,7 +21,13 @@ export default defineConfig(
       globals: { ...globals.browser },
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['*.config.js', 'tests/*.test.ts', 'tests/core/*.test.ts', 'tests/e2e/*.spec.ts'],
+          allowDefaultProject: [
+            '*.config.js',
+            'tests/*.test.ts',
+            'tests/core/*.test.ts',
+            'tests/adapters/phaser/*.test.ts',
+            'tests/e2e/*.spec.ts',
+          ],
           noWarnOnMultipleProjects: true,
         },
         tsconfigRootDir: import.meta.dirname,
@@ -51,6 +57,7 @@ export default defineConfig(
       'max-params': ['error', 3],
       'no-console': 'warn',
       eqeqeq: 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'import/order': [
         'error',
         {

@@ -1,9 +1,14 @@
 import { Scene } from 'phaser';
 import { criarBaralho, distribuir, embaralhar } from '@/core/Baralho';
+import type { Carta } from '@/core/Carta';
 import type { Jogador } from '@/types/entidades';
 import type { MaoJogador } from '@/types/estado-partida';
+import { DecisorHumano } from '../DecisorHumano';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
-import { renderizarLabel, renderizarMao, type PosicaoMao } from '../renderers/mao-renderer';
+import { destacarCarta, destruirDestaque, removerDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
+import { renderizarLabel, renderizarMao } from '../renderers/mao-renderer';
+import { renderizarMesa } from '../renderers/mesa-renderer';
+import { calcularPosicoes } from '../renderers/posicoes-mao';
 
 const JOGADORES: Jogador[] = [
   { id: 'humano', nome: 'Você', pontos: 5 },
@@ -17,16 +22,14 @@ const MARGEM_INFERIOR = 80;
 const ESPACAMENTO_CARTAS = 40;
 const ALTURA_CARTA = 75;
 
-interface PosicaoTela {
-  labelX: number;
-  labelY: number;
-  mao: PosicaoMao;
-}
-
 export class JogoScene extends Scene {
   private objetos: Phaser.GameObjects.GameObject[] = [];
   private maos?: MaoJogador[];
   private redesenhar?: ResizeDebouncer;
+  private decisor = new DecisorHumano();
+  private mesa: Carta[] = [];
+  private mesaObjetos: Phaser.GameObjects.GameObject[] = [];
+  private destaque: EstadoDestaque = {};
 
   constructor() {
     super({ key: 'JogoScene' });
@@ -36,9 +39,29 @@ export class JogoScene extends Scene {
     this.cameras.main.setBackgroundColor('#1a1a2e');
     this.maos = this.montarMaos();
     this.desenharMaos(this.maos);
+    this.iniciarInteracao();
     this.redesenhar = criarDebounceResize(this, this.redesenharMaos);
     this.scale.on('resize', this.redesenhar);
     this.events.once('shutdown', this.aoEncerrar);
+  }
+
+  private iniciarInteracao(): void {
+    if (!this.maos) return;
+    const maoHumano = this.maos[0].cartas;
+    this.decisor
+      .decidirJogada(maoHumano, {})
+      .then((carta) => {
+        this.aoJogarCarta(carta);
+      })
+      .catch(() => {});
+  }
+
+  private aoJogarCarta(carta: Carta): void {
+    this.mesa.push(carta);
+    if (this.maos) {
+      this.maos[0].cartas = this.maos[0].cartas.filter((c) => c !== carta);
+    }
+    this.redesenharMaos();
   }
 
   private montarMaos(): MaoJogador[] {
@@ -51,77 +74,74 @@ export class JogoScene extends Scene {
   }
 
   private redesenharMaos = (): void => {
+    destruirDestaque(this.destaque);
     this.limparObjetos();
+    this.limparMesa();
     if (this.maos) {
       this.desenharMaos(this.maos);
+    }
+    if (this.mesa.length > 0) {
+      renderizarMesa({ cena: this, mesa: this.mesa, objetos: this.mesaObjetos });
     }
   };
 
   private desenharMaos(maos: MaoJogador[]): void {
-    const posicoes = this.posicoes();
+    const posicoes = calcularPosicoes({
+      largura: this.cameras.main.width,
+      altura: this.cameras.main.height,
+      margem: MARGEM,
+      margemInferior: MARGEM_INFERIOR,
+      espacamentoCartas: ESPACAMENTO_CARTAS,
+      alturaCarta: ALTURA_CARTA,
+    });
     maos.forEach((mao, i) => {
       const p = posicoes[i];
       const label = renderizarLabel({ cena: this, x: p.labelX, y: p.labelY, texto: mao.jogador.nome });
       label.setDepth(10);
       this.objetos.push(label);
-      this.objetos.push(...renderizarMao({ cena: this, posicao: p.mao, cartas: mao.cartas, visivel: mao.visivel }));
+      const objetosMao = renderizarMao({ cena: this, posicao: p.mao, cartas: mao.cartas, visivel: mao.visivel });
+      this.objetos.push(...objetosMao);
+
+      if (mao.jogador.id === 'humano') {
+        this.configurarInteracaoHumano(objetosMao, mao.cartas);
+      }
+    });
+
+    const { width: largura, height: altura } = this.cameras.main;
+    const fundo = this.add
+      .rectangle(largura / 2, altura / 2, largura, altura, 0x000000, 0)
+      .setInteractive()
+      .setDepth(-100);
+    this.objetos.push(fundo);
+    fundo.on('pointerdown', () => {
+      this.aoClicarFundo();
     });
   }
 
-  private posicoes(): PosicaoTela[] {
-    const largura = this.cameras.main.width;
-    const altura = this.cameras.main.height;
-    const cx = Math.round(largura / 2);
-    const cy = Math.round(altura / 2);
-    const dl = ALTURA_CARTA / 2 + 10;
-    return [
-      this.posicaoHumano(cx, altura, dl),
-      this.posicaoBotEsquerda(cy, dl),
-      this.posicaoBotTopo(cx, dl),
-      this.posicaoBotDireita(largura, cy, dl),
-    ];
+  private configurarInteracaoHumano(objetosMao: Phaser.GameObjects.GameObject[], cartas: Carta[]): void {
+    objetosMao.forEach((objeto, j) => {
+      const container = objeto as Phaser.GameObjects.Container;
+      container.setInteractive();
+      const carta = cartas[j];
+      container.setData('carta', carta);
+      container.on('pointerdown', () => {
+        this.aoClicarCarta(container, carta);
+      });
+    });
   }
 
-  private posicaoHumano(cx: number, altura: number, dl: number): PosicaoTela {
-    return {
-      labelX: cx,
-      labelY: Math.round(altura - MARGEM_INFERIOR + dl),
-      mao: {
-        x: cx - 60,
-        y: Math.round(altura - MARGEM_INFERIOR),
-        espacamento: ESPACAMENTO_CARTAS,
-        direcao: 'horizontal',
-      },
-    };
+  private aoClicarCarta(container: Phaser.GameObjects.Container, carta: Carta): void {
+    if (this.destaque.container === container) {
+      this.decisor.confirmar();
+      return;
+    }
+    this.decisor.selecionar(carta);
+    destacarCarta(this, container, this.destaque);
   }
 
-  private posicaoBotEsquerda(cy: number, dl: number): PosicaoTela {
-    return {
-      labelX: MARGEM,
-      labelY: Math.round(cy - 60 - dl),
-      mao: { x: MARGEM, y: Math.round(cy - 60), espacamento: ESPACAMENTO_CARTAS, direcao: 'vertical' },
-    };
-  }
-
-  private posicaoBotTopo(cx: number, dl: number): PosicaoTela {
-    return {
-      labelX: cx,
-      labelY: Math.round(MARGEM - dl),
-      mao: { x: cx - 60, y: MARGEM, espacamento: ESPACAMENTO_CARTAS, direcao: 'horizontal' },
-    };
-  }
-
-  private posicaoBotDireita(largura: number, cy: number, dl: number): PosicaoTela {
-    return {
-      labelX: Math.round(largura - MARGEM),
-      labelY: Math.round(cy - 60 - dl),
-      mao: {
-        x: Math.round(largura - MARGEM),
-        y: Math.round(cy - 60),
-        espacamento: ESPACAMENTO_CARTAS,
-        direcao: 'vertical',
-      },
-    };
+  private aoClicarFundo(): void {
+    this.decisor.desmarcar();
+    removerDestaque(this.destaque);
   }
 
   private aoEncerrar = (): void => {
@@ -131,6 +151,8 @@ export class JogoScene extends Scene {
       this.redesenhar = undefined;
     }
     this.limparObjetos();
+    this.limparMesa();
+    destruirDestaque(this.destaque);
   };
 
   private limparObjetos(): void {
@@ -138,5 +160,12 @@ export class JogoScene extends Scene {
       o.destroy();
     });
     this.objetos = [];
+  }
+
+  private limparMesa(): void {
+    this.mesaObjetos.forEach((o) => {
+      o.destroy();
+    });
+    this.mesaObjetos = [];
   }
 }
