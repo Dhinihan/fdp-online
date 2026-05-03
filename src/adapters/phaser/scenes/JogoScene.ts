@@ -1,5 +1,5 @@
 import { Scene } from 'phaser';
-import { criarBaralho, distribuir } from '@/core/Baralho';
+import { criarBaralho, distribuir, embaralhar } from '@/core/Baralho';
 import type { Jogador } from '@/types/entidades';
 import type { MaoJogador } from '@/types/estado-partida';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
@@ -42,7 +42,7 @@ export class JogoScene extends Scene {
   }
 
   private montarMaos(): MaoJogador[] {
-    const cartas = distribuir(criarBaralho(), 4, 4);
+    const cartas = distribuir(embaralhar(criarBaralho()), 4, 4);
     return JOGADORES.map((jogador, i) => ({
       jogador,
       cartas: cartas[i],
