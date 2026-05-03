@@ -71,31 +71,57 @@ export class JogoScene extends Scene {
   private posicoes(): PosicaoTela[] {
     const largura = this.cameras.main.width;
     const altura = this.cameras.main.height;
-    const cx = largura / 2;
-    const cy = altura / 2;
-    const deslocamentoLabel = ALTURA_CARTA / 2 + 10;
+    const cx = Math.round(largura / 2);
+    const cy = Math.round(altura / 2);
+    const dl = ALTURA_CARTA / 2 + 10;
     return [
-      {
-        labelX: cx,
-        labelY: altura - MARGEM_INFERIOR + deslocamentoLabel,
-        mao: { x: cx - 60, y: altura - MARGEM_INFERIOR, espacamento: ESPACAMENTO_CARTAS, direcao: 'horizontal' },
-      },
-      {
-        labelX: MARGEM,
-        labelY: cy - 60 - deslocamentoLabel,
-        mao: { x: MARGEM, y: cy - 60, espacamento: ESPACAMENTO_CARTAS, direcao: 'vertical' },
-      },
-      {
-        labelX: cx,
-        labelY: MARGEM - deslocamentoLabel,
-        mao: { x: cx - 60, y: MARGEM, espacamento: ESPACAMENTO_CARTAS, direcao: 'horizontal' },
-      },
-      {
-        labelX: largura - MARGEM,
-        labelY: cy - 60 - deslocamentoLabel,
-        mao: { x: largura - MARGEM, y: cy - 60, espacamento: ESPACAMENTO_CARTAS, direcao: 'vertical' },
-      },
+      this.posicaoHumano(cx, altura, dl),
+      this.posicaoBotEsquerda(cy, dl),
+      this.posicaoBotTopo(cx, dl),
+      this.posicaoBotDireita(largura, cy, dl),
     ];
+  }
+
+  private posicaoHumano(cx: number, altura: number, dl: number): PosicaoTela {
+    return {
+      labelX: cx,
+      labelY: Math.round(altura - MARGEM_INFERIOR + dl),
+      mao: {
+        x: cx - 60,
+        y: Math.round(altura - MARGEM_INFERIOR),
+        espacamento: ESPACAMENTO_CARTAS,
+        direcao: 'horizontal',
+      },
+    };
+  }
+
+  private posicaoBotEsquerda(cy: number, dl: number): PosicaoTela {
+    return {
+      labelX: MARGEM,
+      labelY: Math.round(cy - 60 - dl),
+      mao: { x: MARGEM, y: Math.round(cy - 60), espacamento: ESPACAMENTO_CARTAS, direcao: 'vertical' },
+    };
+  }
+
+  private posicaoBotTopo(cx: number, dl: number): PosicaoTela {
+    return {
+      labelX: cx,
+      labelY: Math.round(MARGEM - dl),
+      mao: { x: cx - 60, y: MARGEM, espacamento: ESPACAMENTO_CARTAS, direcao: 'horizontal' },
+    };
+  }
+
+  private posicaoBotDireita(largura: number, cy: number, dl: number): PosicaoTela {
+    return {
+      labelX: Math.round(largura - MARGEM),
+      labelY: Math.round(cy - 60 - dl),
+      mao: {
+        x: Math.round(largura - MARGEM),
+        y: Math.round(cy - 60),
+        espacamento: ESPACAMENTO_CARTAS,
+        direcao: 'vertical',
+      },
+    };
   }
 
   private aoEncerrar = (): void => {
