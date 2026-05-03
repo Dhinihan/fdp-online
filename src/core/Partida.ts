@@ -2,6 +2,7 @@ import type { Jogador } from '@/types/entidades';
 import type { EstadoPartida } from '@/types/estado-partida';
 import type { EventoDominio } from '@/types/eventos-dominio';
 import { criarBaralho, distribuir, embaralhar } from './Baralho';
+import type { Carta } from './Carta';
 import type { DecisorJogada } from './portas/DecisorJogada';
 
 interface Emissor {
@@ -49,12 +50,36 @@ export class Partida {
     const jogador = this.jogadores[this._estado.jogadorAtual];
     const decisor = this.decisores.get(jogador.id);
     if (!decisor) {
+      this._estado.fase = 'aguardandoJogada';
       throw new Error(`Decisor não encontrado para jogador ${jogador.id}`);
     }
+    try {
+      await this.executarJogada(jogador, decisor);
+    } catch (erro) {
+      this._estado.fase = 'aguardandoJogada';
+      throw erro;
+    }
+  }
+
+  private async executarJogada(jogador: Jogador, decisor: DecisorJogada): Promise<void> {
     const mao = this._estado.maos[this._estado.jogadorAtual].cartas;
     const carta = await decisor.decidirJogada(mao, this._estado);
-    this._estado.maos[this._estado.jogadorAtual].cartas = mao.filter((c) => c !== carta);
+    const indiceCarta = mao.findIndex((c) => c.valor === carta.valor && c.naipe === carta.naipe);
+    if (indiceCarta === -1) {
+      throw new Error(`Jogada inválida para jogador ${jogador.id}`);
+    }
+    this.removerCartaDaMao(indiceCarta);
     this._estado.mesa.push(carta);
+    this.emitirCartaJogada(jogador, carta);
+    this.avancarJogador();
+  }
+
+  private removerCartaDaMao(indice: number): void {
+    const mao = this._estado.maos[this._estado.jogadorAtual].cartas;
+    this._estado.maos[this._estado.jogadorAtual].cartas = [...mao.slice(0, indice), ...mao.slice(indice + 1)];
+  }
+
+  private emitirCartaJogada(jogador: Jogador, carta: Carta): void {
     this.emissor.emit({
       id: crypto.randomUUID(),
       timestamp: Date.now(),
@@ -63,7 +88,6 @@ export class Partida {
       carta,
       posicaoMesa: this._estado.mesa.length - 1,
     });
-    this.avancarJogador();
   }
 
   private avancarJogador(): void {
