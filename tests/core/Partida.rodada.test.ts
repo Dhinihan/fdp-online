@@ -54,8 +54,7 @@ describe('Partida — vazas e rodada', () => {
   it('deve acumular 4 vazas após 4 turnos', async () => {
     const { partida } = partidaComMaoFixa(MAO_LONGA, 4);
     await jogarTurnos(partida, 16);
-    const totalVazas = Object.values(partida.estado.vazas).reduce((a, b) => a + b, 0);
-    expect(totalVazas).toBe(4);
+    expect(partida.estado.vazas).toEqual({ j1: 1, j2: 1, j3: 1, j4: 1 });
   });
 
   it('deve transitar para rodadaConcluida após o último turno', async () => {
@@ -81,6 +80,11 @@ describe('Partida — eventos de turno e rodada', () => {
     emissor.on('RODADA_ENCERRADA', handler);
     await jogarTurnos(partida, 16);
     expect(handler).toHaveBeenCalledTimes(1);
-    expect(handler).toHaveBeenCalledWith(expect.objectContaining({ tipo: 'RODADA_ENCERRADA' }));
+    expect(handler).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tipo: 'RODADA_ENCERRADA',
+        placar: { j1: 1, j2: 1, j3: 1, j4: 1 },
+      }),
+    );
   });
 });
