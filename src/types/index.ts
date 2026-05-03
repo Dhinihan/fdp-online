@@ -1,4 +1,5 @@
 export * from './entidades';
+export * from './estado-partida';
 export * from './eventos-dominio';
 export * from './eventos-input';
 export * from './eventos-visual';
