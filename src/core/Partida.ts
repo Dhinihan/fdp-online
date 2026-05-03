@@ -2,6 +2,7 @@ import type { Jogador } from '@/types/entidades';
 import type { EstadoPartida } from '@/types/estado-partida';
 import type { EventoDominio } from '@/types/eventos-dominio';
 import { criarBaralho, distribuir, embaralhar } from './Baralho';
+import { compararNaipe, compararValor } from './Carta';
 import type { Carta } from './Carta';
 import type { DecisorJogada } from './portas/DecisorJogada';
 
@@ -24,6 +25,9 @@ export class Partida {
       jogadorAtual: 0,
       mesa: [],
       maos: [],
+      vazas: {},
+      turno: 1,
+      cartasPorRodada: 0,
     };
   }
 
@@ -39,6 +43,7 @@ export class Partida {
       cartas: cartas[i],
       visivel: jogador.id === 'humano',
     }));
+    this._estado.cartasPorRodada = numeroCartas;
     this._estado.fase = 'aguardandoJogada';
   }
 
@@ -69,7 +74,7 @@ export class Partida {
       throw new Error(`Jogada inválida para jogador ${jogador.id}`);
     }
     this.removerCartaDaMao(indiceCarta);
-    this._estado.mesa.push(carta);
+    this._estado.mesa.push({ jogadorId: jogador.id, carta });
     this.emitirCartaJogada(jogador, carta);
     this.avancarJogador();
   }
@@ -91,11 +96,64 @@ export class Partida {
   }
 
   private avancarJogador(): void {
+    if (this._estado.mesa.length === this.jogadores.length) {
+      this.resolverTurno();
+      return;
+    }
     this._estado.jogadorAtual = (this._estado.jogadorAtual + 1) % this.jogadores.length;
-    if (this._estado.jogadorAtual === 0) {
-      this._estado.fase = 'turnoConcluido';
+    this._estado.fase = 'aguardandoJogada';
+  }
+
+  private resolverTurno(): void {
+    const vencedor = this.calcularVencedorTurno();
+    this._estado.vazas[vencedor.id] = (this._estado.vazas[vencedor.id] ?? 0) + 1;
+    this.emitirTurnoGanho(vencedor);
+    this._estado.turno += 1;
+    this._estado.mesa = [];
+
+    if (this._estado.turno > this._estado.cartasPorRodada) {
+      this._estado.fase = 'rodadaConcluida';
+      this.emitirRodadaEncerrada();
     } else {
       this._estado.fase = 'aguardandoJogada';
+      this._estado.jogadorAtual = this.jogadores.findIndex((j) => j.id === vencedor.id);
     }
+  }
+
+  private calcularVencedorTurno(): Jogador {
+    let indiceMelhor = 0;
+    for (let i = 1; i < this._estado.mesa.length; i++) {
+      const cartaAtual = this._estado.mesa[i].carta;
+      const cartaMelhor = this._estado.mesa[indiceMelhor].carta;
+      if (compararValor(cartaAtual, cartaMelhor)) {
+        indiceMelhor = i;
+      } else if (!compararValor(cartaMelhor, cartaAtual) && compararNaipe(cartaAtual, cartaMelhor)) {
+        indiceMelhor = i;
+      }
+    }
+    const jogadorId = this._estado.mesa[indiceMelhor].jogadorId;
+    const vencedor = this.jogadores.find((j) => j.id === jogadorId);
+    if (!vencedor) throw new Error('Vencedor não encontrado');
+    return vencedor;
+  }
+
+  private emitirTurnoGanho(vencedor: Jogador): void {
+    this.emissor.emit({
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      tipo: 'TURNO_GANHO',
+      jogadorId: vencedor.id,
+      cartas: this._estado.mesa.map((m) => m.carta),
+    });
+  }
+
+  private emitirRodadaEncerrada(): void {
+    this.emissor.emit({
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      tipo: 'RODADA_ENCERRADA',
+      placar: { ...this._estado.vazas },
+      proximaRodada: null,
+    });
   }
 }
