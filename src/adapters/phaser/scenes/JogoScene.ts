@@ -48,6 +48,7 @@ export class JogoScene extends Scene {
   private iniciarInteracao(): void {
     if (!this.maos) return;
     const maoHumano = this.maos[0].cartas;
+    if (maoHumano.length === 0) return;
     this.decisor
       .decidirJogada(maoHumano, {})
       .then((carta) => {
