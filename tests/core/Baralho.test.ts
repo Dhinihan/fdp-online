@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { criarBaralho, distribuir } from '@/core/Baralho';
+import { criarBaralho, distribuir, embaralhar } from '@/core/Baralho';
 
 describe('criarBaralho', () => {
   it('deve retornar 52 cartas', () => {
@@ -17,6 +17,30 @@ describe('criarBaralho', () => {
     const baralho = criarBaralho();
     expect(baralho[0]).toEqual({ valor: '3', naipe: '♣' });
     expect(baralho[51]).toEqual({ valor: '4', naipe: '♦' });
+  });
+});
+
+describe('embaralhar', () => {
+  it('deve preservar as 52 cartas (mesmo multiset)', () => {
+    const baralho = criarBaralho();
+    const embaralhado = embaralhar(baralho);
+    const chavesOriginal = baralho.map((c) => `${c.valor}${c.naipe}`).sort();
+    const chavesEmbaralhado = embaralhado.map((c) => `${c.valor}${c.naipe}`).sort();
+    expect(chavesEmbaralhado).toEqual(chavesOriginal);
+  });
+
+  it('deve produzir ordens diferentes em chamadas consecutivas', () => {
+    const baralho = criarBaralho();
+    const resultados: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      resultados.push(
+        embaralhar(baralho)
+          .map((c) => `${c.valor}${c.naipe}`)
+          .join(','),
+      );
+    }
+    const unicos = new Set(resultados);
+    expect(unicos.size).toBeGreaterThan(1);
   });
 });
 

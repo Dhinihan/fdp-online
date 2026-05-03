@@ -13,6 +13,15 @@ export function criarBaralho(): Carta[] {
   return baralho;
 }
 
+export function embaralhar(baralho: Carta[]): Carta[] {
+  const copia = [...baralho];
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
+}
+
 export function distribuir(cartas: Carta[], numeroCartas: number, numeroJogadores: number): Carta[][] {
   if (numeroCartas * numeroJogadores > cartas.length) {
     throw new Error(
