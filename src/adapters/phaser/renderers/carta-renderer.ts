@@ -1,9 +1,9 @@
 import type { GameObjects, Scene } from 'phaser';
 import type { Carta } from '@/core/Carta';
 
-const LARGURA = 50;
-const ALTURA = 75;
-const RAIO = 6;
+export const LARGURA = 50;
+export const ALTURA = 75;
+export const RAIO = 6;
 
 export interface ConfigCartaFrente {
   cena: Scene;

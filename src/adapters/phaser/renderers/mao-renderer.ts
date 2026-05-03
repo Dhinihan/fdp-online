@@ -24,6 +24,7 @@ export function renderizarMao(config: ConfigRenderizarMao): GameObjects.GameObje
     const x = posicao.direcao === 'horizontal' ? posicao.x + deslocamento : posicao.x;
     const y = posicao.direcao === 'horizontal' ? posicao.y : posicao.y + deslocamento;
     const objeto = visivel ? criarCartaFrente({ cena, x, y, carta }) : criarCartaVerso({ cena, x, y });
+    objeto.setDepth(i + 1);
     objetos.push(objeto);
   });
   return objetos;
