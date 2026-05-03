@@ -1,7 +1,12 @@
 import type { Carta } from '@/core/Carta';
 import type { Jogador } from './entidades';
 
-export type FasePartida = 'distribuindo' | 'aguardandoJogada' | 'processandoTurno' | 'turnoConcluido';
+export type FasePartida =
+  | 'distribuindo'
+  | 'aguardandoJogada'
+  | 'processandoTurno'
+  | 'turnoConcluido'
+  | 'rodadaConcluida';
 
 export interface MaoJogador {
   jogador: Jogador;
@@ -9,9 +14,17 @@ export interface MaoJogador {
   visivel: boolean;
 }
 
+export interface MesaItem {
+  jogadorId: string;
+  carta: Carta;
+}
+
 export interface EstadoPartida {
   fase: FasePartida;
   jogadorAtual: number;
-  mesa: Carta[];
+  mesa: MesaItem[];
   maos: MaoJogador[];
+  vazas: Record<string, number>;
+  turno: number;
+  cartasPorRodada: number;
 }
