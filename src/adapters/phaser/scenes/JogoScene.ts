@@ -76,7 +76,12 @@ export class JogoScene extends Scene {
       const jogadorAtual = this.partida.estado.jogadorAtual;
       const ehBot = this.partida.estado.maos[jogadorAtual].jogador.id !== 'humano';
       if (ehBot) await this.esperar(500);
-      await this.partida.jogarTurno();
+      try {
+        await this.partida.jogarTurno();
+      } catch (erro) {
+        console.error('Falha ao processar turno', erro);
+        break;
+      }
       if (this.partida.estado.turno > this.turnoAnterior) {
         this.turnoAnterior = this.partida.estado.turno;
         this.animarRecolhimentoTurno();
