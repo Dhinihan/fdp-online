@@ -163,7 +163,7 @@ export class JogoScene extends Scene {
   }
 
   private aoClicarCarta(container: Phaser.GameObjects.Container, carta: Carta): void {
-    if (!this.partida || this.partida.estado.fase !== 'aguardandoJogada') {
+    if (!this.partida || this.partida.estado.maos[this.partida.estado.jogadorAtual].jogador.id !== 'humano') {
       return;
     }
     if (this.destaque.container === container) {
