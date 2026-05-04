@@ -11,6 +11,9 @@ export function inicializarJogo(containerId?: string): Game {
     width: window.innerWidth,
     height: window.innerHeight,
     parent: containerId,
+    resolution: window.devicePixelRatio,
+    antialias: false,
+    roundPixels: true,
     scene: [MenuScene, JogoScene],
     scale: {
       mode: Phaser.Scale.RESIZE,
