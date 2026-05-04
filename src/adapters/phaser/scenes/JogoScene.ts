@@ -144,11 +144,12 @@ export class JogoScene extends Scene {
   }
 
   private desenharMao(mao: MaoJogador, posicao: ReturnType<typeof calcularPosicoes>[number], partida: Partida): void {
+    const vazas = partida.estado.vazas[mao.jogador.id] ?? 0;
     const label = renderizarLabel({
       cena: this,
       x: posicao.labelX,
       y: posicao.labelY,
-      texto: mao.jogador.nome,
+      texto: `${mao.jogador.nome} · Fez: ${String(vazas)}`,
     }).setDepth(10);
     this.objetos.push(label);
     this.labels.push(label);
