@@ -25,9 +25,9 @@ export function calcularPosicoes(config: ConfigPosicoes): PosicaoTela[] {
   const dl = alturaCarta / 2 + offsetBase;
   return [
     posicaoHumano({ cx, altura, margemInferior, dl, espacamento: espacamentoCartas, offsetLateral }),
-    posicaoBotEsquerda({ margem, cy, dl, espacamento: espacamentoCartas, offsetLateral }),
+    posicaoBotEsquerda({ margem, cy, dl, espacamento: espacamentoCartas, offsetLateral, offsetBase }),
     posicaoBotTopo({ cx, margem, dl, espacamento: espacamentoCartas, offsetLateral }),
-    posicaoBotDireita({ largura, margem, cy, dl, espacamento: espacamentoCartas, offsetLateral }),
+    posicaoBotDireita({ largura, margem, cy, dl, espacamento: espacamentoCartas, offsetLateral, offsetBase }),
   ];
 }
 
@@ -57,10 +57,11 @@ function posicaoBotEsquerda(config: {
   dl: number;
   espacamento: number;
   offsetLateral: number;
+  offsetBase: number;
 }): PosicaoTela {
   return {
     labelX: config.margem,
-    labelY: Math.round(config.cy - config.offsetLateral - config.dl),
+    labelY: Math.round(config.cy - config.offsetLateral - config.dl - config.offsetBase),
     mao: {
       x: config.margem,
       y: Math.round(config.cy - config.offsetLateral),
@@ -96,10 +97,11 @@ function posicaoBotDireita(config: {
   dl: number;
   espacamento: number;
   offsetLateral: number;
+  offsetBase: number;
 }): PosicaoTela {
   return {
     labelX: Math.round(config.largura - config.margem),
-    labelY: Math.round(config.cy - config.offsetLateral - config.dl),
+    labelY: Math.round(config.cy - config.offsetLateral - config.dl - config.offsetBase),
     mao: {
       x: Math.round(config.largura - config.margem),
       y: Math.round(config.cy - config.offsetLateral),
