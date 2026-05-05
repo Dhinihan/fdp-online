@@ -13,18 +13,21 @@ export interface ConfigPosicoes {
   margemInferior: number;
   espacamentoCartas: number;
   alturaCarta: number;
+  dpr: number;
 }
 
 export function calcularPosicoes(config: ConfigPosicoes): PosicaoTela[] {
-  const { largura, altura, margem, margemInferior, espacamentoCartas, alturaCarta } = config;
+  const { largura, altura, margem, margemInferior, espacamentoCartas, alturaCarta, dpr } = config;
   const cx = Math.round(largura / 2);
   const cy = Math.round(altura / 2);
-  const dl = alturaCarta / 2 + 10;
+  const offsetBase = Math.round(10 * dpr);
+  const offsetLateral = Math.round(60 * dpr);
+  const dl = alturaCarta / 2 + offsetBase;
   return [
-    posicaoHumano({ cx, altura, margemInferior, dl, espacamento: espacamentoCartas }),
-    posicaoBotEsquerda({ margem, cy, dl, espacamento: espacamentoCartas }),
-    posicaoBotTopo({ cx, margem, dl, espacamento: espacamentoCartas }),
-    posicaoBotDireita({ largura, margem, cy, dl, espacamento: espacamentoCartas }),
+    posicaoHumano({ cx, altura, margemInferior, dl, espacamento: espacamentoCartas, offsetLateral }),
+    posicaoBotEsquerda({ margem, cy, dl, espacamento: espacamentoCartas, offsetLateral }),
+    posicaoBotTopo({ cx, margem, dl, espacamento: espacamentoCartas, offsetLateral }),
+    posicaoBotDireita({ largura, margem, cy, dl, espacamento: espacamentoCartas, offsetLateral }),
   ];
 }
 
@@ -34,12 +37,13 @@ function posicaoHumano(config: {
   margemInferior: number;
   dl: number;
   espacamento: number;
+  offsetLateral: number;
 }): PosicaoTela {
   return {
     labelX: config.cx,
     labelY: Math.round(config.altura - config.margemInferior + config.dl),
     mao: {
-      x: config.cx - 60,
+      x: config.cx - config.offsetLateral,
       y: Math.round(config.altura - config.margemInferior),
       espacamento: config.espacamento,
       direcao: 'horizontal',
@@ -47,19 +51,41 @@ function posicaoHumano(config: {
   };
 }
 
-function posicaoBotEsquerda(config: { margem: number; cy: number; dl: number; espacamento: number }): PosicaoTela {
+function posicaoBotEsquerda(config: {
+  margem: number;
+  cy: number;
+  dl: number;
+  espacamento: number;
+  offsetLateral: number;
+}): PosicaoTela {
   return {
     labelX: config.margem,
-    labelY: Math.round(config.cy - 60 - config.dl),
-    mao: { x: config.margem, y: Math.round(config.cy - 60), espacamento: config.espacamento, direcao: 'vertical' },
+    labelY: Math.round(config.cy - config.offsetLateral - config.dl),
+    mao: {
+      x: config.margem,
+      y: Math.round(config.cy - config.offsetLateral),
+      espacamento: config.espacamento,
+      direcao: 'vertical',
+    },
   };
 }
 
-function posicaoBotTopo(config: { cx: number; margem: number; dl: number; espacamento: number }): PosicaoTela {
+function posicaoBotTopo(config: {
+  cx: number;
+  margem: number;
+  dl: number;
+  espacamento: number;
+  offsetLateral: number;
+}): PosicaoTela {
   return {
     labelX: config.cx,
     labelY: Math.round(config.margem - config.dl),
-    mao: { x: config.cx - 60, y: config.margem, espacamento: config.espacamento, direcao: 'horizontal' },
+    mao: {
+      x: config.cx - config.offsetLateral,
+      y: config.margem,
+      espacamento: config.espacamento,
+      direcao: 'horizontal',
+    },
   };
 }
 
@@ -69,13 +95,14 @@ function posicaoBotDireita(config: {
   cy: number;
   dl: number;
   espacamento: number;
+  offsetLateral: number;
 }): PosicaoTela {
   return {
     labelX: Math.round(config.largura - config.margem),
-    labelY: Math.round(config.cy - 60 - config.dl),
+    labelY: Math.round(config.cy - config.offsetLateral - config.dl),
     mao: {
       x: Math.round(config.largura - config.margem),
-      y: Math.round(config.cy - 60),
+      y: Math.round(config.cy - config.offsetLateral),
       espacamento: config.espacamento,
       direcao: 'vertical',
     },

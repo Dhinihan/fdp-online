@@ -1,4 +1,5 @@
 import type { Scene } from 'phaser';
+import { escalar } from '../escala';
 import { LARGURA, ALTURA, RAIO } from './carta-renderer';
 
 export interface EstadoDestaque {
@@ -19,13 +20,20 @@ export function destacarCarta(cena: Scene, container: Phaser.GameObjects.Contain
   }
   estado.highlight.setDepth(101);
   estado.highlight.clear();
-  estado.highlight.lineStyle(3, 0xffff00, 1);
+
+  const largura = escalar(LARGURA, cena);
+  const altura = escalar(ALTURA, cena);
+  const raio = escalar(RAIO, cena);
+  const offset = escalar(4, cena);
+  const espessura = escalar(3, cena);
+
+  estado.highlight.lineStyle(espessura, 0xffff00, 1);
   estado.highlight.strokeRoundedRect(
-    container.x - LARGURA / 2 - 4,
-    container.y - ALTURA / 2 - 4,
-    LARGURA + 8,
-    ALTURA + 8,
-    RAIO + 2,
+    container.x - largura / 2 - offset,
+    container.y - altura / 2 - offset,
+    largura + offset * 2,
+    altura + offset * 2,
+    raio + escalar(2, cena),
   );
 }
 

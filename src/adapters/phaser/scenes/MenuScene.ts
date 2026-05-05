@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
 import type { GameObjects } from 'phaser';
 import { precarregarSomUi, prepararSomUi, tocarSomUi } from '../audio/som-ui';
+import { escalar, escalarFonte } from '../escala';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 
 type Graphics = GameObjects.Graphics;
@@ -63,7 +64,7 @@ export class MenuScene extends Scene {
   private criarTitulo(x: number, y: number): void {
     this.titulo = this.add
       .text(x, y, 'FDP', {
-        fontSize: '64px',
+        fontSize: escalarFonte(64, this),
         fontStyle: 'bold',
         color: '#ffffff',
       })
@@ -71,9 +72,9 @@ export class MenuScene extends Scene {
   }
 
   private criarBotao(x: number, y: number): void {
-    const larguraBotao = 200;
-    const alturaBotao = 56;
-    const raio = 12;
+    const larguraBotao = escalar(200, this);
+    const alturaBotao = escalar(56, this);
+    const raio = escalar(12, this);
 
     const posX = x - larguraBotao / 2;
     const posY = y - alturaBotao / 2;
@@ -84,7 +85,7 @@ export class MenuScene extends Scene {
 
     this.botaoTexto = this.add
       .text(x, y, 'Jogar', {
-        fontSize: '24px',
+        fontSize: escalarFonte(24, this),
         fontStyle: 'bold',
         color: '#ffffff',
       })

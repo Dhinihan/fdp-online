@@ -3,6 +3,7 @@ import { Partida } from '@/core/Partida';
 import type { Jogador } from '@/types/entidades';
 import type { MaoJogador } from '@/types/estado-partida';
 import { DecisorHumano } from '../DecisorHumano';
+import { obterDpr, escalar } from '../escala';
 import { fabricarPartida } from '../factories/partida-factory';
 import { criarFundoInterativo } from '../input/input-humano';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
@@ -131,16 +132,22 @@ export class JogoScene extends Scene {
     this.atualizarIndicadorVez();
   };
 
-  private desenharMaos(maos: MaoJogador[], partida: Partida): void {
-    this.labels = [];
-    const posicoes = calcularPosicoes({
+  private calcularPosicoesMaos(): ReturnType<typeof calcularPosicoes> {
+    const dpr = obterDpr(this);
+    return calcularPosicoes({
       largura: this.cameras.main.width,
       altura: this.cameras.main.height,
-      margem: MARGEM,
-      margemInferior: MARGEM_INFERIOR,
-      espacamentoCartas: ESPACAMENTO_CARTAS,
-      alturaCarta: ALTURA_CARTA,
+      margem: escalar(MARGEM, this),
+      margemInferior: escalar(MARGEM_INFERIOR, this),
+      espacamentoCartas: escalar(ESPACAMENTO_CARTAS, this),
+      alturaCarta: escalar(ALTURA_CARTA, this),
+      dpr,
     });
+  }
+
+  private desenharMaos(maos: MaoJogador[], partida: Partida): void {
+    this.labels = [];
+    const posicoes = this.calcularPosicoesMaos();
     this.direcoesLabels = posicoes.map((p) => p.mao.direcao);
     maos.forEach((mao, i) => {
       desenharMaoNaCena({
