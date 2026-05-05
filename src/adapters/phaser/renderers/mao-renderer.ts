@@ -1,5 +1,6 @@
 import type { GameObjects, Scene } from 'phaser';
 import type { Carta } from '@/core/Carta';
+import { escalarFonte } from '../escala';
 import { criarCartaFrente, criarCartaVerso } from './carta-renderer';
 
 export interface PosicaoMao {
@@ -39,5 +40,7 @@ export interface ConfigLabel {
 
 export function renderizarLabel(config: ConfigLabel): GameObjects.Text {
   const { cena, x, y, texto } = config;
-  return cena.add.text(x, y, texto, { fontSize: '16px', fontStyle: 'bold', color: '#ffffff' }).setOrigin(0.5);
+  return cena.add
+    .text(x, y, texto, { fontSize: escalarFonte(16, cena), fontStyle: 'bold', color: '#ffffff' })
+    .setOrigin(0.5);
 }
