@@ -1,6 +1,6 @@
 import type { Scene } from 'phaser';
 import type { Carta } from '@/core/Carta';
-import type { Partida } from '@/core/Partida';
+import type { Rodada } from '@/core/Rodada';
 import type { DecisorHumano } from '../DecisorHumano';
 import { destacarCarta, removerDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
 
@@ -8,7 +8,7 @@ export interface ConfigInteracaoHumano {
   cena: Scene;
   objetosMao: Phaser.GameObjects.GameObject[];
   cartas: Carta[];
-  partida: Partida;
+  partida: Rodada;
   decisorHumano: DecisorHumano;
   destaque: EstadoDestaque;
 }
@@ -54,7 +54,7 @@ interface ConfigClicarCarta {
   cena: Scene;
   container: Phaser.GameObjects.Container;
   carta: Carta;
-  partida: Partida;
+  partida: Rodada;
   decisorHumano: DecisorHumano;
   destaque: EstadoDestaque;
 }

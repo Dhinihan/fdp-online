@@ -1,6 +1,6 @@
 import type { Scene } from 'phaser';
-import type { Partida } from '@/core/Partida';
-import type { MaoJogador } from '@/types/estado-partida';
+import type { Rodada } from '@/core/Rodada';
+import type { MaoJogador } from '@/types/estado-rodada';
 import type { DecisorHumano } from '../DecisorHumano';
 import { configurarInteracaoHumano } from '../input/input-humano';
 import type { EstadoDestaque } from './destaque-renderer';
@@ -12,7 +12,7 @@ export interface ConfigDesenharMao {
   cena: Scene;
   mao: MaoJogador;
   posicao: PosicaoTela;
-  partida: Partida;
+  partida: Rodada;
   decisorHumano: DecisorHumano;
   destaque: EstadoDestaque;
   objetos: Phaser.GameObjects.GameObject[];

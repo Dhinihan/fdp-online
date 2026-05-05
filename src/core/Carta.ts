@@ -7,6 +7,8 @@ export interface Carta {
   naipe: Naipe;
 }
 
+const valoresOrdem: Valor[] = ['3', '2', 'A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4'];
+
 const hierarquiaValores: Record<Valor, number> = {
   '3': 13,
   '2': 12,
@@ -36,4 +38,14 @@ export function compararValor(a: Carta, b: Carta): boolean {
 
 export function compararNaipe(a: Carta, b: Carta): boolean {
   return hierarquiaNaipes[a.naipe] > hierarquiaNaipes[b.naipe];
+}
+
+export function obterProximoValor(valor: Valor): Valor {
+  const indice = valoresOrdem.indexOf(valor);
+  const proximoIndice = (indice + 1) % valoresOrdem.length;
+  return valoresOrdem[proximoIndice];
+}
+
+export function ehManilha(carta: Carta, manilha: Valor): boolean {
+  return carta.valor === manilha;
 }

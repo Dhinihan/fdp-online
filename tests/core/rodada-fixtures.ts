@@ -1,10 +1,10 @@
 import { vi } from 'vitest';
 import type { Carta } from '@/core/Carta';
-import { Partida } from '@/core/Partida';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
+import { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
 import type { Jogador } from '@/types/entidades';
-import type { EstadoPartida } from '@/types/estado-partida';
+import type { EstadoRodada } from '@/types/estado-rodada';
 
 export function criarCarta(valor: Carta['valor'], naipe: Carta['naipe']): Carta {
   return { valor, naipe };
@@ -36,33 +36,34 @@ export function criarDecisorSequencia(cartas: Carta[]): DecisorJogada {
   return { decidirJogada: mock };
 }
 
-export function criarPartida(config: {
+export function criarRodada(config: {
   jogadores: Jogador[];
   decisores: Map<string, DecisorJogada>;
   emissor: ReturnType<typeof createEmissorEventos>;
   cartasPorRodada?: number;
-}): Partida {
-  const partida = new Partida(config.jogadores, config.decisores, config.emissor);
-  partida.distribuir(config.cartasPorRodada ?? 1);
-  return partida;
+}): Rodada {
+  const rodada = new Rodada(config.jogadores, config.decisores, config.emissor);
+  rodada.distribuir(config.cartasPorRodada ?? 1);
+  return rodada;
 }
 
 interface EstadoPrivado {
-  _estado: EstadoPartida;
+  _estado: EstadoRodada;
 }
 
-export function criarPartidaComMao(config: {
+export function criarRodadaComMao(config: {
   jogadores: Jogador[];
   decisores: Map<string, DecisorJogada>;
   emissor: ReturnType<typeof createEmissorEventos>;
   maos: Carta[][];
   jogadorAtual?: number;
-  fase?: EstadoPartida['fase'];
+  fase?: EstadoRodada['fase'];
   turno?: number;
   cartasPorRodada?: number;
-}): Partida {
-  const partida = new Partida(config.jogadores, config.decisores, config.emissor);
-  const estado = (partida as unknown as EstadoPrivado)._estado;
+  manilha?: Carta['valor'];
+}): Rodada {
+  const rodada = new Rodada(config.jogadores, config.decisores, config.emissor);
+  const estado = (rodada as unknown as EstadoPrivado)._estado;
   estado.maos = config.jogadores.map((jogador, i) => ({
     jogador,
     cartas: config.maos[i] ?? [],
@@ -73,7 +74,9 @@ export function criarPartidaComMao(config: {
   estado.vazas = {};
   estado.turno = config.turno ?? 1;
   estado.cartasPorRodada = config.cartasPorRodada ?? 4;
-  return partida;
+  estado.manilha = config.manilha ?? '3';
+  estado.cartaVirada = null;
+  return rodada;
 }
 
 export function jogadoresPadrao(): Jogador[] {
