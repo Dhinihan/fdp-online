@@ -4,10 +4,11 @@ import type { Jogador } from '@/types/entidades';
 import type { MaoJogador } from '@/types/estado-partida';
 import { DecisorHumano } from '../DecisorHumano';
 import { fabricarPartida } from '../factories/partida-factory';
-import { configurarInteracaoHumano, criarFundoInterativo } from '../input/input-humano';
+import { criarFundoInterativo } from '../input/input-humano';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 import { destruirDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
-import { renderizarLabel, renderizarMao } from '../renderers/mao-renderer';
+import { atualizarLabelVencedor } from '../renderers/label-jogador';
+import { desenharMaoNaCena } from '../renderers/mao-scene-renderer';
 import { renderizarMesa } from '../renderers/mesa-renderer';
 import { calcularPosicoes } from '../renderers/posicoes-mao';
 import {
@@ -36,6 +37,7 @@ export class JogoScene extends Scene {
   private destaque: EstadoDestaque = {};
   private partida?: Partida;
   private labels: Phaser.GameObjects.Text[] = [];
+  private direcoesLabels: ('horizontal' | 'vertical')[] = [];
   private tweenVez?: Phaser.Tweens.Tween;
   private turnoAnterior = 1;
   private vencedorTurno?: string;
@@ -78,14 +80,21 @@ export class JogoScene extends Scene {
       if (ehBot) await this.esperar(500);
       try {
         await this.partida.jogarTurno();
-      } catch (erro) {
-        console.error('Falha ao processar turno', erro);
+      } catch {
         break;
       }
       if (this.partida.estado.turno > this.turnoAnterior) {
         this.turnoAnterior = this.partida.estado.turno;
+        const vencedorId = this.vencedorTurno;
         this.animarRecolhimentoTurno();
         await this.esperar(800);
+        atualizarLabelVencedor({
+          vencedorId,
+          jogadores: JOGADORES,
+          vazas: this.partida.estado.vazas,
+          labels: this.labels,
+          direcoes: this.direcoesLabels,
+        });
       }
       this.atualizarIndicadorVez();
     }
@@ -132,8 +141,18 @@ export class JogoScene extends Scene {
       espacamentoCartas: ESPACAMENTO_CARTAS,
       alturaCarta: ALTURA_CARTA,
     });
+    this.direcoesLabels = posicoes.map((p) => p.mao.direcao);
     maos.forEach((mao, i) => {
-      this.desenharMao(mao, posicoes[i], partida);
+      desenharMaoNaCena({
+        cena: this,
+        mao,
+        posicao: posicoes[i],
+        partida,
+        decisorHumano: this.decisorHumano,
+        destaque: this.destaque,
+        objetos: this.objetos,
+        labels: this.labels,
+      });
     });
     criarFundoInterativo({
       cena: this,
@@ -141,29 +160,6 @@ export class JogoScene extends Scene {
       decisorHumano: this.decisorHumano,
       destaque: this.destaque,
     });
-  }
-
-  private desenharMao(mao: MaoJogador, posicao: ReturnType<typeof calcularPosicoes>[number], partida: Partida): void {
-    const label = renderizarLabel({
-      cena: this,
-      x: posicao.labelX,
-      y: posicao.labelY,
-      texto: mao.jogador.nome,
-    }).setDepth(10);
-    this.objetos.push(label);
-    this.labels.push(label);
-    const objetosMao = renderizarMao({ cena: this, posicao: posicao.mao, cartas: mao.cartas, visivel: mao.visivel });
-    this.objetos.push(...objetosMao);
-    if (mao.jogador.id === 'humano') {
-      configurarInteracaoHumano({
-        cena: this,
-        objetosMao,
-        cartas: mao.cartas,
-        partida,
-        decisorHumano: this.decisorHumano,
-        destaque: this.destaque,
-      });
-    }
   }
 
   private aoEncerrar = (): void => {
