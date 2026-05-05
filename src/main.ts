@@ -31,6 +31,7 @@ export function inicializarJogo(containerId?: string): Game {
   aoRedimensionar = (): void => {
     if (!jogo) return;
     const dpr = obterDpr();
+    jogo.scale.setZoom(1 / dpr);
     jogo.scale.resize(window.innerWidth * dpr, window.innerHeight * dpr);
   };
 
