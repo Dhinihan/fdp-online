@@ -2,9 +2,8 @@ import type { Jogador } from '@/types/entidades';
 
 export type DirecaoLabel = 'horizontal' | 'vertical';
 
-export function formatarLabelJogador(nome: string, vazas: number, direcao: DirecaoLabel): string {
-  const contador = `(Fez: ${String(vazas)})`;
-  return direcao === 'horizontal' ? `${nome} ${contador}` : `${nome}\n${contador}`;
+export function formatarLabelJogador(nome: string, vazas: number, _direcao: DirecaoLabel): string {
+  return `${nome} · Fez: ${String(vazas)}`;
 }
 
 export interface ConfigAtualizarLabelVencedor {

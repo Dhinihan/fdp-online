@@ -28,6 +28,7 @@ export function desenharMaoNaCena(config: ConfigDesenharMao): void {
     x: posicao.labelX,
     y: posicao.labelY,
     texto,
+    origem: posicao.origemLabel,
   }).setDepth(10);
   objetos.push(label);
   labels.push(label);
