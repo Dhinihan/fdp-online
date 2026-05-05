@@ -1,7 +1,8 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { codex, pi, run, type AgentProvider, type RunResult } from '@ai-hero/sandcastle';
+import { dirname, join } from 'node:path';
+import { codex, pi, run, type AgentProvider, type AgentStreamEvent, type RunResult } from '@ai-hero/sandcastle';
 import { docker } from '@ai-hero/sandcastle/sandboxes/docker';
 import { lerConfiguracaoAgente, type EsforcoPi } from './configuracao-agente';
 import { montarEnvAgente, montarEnvSandbox } from './env-sandcastle';
@@ -69,7 +70,7 @@ async function rodarAgente(prompt: string, branch: string): Promise<RunResult> {
     hooks: montarHooksSandbox(),
     idleTimeoutSeconds: 300,
     branchStrategy: { type: 'branch', branch },
-    logging: { type: 'stdout' },
+    logging: montarConfiguracaoLogging(configuracao.agente, montarNomeExecucao(branch)),
     name: montarNomeExecucao(branch),
   });
 }
@@ -105,6 +106,30 @@ function montarAgentePi(modelo: string, esforco: EsforcoPi, env: Record<string, 
 
 function montarNomeExecucao(branch: string): string {
   return `sandcastle-${branch}-${String(Date.now())}`;
+}
+
+function montarConfiguracaoLogging(
+  agente: string,
+  nomeExecucao: string,
+): { type: 'stdout' } | { type: 'file'; path: string; onAgentStreamEvent?: (evento: AgentStreamEvent) => void } {
+  const modoVerbose = process.env.SANDCASTLE_VERBOSE === '1' || agente === 'pi';
+
+  if (!modoVerbose) {
+    return { type: 'stdout' };
+  }
+
+  const caminhoLog = join(process.cwd(), '.sandcastle', 'logs', `${nomeExecucao}.log`);
+  mkdirSync(dirname(caminhoLog), { recursive: true });
+
+  return {
+    type: 'file',
+    path: caminhoLog,
+    onAgentStreamEvent(evento) {
+      if (evento.type === 'toolCall') {
+        console.log(`[toolCall] ${evento.name} ${evento.formattedArgs}`);
+      }
+    },
+  };
 }
 
 function montarHooksSandbox(): {
