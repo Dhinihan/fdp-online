@@ -29,7 +29,6 @@ const MARGEM = 60;
 const MARGEM_INFERIOR = 80;
 const ESPACAMENTO_CARTAS = 40;
 const ALTURA_CARTA = 75;
-const LARGURA_CARTA = 50;
 
 export class JogoScene extends Scene {
   private objetos: Phaser.GameObjects.GameObject[] = [];
@@ -47,6 +46,7 @@ export class JogoScene extends Scene {
   constructor() {
     super({ key: 'JogoScene' });
   }
+
   create(): void {
     this.cameras.main.setBackgroundColor('#1a1a2e');
     this.partida = this.criarPartida();
@@ -104,6 +104,7 @@ export class JogoScene extends Scene {
   private esperar(ms: number): Promise<void> {
     return new Promise((resolve) => this.time.delayedCall(ms, resolve));
   }
+
   private atualizarMesa(): void {
     this.limparMesa();
     if (!this.partida) return;
@@ -140,7 +141,6 @@ export class JogoScene extends Scene {
       margemInferior: escalar(MARGEM_INFERIOR, this),
       espacamentoCartas: escalar(ESPACAMENTO_CARTAS, this),
       alturaCarta: escalar(ALTURA_CARTA, this),
-      larguraCarta: escalar(LARGURA_CARTA, this),
       dpr,
     });
   }
@@ -186,7 +186,9 @@ export class JogoScene extends Scene {
   };
 
   private limparObjetos(): void {
-    for (const o of this.objetos) o.destroy();
+    this.objetos.forEach((o) => {
+      o.destroy();
+    });
     this.objetos = [];
   }
 
@@ -207,7 +209,9 @@ export class JogoScene extends Scene {
   }
 
   private limparMesa(): void {
-    for (const o of this.mesaObjetos) o.destroy();
+    this.mesaObjetos.forEach((o) => {
+      o.destroy();
+    });
     this.mesaObjetos = [];
   }
 }

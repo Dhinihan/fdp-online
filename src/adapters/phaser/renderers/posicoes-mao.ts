@@ -3,7 +3,6 @@ import type { PosicaoMao } from './mao-renderer';
 export interface PosicaoTela {
   labelX: number;
   labelY: number;
-  origemLabel?: { x: number; y: number };
   mao: PosicaoMao;
 }
 
@@ -14,32 +13,21 @@ export interface ConfigPosicoes {
   margemInferior: number;
   espacamentoCartas: number;
   alturaCarta: number;
-  larguraCarta: number;
   dpr: number;
 }
 
 export function calcularPosicoes(config: ConfigPosicoes): PosicaoTela[] {
-  const { largura, altura, margem, margemInferior, espacamentoCartas, alturaCarta, larguraCarta, dpr } = config;
+  const { largura, altura, margem, margemInferior, espacamentoCartas, alturaCarta, dpr } = config;
   const cx = Math.round(largura / 2);
   const cy = Math.round(altura / 2);
   const offsetBase = Math.round(10 * dpr);
   const offsetLateral = Math.round(60 * dpr);
   const dl = alturaCarta / 2 + offsetBase;
-  const padding = offsetBase;
   return [
     posicaoHumano({ cx, altura, margemInferior, dl, espacamento: espacamentoCartas, offsetLateral }),
-    posicaoBotEsquerda({ margem, cy, dl, espacamento: espacamentoCartas, offsetLateral, larguraCarta, padding }),
+    posicaoBotEsquerda({ margem, cy, dl, espacamento: espacamentoCartas, offsetLateral, offsetBase }),
     posicaoBotTopo({ cx, margem, dl, espacamento: espacamentoCartas, offsetLateral }),
-    posicaoBotDireita({
-      largura,
-      margem,
-      cy,
-      dl,
-      espacamento: espacamentoCartas,
-      offsetLateral,
-      larguraCarta,
-      padding,
-    }),
+    posicaoBotDireita({ largura, margem, cy, dl, espacamento: espacamentoCartas, offsetLateral, offsetBase }),
   ];
 }
 
@@ -69,13 +57,11 @@ function posicaoBotEsquerda(config: {
   dl: number;
   espacamento: number;
   offsetLateral: number;
-  larguraCarta: number;
-  padding: number;
+  offsetBase: number;
 }): PosicaoTela {
   return {
-    labelX: Math.round(config.margem + config.larguraCarta / 2 + config.padding),
-    labelY: Math.round(config.cy - config.offsetLateral - config.dl),
-    origemLabel: { x: 0, y: 0.5 },
+    labelX: config.margem,
+    labelY: Math.round(config.cy - config.offsetLateral - config.dl - config.offsetBase),
     mao: {
       x: config.margem,
       y: Math.round(config.cy - config.offsetLateral),
@@ -111,13 +97,11 @@ function posicaoBotDireita(config: {
   dl: number;
   espacamento: number;
   offsetLateral: number;
-  larguraCarta: number;
-  padding: number;
+  offsetBase: number;
 }): PosicaoTela {
   return {
-    labelX: Math.round(config.largura - config.margem - config.larguraCarta / 2 - config.padding),
-    labelY: Math.round(config.cy - config.offsetLateral - config.dl),
-    origemLabel: { x: 1, y: 0.5 },
+    labelX: Math.round(config.largura - config.margem),
+    labelY: Math.round(config.cy - config.offsetLateral - config.dl - config.offsetBase),
     mao: {
       x: Math.round(config.largura - config.margem),
       y: Math.round(config.cy - config.offsetLateral),

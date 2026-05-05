@@ -36,20 +36,11 @@ export interface ConfigLabel {
   x: number;
   y: number;
   texto: string;
-  origem?: { x: number; y: number };
 }
 
 export function renderizarLabel(config: ConfigLabel): GameObjects.Text {
-  const { cena, x, y, texto, origem } = config;
-  const label = cena.add.text(x, y, texto, {
-    fontSize: escalarFonte(16, cena),
-    fontStyle: 'bold',
-    color: '#ffffff',
-  });
-  if (origem) {
-    label.setOrigin(origem.x, origem.y);
-  } else {
-    label.setOrigin(0.5);
-  }
-  return label;
+  const { cena, x, y, texto } = config;
+  return cena.add
+    .text(x, y, texto, { fontSize: escalarFonte(16, cena), fontStyle: 'bold', color: '#ffffff' })
+    .setOrigin(0.5);
 }
