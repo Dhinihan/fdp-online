@@ -38,13 +38,17 @@ describe('Rodada — cálculo de vencedor', () => {
     expect(rodada.estado.vazas['j1']).toBe(1);
   });
 
-  it('deve desempatar pelo naipe quando valores são iguais', async () => {
-    const { rodada } = rodadaComMaoFixa([
-      [criarCarta('4', '♦')],
-      [criarCarta('4', '♠')],
-      [criarCarta('4', '♥')],
-      [criarCarta('4', '♣')],
-    ]);
+  it('deve desempatar pelo naipe quando valores são iguais (manilhas)', async () => {
+    const emissor = createEmissorEventos();
+    const jogadores = jogadoresPadrao();
+    const decisores = new Map(jogadores.map((j) => [j.id, criarDecisorPrimeiraCarta()]));
+    const rodada = criarRodadaComMao({
+      jogadores,
+      decisores,
+      emissor,
+      maos: [[criarCarta('4', '♦')], [criarCarta('4', '♠')], [criarCarta('4', '♥')], [criarCarta('4', '♣')]],
+      manilha: '4',
+    });
     await jogarTurnos(rodada, 4);
     expect(rodada.estado.vazas['j4']).toBe(1);
   });

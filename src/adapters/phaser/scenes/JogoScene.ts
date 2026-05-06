@@ -65,6 +65,9 @@ export class JogoScene extends Scene {
       onTurnoGanho: (id) => {
         this.vencedorTurno = id;
       },
+      onTurnoEmpatado: () => {
+        this.vencedorTurno = undefined;
+      },
       onRodadaEncerrada: () => {
         this.mostrarOverlayRodadaConcluida();
       },

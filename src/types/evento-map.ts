@@ -5,6 +5,7 @@ import type {
   JogoIniciado,
   ManilhaVirada,
   RodadaEncerrada,
+  TurnoEmpatado,
   TurnoGanho,
 } from './eventos-dominio';
 import type { ArrastoCarta, ToqueBotao, ToqueCarta } from './eventos-input';
@@ -17,6 +18,7 @@ export interface EventoMap {
   DECLARACAO_FEITA: DeclaracaoFeita;
   CARTA_JOGADA: CartaJogada;
   TURNO_GANHO: TurnoGanho;
+  TURNO_EMPATADO: TurnoEmpatado;
   RODADA_ENCERRADA: RodadaEncerrada;
   JOGO_ENCERRADO: JogoEncerrado;
   // --- Eventos de input ---
