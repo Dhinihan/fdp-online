@@ -157,3 +157,23 @@ describe('Rodada — declaração — hardening', () => {
     expect(rodada.estado.fase).toBe('aguardandoDeclaracao');
   });
 });
+
+describe('Rodada — declaração — valores invalidos', () => {
+  it.each([
+    ['negativa', -1],
+    ['fracionaria', 1.5],
+    ['maior que cartas da rodada', 3],
+  ])('deve rejeitar declaracao %s', async (_caso, valor) => {
+    const emissor = createEmissorEventos();
+    const handler = vi.fn<(ev: unknown) => void>();
+    emissor.on('DECLARACAO_FEITA', handler);
+    const jogadores = [criarJogador('j1', 'J1')];
+    const decisoresDeclaracao = new Map([['j1', criarDecisorDeclaracao(valor)]]);
+    const rodada = new Rodada(jogadores, emissor, { jogada: new Map(), declaracao: decisoresDeclaracao });
+    rodada.distribuir(2);
+    await expect(rodada.declarar()).rejects.toThrow('Declaração inválida');
+    expect(rodada.estado.fase).toBe('aguardandoDeclaracao');
+    expect(rodada.estado.declaracoes).toEqual({});
+    expect(handler).not.toHaveBeenCalled();
+  });
+});

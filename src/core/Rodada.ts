@@ -87,12 +87,20 @@ export class Rodada {
     }
     try {
       const declaracao = await decisor.declarar(this._estado, this._estado.maos[this._estado.jogadorAtual].cartas);
+      this.validarDeclaracao(declaracao);
       this._estado.declaracoes[jogador.id] = declaracao;
       emitirDeclaracaoFeita(this.emissor, jogador.id, declaracao);
       this.avancarDeclaracao();
     } catch (erro) {
       this._estado.fase = 'aguardandoDeclaracao';
       throw erro;
+    }
+  }
+
+  private validarDeclaracao(declaracao: number): void {
+    const maximo = this._estado.cartasPorRodada;
+    if (!Number.isInteger(declaracao) || declaracao < 0 || declaracao > maximo) {
+      throw new Error(`Declaração inválida: ${String(declaracao)}`);
     }
   }
 
