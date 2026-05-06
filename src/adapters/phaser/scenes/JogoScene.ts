@@ -74,8 +74,8 @@ export class JogoScene extends Scene {
     await iniciarProcessamentoTurno({
       cena: this,
       rodada: this.rodada as Rodada,
-      labels: this.labels,
-      direcoesLabels: this.direcoesLabels,
+      getLabels: () => this.labels,
+      getDirecoesLabels: () => this.direcoesLabels,
       turnoAnteriorRef: { valor: this.turnoAnterior },
       jogadores: JOGADORES,
       getVencedorTurno: () => this.vencedorTurno,

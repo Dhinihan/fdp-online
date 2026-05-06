@@ -17,8 +17,8 @@ interface ConfigDeclaracoes {
 interface ConfigTurnos {
   cena: JogoScene;
   rodada: Rodada;
-  labels: Phaser.GameObjects.Text[];
-  direcoesLabels: ('horizontal' | 'vertical')[];
+  getLabels: () => Phaser.GameObjects.Text[];
+  getDirecoesLabels: () => ('horizontal' | 'vertical')[];
   turnoAnteriorRef: { valor: number };
   jogadores: Jogador[];
   getVencedorTurno: () => string | undefined;
@@ -83,8 +83,8 @@ async function atualizarFimDeTurno(config: ConfigTurnos): Promise<void> {
     vencedorId,
     jogadores: config.jogadores,
     vazas: rodada.estado.vazas,
-    labels: config.labels,
-    direcoes: config.direcoesLabels,
+    labels: config.getLabels(),
+    direcoes: config.getDirecoesLabels(),
   });
 }
 
