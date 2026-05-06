@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cartaVence, calcularIndiceVencedor } from '@/core/comparador-carta';
+import { cartaVence, calcularIndiceVencedor, cartasEmpatam } from '@/core/comparador-carta';
 import { criarCarta } from './rodada-fixtures';
 
 describe('comparador-carta', () => {
@@ -26,5 +26,23 @@ describe('comparador-carta', () => {
   it('deve calcular índice do vencedor na mesa', () => {
     const mesa = [{ carta: criarCarta('2', '♥') }, { carta: criarCarta('3', '♠') }, { carta: criarCarta('A', '♦') }];
     expect(calcularIndiceVencedor(mesa, '4')).toBe(1);
+  });
+});
+
+describe('cartasEmpatam', () => {
+  it('deve identificar empate entre cartas não-manilha de mesmo valor', () => {
+    expect(cartasEmpatam(criarCarta('3', '♣'), criarCarta('3', '♦'), '4')).toBe(true);
+  });
+
+  it('deve rejeitar empate entre manilha e não-manilha', () => {
+    expect(cartasEmpatam(criarCarta('4', '♣'), criarCarta('3', '♦'), '4')).toBe(false);
+  });
+
+  it('deve rejeitar empate entre duas manilhas', () => {
+    expect(cartasEmpatam(criarCarta('4', '♣'), criarCarta('4', '♦'), '4')).toBe(false);
+  });
+
+  it('deve rejeitar empate entre cartas de valores diferentes', () => {
+    expect(cartasEmpatam(criarCarta('3', '♣'), criarCarta('2', '♦'), '4')).toBe(false);
   });
 });
