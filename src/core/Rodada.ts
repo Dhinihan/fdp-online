@@ -152,8 +152,8 @@ export class Rodada {
       if (this.cartaVence(cartaAtual, cartaMelhor)) indiceMelhor = i;
     }
     const cartaMelhor = this._estado.mesa[indiceMelhor].carta;
-    const empatados = this._estado.mesa.filter((item, i) => i !== indiceMelhor && this.empata(item.carta, cartaMelhor));
-    if (empatados.length > 0) {
+    const empatados = this._estado.mesa.filter((item, i) => i === indiceMelhor || this.empata(item.carta, cartaMelhor));
+    if (empatados.length > 1) {
       const ultimoEmpatado = empatados[empatados.length - 1];
       const jogador = this.jogadores.find((j) => j.id === ultimoEmpatado.jogadorId);
       if (!jogador) throw new Error('Último empatado não encontrado');

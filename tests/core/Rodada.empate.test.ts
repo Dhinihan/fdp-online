@@ -66,6 +66,18 @@ describe('Rodada — empate e próximo turno', () => {
     expect(rodada.estado.jogadorAtual).toBe(1); // j2 foi o último empatado
     expect(rodada.estado.turno).toBe(2);
   });
+
+  it('deve fazer o último empatado iniciar quando o naipe maior é jogado por último', async () => {
+    const { rodada } = criarRodadaEmpate([
+      [criarCarta('7', '♥'), criarCarta('A', '♥')],
+      [criarCarta('7', '♣'), criarCarta('K', '♣')],
+      [criarCarta('5', '♠'), criarCarta('Q', '♠')],
+      [criarCarta('4', '♦'), criarCarta('J', '♦')],
+    ]);
+    await jogarTurnos(rodada, 4);
+    expect(rodada.estado.jogadorAtual).toBe(1); // j2 foi o último empatado
+    expect(rodada.estado.turno).toBe(2);
+  });
 });
 
 describe('Rodada — manilha vs não-manilha não é empate', () => {
