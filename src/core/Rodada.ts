@@ -123,34 +123,46 @@ export class Rodada {
   }
 
   private resolverTurno(): void {
-    const vencedor = this.calcularVencedorTurno();
-    this._estado.vazas[vencedor.id] = (this._estado.vazas[vencedor.id] ?? 0) + 1;
-    this.emitirTurnoGanho(vencedor);
+    const resultado = this.calcularVencedorTurno();
+    let proximoJogadorId: string;
+    if (resultado.tipo === 'vitoria') {
+      this._estado.vazas[resultado.jogador.id] = (this._estado.vazas[resultado.jogador.id] ?? 0) + 1;
+      this.emitirTurnoGanho(resultado.jogador);
+      proximoJogadorId = resultado.jogador.id;
+    } else {
+      this.emitirTurnoEmpatado(resultado.ultimoEmpatado);
+      proximoJogadorId = resultado.ultimoEmpatado.id;
+    }
     this._estado.turno += 1;
     this._estado.mesa = [];
-
     if (this._estado.turno > this._estado.cartasPorRodada) {
       this._estado.fase = 'rodadaConcluida';
       this.emitirRodadaEncerrada();
     } else {
       this._estado.fase = 'aguardandoJogada';
-      this._estado.jogadorAtual = this.jogadores.findIndex((j) => j.id === vencedor.id);
+      this._estado.jogadorAtual = this.jogadores.findIndex((j) => j.id === proximoJogadorId);
     }
   }
 
-  private calcularVencedorTurno(): Jogador {
+  private calcularVencedorTurno(): { tipo: 'vitoria'; jogador: Jogador } | { tipo: 'empate'; ultimoEmpatado: Jogador } {
     let indiceMelhor = 0;
     for (let i = 1; i < this._estado.mesa.length; i++) {
       const cartaAtual = this._estado.mesa[i].carta;
       const cartaMelhor = this._estado.mesa[indiceMelhor].carta;
-      if (this.cartaVence(cartaAtual, cartaMelhor)) {
-        indiceMelhor = i;
-      }
+      if (this.cartaVence(cartaAtual, cartaMelhor)) indiceMelhor = i;
+    }
+    const cartaMelhor = this._estado.mesa[indiceMelhor].carta;
+    const empatados = this._estado.mesa.filter((item, i) => i !== indiceMelhor && this.empata(item.carta, cartaMelhor));
+    if (empatados.length > 0) {
+      const ultimoEmpatado = empatados[empatados.length - 1];
+      const jogador = this.jogadores.find((j) => j.id === ultimoEmpatado.jogadorId);
+      if (!jogador) throw new Error('Último empatado não encontrado');
+      return { tipo: 'empate', ultimoEmpatado: jogador };
     }
     const jogadorId = this._estado.mesa[indiceMelhor].jogadorId;
     const vencedor = this.jogadores.find((j) => j.id === jogadorId);
     if (!vencedor) throw new Error('Vencedor não encontrado');
-    return vencedor;
+    return { tipo: 'vitoria', jogador: vencedor };
   }
 
   private cartaVence(carta: Carta, outra: Carta): boolean {
@@ -166,12 +178,31 @@ export class Rodada {
     return compararNaipe(carta, outra);
   }
 
+  private empata(carta: Carta, outra: Carta): boolean {
+    const cartaEhManilha = ehManilha(carta, this._estado.manilha);
+    const outraEhManilha = ehManilha(outra, this._estado.manilha);
+
+    if (cartaEhManilha !== outraEhManilha) return false;
+    if (cartaEhManilha && outraEhManilha) return false;
+    return carta.valor === outra.valor;
+  }
+
   private emitirTurnoGanho(vencedor: Jogador): void {
     this.emissor.emit({
       id: crypto.randomUUID(),
       timestamp: Date.now(),
       tipo: 'TURNO_GANHO',
       jogadorId: vencedor.id,
+      cartas: this._estado.mesa.map((m) => m.carta),
+    });
+  }
+
+  private emitirTurnoEmpatado(ultimoEmpatado: Jogador): void {
+    this.emissor.emit({
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      tipo: 'TURNO_EMPATADO',
+      ultimoEmpatadoId: ultimoEmpatado.id,
       cartas: this._estado.mesa.map((m) => m.carta),
     });
   }
