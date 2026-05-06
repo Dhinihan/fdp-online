@@ -29,20 +29,20 @@ const JOGADORES: Jogador[] = [
 ];
 
 export class JogoScene extends Scene {
-  objetos: Phaser.GameObjects.GameObject[] = [];
-  redesenhar?: ResizeDebouncer;
-  decisorHumano = new DecisorHumano();
-  decisorDeclaracaoHumano = new DecisorDeclaracaoHumano();
-  mesaObjetos: Phaser.GameObjects.GameObject[] = [];
-  objetosDeclaracao: Phaser.GameObjects.GameObject[] = [];
-  destaque: EstadoDestaque = {};
-  rodada?: Rodada;
-  labels: Phaser.GameObjects.Text[] = [];
-  direcoesLabels: ('horizontal' | 'vertical')[] = [];
-  tweenVez?: Phaser.Tweens.Tween;
-  turnoAnterior = 1;
-  vencedorTurno?: string;
-  manilhaObjetos: Phaser.GameObjects.GameObject[] = [];
+  private objetos: Phaser.GameObjects.GameObject[] = [];
+  private redesenhar?: ResizeDebouncer;
+  private decisorHumano = new DecisorHumano();
+  private decisorDeclaracaoHumano = new DecisorDeclaracaoHumano();
+  private mesaObjetos: Phaser.GameObjects.GameObject[] = [];
+  private objetosDeclaracao: Phaser.GameObjects.GameObject[] = [];
+  private destaque: EstadoDestaque = {};
+  private rodada?: Rodada;
+  private labels: Phaser.GameObjects.Text[] = [];
+  private direcoesLabels: ('horizontal' | 'vertical')[] = [];
+  private tweenVez?: Phaser.Tweens.Tween;
+  private turnoAnterior = 1;
+  private vencedorTurno?: string;
+  private manilhaObjetos: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
     super({ key: 'JogoScene' });
