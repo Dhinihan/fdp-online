@@ -92,7 +92,7 @@ describe('Rodada — manilha vs não-manilha não é empate', () => {
 });
 
 describe('Rodada — desempate entre manilhas por naipe', () => {
-  it('deve desempatar 3 manilhas diferentes pelo naipe', async () => {
+  it('deve desempatar 4 manilhas diferentes pelo naipe', async () => {
     const { rodada } = criarRodadaEmpate(
       [[criarCarta('4', '♦')], [criarCarta('4', '♠')], [criarCarta('4', '♥')], [criarCarta('4', '♣')]],
       '4',
