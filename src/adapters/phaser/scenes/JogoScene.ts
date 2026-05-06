@@ -2,13 +2,13 @@ import { Scene } from 'phaser';
 import { Rodada } from '@/core/Rodada';
 import type { Jogador } from '@/types/entidades';
 import type { MaoJogador } from '@/types/estado-rodada';
+import { DecisorDeclaracaoHumano } from '../DecisorDeclaracaoHumano';
 import { DecisorHumano } from '../DecisorHumano';
 import { obterDpr, escalar } from '../escala';
 import { fabricarRodada } from '../factories/rodada-factory';
 import { criarFundoInterativo } from '../input/input-humano';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 import { destruirDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
-import { atualizarLabelVencedor } from '../renderers/label-jogador';
 import { limparObjetos } from '../renderers/limpar-objetos';
 import { desenharManilha, limparManilha } from '../renderers/manilha-renderer';
 import { desenharMaoNaCena } from '../renderers/mao-scene-renderer';
@@ -19,6 +19,7 @@ import {
   atualizarIndicadorVez,
   mostrarOverlayRodadaConcluida,
 } from '../renderers/turno-renderer';
+import { iniciarProcessamentoTurno, processarDeclaracoes } from './jogo-scene-loop';
 
 const JOGADORES: Jogador[] = [
   { id: 'humano', nome: 'Você', pontos: 5 },
@@ -28,18 +29,20 @@ const JOGADORES: Jogador[] = [
 ];
 
 export class JogoScene extends Scene {
-  private objetos: Phaser.GameObjects.GameObject[] = [];
-  private redesenhar?: ResizeDebouncer;
-  private decisorHumano = new DecisorHumano();
-  private mesaObjetos: Phaser.GameObjects.GameObject[] = [];
-  private destaque: EstadoDestaque = {};
-  private rodada?: Rodada;
-  private labels: Phaser.GameObjects.Text[] = [];
-  private direcoesLabels: ('horizontal' | 'vertical')[] = [];
-  private tweenVez?: Phaser.Tweens.Tween;
-  private turnoAnterior = 1;
-  private vencedorTurno?: string;
-  private manilhaObjetos: Phaser.GameObjects.GameObject[] = [];
+  objetos: Phaser.GameObjects.GameObject[] = [];
+  redesenhar?: ResizeDebouncer;
+  decisorHumano = new DecisorHumano();
+  decisorDeclaracaoHumano = new DecisorDeclaracaoHumano();
+  mesaObjetos: Phaser.GameObjects.GameObject[] = [];
+  objetosDeclaracao: Phaser.GameObjects.GameObject[] = [];
+  destaque: EstadoDestaque = {};
+  rodada?: Rodada;
+  labels: Phaser.GameObjects.Text[] = [];
+  direcoesLabels: ('horizontal' | 'vertical')[] = [];
+  tweenVez?: Phaser.Tweens.Tween;
+  turnoAnterior = 1;
+  vencedorTurno?: string;
+  manilhaObjetos: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
     super({ key: 'JogoScene' });
@@ -48,30 +51,51 @@ export class JogoScene extends Scene {
     this.cameras.main.setBackgroundColor('#1a1a2e');
     this.rodada = this.criarRodada();
     this.rodada.distribuir(4);
-    this.turnoAnterior = 1;
     this.atualizarManilha();
     this.desenharMaos(this.rodada.estado.maos);
     this.atualizarIndicadorVez();
-    void this.iniciarProcessamentoTurno();
+    this.iniciarFluxoDeclaracao();
     this.redesenhar = criarDebounceResize(this, this.redesenharTela);
     this.scale.on('resize', this.redesenhar);
     this.events.once('shutdown', this.aoEncerrar);
   }
-  private criarRodada(): Rodada {
-    return fabricarRodada(JOGADORES, this.decisorHumano, {
-      onCartaJogada: () => {
-        this.redesenharTela();
-      },
-      onTurnoGanho: (id) => {
-        this.vencedorTurno = id;
-      },
-      onRodadaEncerrada: () => {
-        this.mostrarOverlayRodadaConcluida();
-      },
-      onManilhaVirada: () => {
-        this.atualizarManilha();
-      },
+  private iniciarFluxoDeclaracao(): void {
+    if (!this.rodada) return;
+    void processarDeclaracoes({
+      cena: this,
+      rodada: this.rodada,
+      objetos: this.objetosDeclaracao,
+      decisorHumano: this.decisorDeclaracaoHumano,
+      atualizarIndicadorVez: this.atualizarIndicadorVez.bind(this),
+      iniciarTurnos: this.iniciarFluxoTurno.bind(this),
     });
+  }
+  private async iniciarFluxoTurno(): Promise<void> {
+    await iniciarProcessamentoTurno({
+      cena: this,
+      rodada: this.rodada as Rodada,
+      labels: this.labels,
+      direcoesLabels: this.direcoesLabels,
+      turnoAnteriorRef: { valor: this.turnoAnterior },
+      jogadores: JOGADORES,
+      getVencedorTurno: () => this.vencedorTurno,
+      animarRecolhimento: this.animarRecolhimentoTurno.bind(this),
+      atualizarIndicadorVez: this.atualizarIndicadorVez.bind(this),
+    });
+  }
+  private criarRodada(): Rodada {
+    return fabricarRodada(
+      JOGADORES,
+      { jogada: this.decisorHumano, declaracao: this.decisorDeclaracaoHumano },
+      {
+        onCartaJogada: this.redesenharTela,
+        onTurnoGanho: (id) => {
+          this.vencedorTurno = id;
+        },
+        onRodadaEncerrada: this.mostrarOverlayRodadaConcluida.bind(this),
+        onManilhaVirada: this.atualizarManilha.bind(this),
+      },
+    );
   }
   private atualizarManilha(): void {
     limparManilha(this.manilhaObjetos);
@@ -79,32 +103,6 @@ export class JogoScene extends Scene {
     const { cartaVirada, manilha } = this.rodada.estado;
     if (!cartaVirada) return;
     desenharManilha({ cena: this, cartaVirada, manilha, objetos: this.manilhaObjetos });
-  }
-  private async iniciarProcessamentoTurno(): Promise<void> {
-    while (this.rodada && this.rodada.estado.fase !== 'rodadaConcluida') {
-      const jogadorAtual = this.rodada.estado.jogadorAtual;
-      const ehBot = this.rodada.estado.maos[jogadorAtual].jogador.id !== 'humano';
-      if (ehBot) await new Promise((resolve) => this.time.delayedCall(500, resolve));
-      try {
-        await this.rodada.jogarTurno();
-      } catch {
-        break;
-      }
-      if (this.rodada.estado.turno > this.turnoAnterior) {
-        this.turnoAnterior = this.rodada.estado.turno;
-        const vencedorId = this.vencedorTurno;
-        this.animarRecolhimentoTurno();
-        await new Promise((resolve) => this.time.delayedCall(800, resolve));
-        atualizarLabelVencedor({
-          vencedorId,
-          jogadores: JOGADORES,
-          vazas: this.rodada.estado.vazas,
-          labels: this.labels,
-          direcoes: this.direcoesLabels,
-        });
-      }
-      this.atualizarIndicadorVez();
-    }
   }
   private atualizarMesa(): void {
     limparObjetos(this.mesaObjetos);

@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import type { Carta } from '@/core/Carta';
+import type { DecisorDeclaracao } from '@/core/portas/DecisorDeclaracao';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
@@ -41,9 +42,16 @@ export function criarRodada(config: {
   decisores: Map<string, DecisorJogada>;
   emissor: ReturnType<typeof createEmissorEventos>;
   cartasPorRodada?: number;
+  decisoresDeclaracao?: Map<string, DecisorDeclaracao>;
 }): Rodada {
-  const rodada = new Rodada(config.jogadores, config.decisores, config.emissor);
+  const rodada = new Rodada(config.jogadores, config.emissor, {
+    jogada: config.decisores,
+    declaracao: config.decisoresDeclaracao ?? new Map<string, DecisorDeclaracao>(),
+  });
   rodada.distribuir(config.cartasPorRodada ?? 1);
+  const estado = (rodada as unknown as EstadoPrivado)._estado;
+  estado.fase = 'aguardandoJogada';
+  estado.declaracoes = {};
   return rodada;
 }
 
@@ -61,8 +69,12 @@ export function criarRodadaComMao(config: {
   turno?: number;
   cartasPorRodada?: number;
   manilha?: Carta['valor'];
+  declaracoes?: Record<string, number>;
 }): Rodada {
-  const rodada = new Rodada(config.jogadores, config.decisores, config.emissor);
+  const rodada = new Rodada(config.jogadores, config.emissor, {
+    jogada: config.decisores,
+    declaracao: new Map<string, DecisorDeclaracao>(),
+  });
   const estado = (rodada as unknown as EstadoPrivado)._estado;
   estado.maos = config.jogadores.map((jogador, i) => ({
     jogador,
@@ -71,11 +83,10 @@ export function criarRodadaComMao(config: {
   }));
   estado.fase = config.fase ?? 'aguardandoJogada';
   estado.jogadorAtual = config.jogadorAtual ?? 0;
-  estado.vazas = {};
   estado.turno = config.turno ?? 1;
   estado.cartasPorRodada = config.cartasPorRodada ?? 4;
   estado.manilha = config.manilha ?? '3';
-  estado.cartaVirada = null;
+  estado.declaracoes = config.declaracoes ?? {};
   return rodada;
 }
 

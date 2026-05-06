@@ -16,7 +16,7 @@ describe('Rodada — carta virada removida', () => {
       criarCarta('J', '♦'),
       criarCarta('10', '♣'),
     ];
-    const rodada = new Rodada(jogadores, new Map(), emissor);
+    const rodada = new Rodada(jogadores, emissor, { jogada: new Map(), declaracao: new Map() });
     rodada.distribuir(2, baralho);
     const todasCartas = rodada.estado.maos.flatMap((m) => m.cartas);
     expect(todasCartas).toHaveLength(4);
@@ -33,7 +33,7 @@ describe('Rodada — evento MANILHA_VIRADA', () => {
     emissor.on('MANILHA_VIRADA', handler);
     const jogadores = [criarJogador('j1', 'J1')];
     const baralho: Carta[] = [criarCarta('5', '♥'), criarCarta('4', '♣')];
-    const rodada = new Rodada(jogadores, new Map(), emissor);
+    const rodada = new Rodada(jogadores, emissor, { jogada: new Map(), declaracao: new Map() });
     rodada.distribuir(1, baralho);
     expect(handler).toHaveBeenCalledTimes(1);
     expect(handler).toHaveBeenCalledWith(
@@ -50,7 +50,7 @@ describe('Rodada — sem carta para virar', () => {
   it('deve definir manilha como 3 quando não há carta para virar', () => {
     const emissor = createEmissorEventos();
     const jogadores = [criarJogador('j1', 'J1')];
-    const rodada = new Rodada(jogadores, new Map(), emissor);
+    const rodada = new Rodada(jogadores, emissor, { jogada: new Map(), declaracao: new Map() });
     rodada.distribuir(0, []);
     expect(rodada.estado.manilha).toBe('3');
     expect(rodada.estado.cartaVirada).toBeNull();
@@ -65,7 +65,7 @@ describe('Rodada — manilha vence não-manilha', () => {
       ['j1', criarDecisorPrimeiraCarta()],
       ['j2', criarDecisorPrimeiraCarta()],
     ]);
-    const rodada = new Rodada(jogadores, decisores, emissor);
+    const rodada = new Rodada(jogadores, emissor, { jogada: decisores, declaracao: new Map() });
     const estadoPrivado = rodada as unknown as {
       _estado: { fase: string; manilha: Carta['valor']; maos: { cartas: Carta[] }[] };
     };
@@ -86,7 +86,7 @@ describe('Rodada — desempate de manilhas', () => {
       ['j1', criarDecisorPrimeiraCarta()],
       ['j2', criarDecisorPrimeiraCarta()],
     ]);
-    const rodada = new Rodada(jogadores, decisores, emissor);
+    const rodada = new Rodada(jogadores, emissor, { jogada: decisores, declaracao: new Map() });
     const estadoPrivado = rodada as unknown as {
       _estado: { fase: string; manilha: Carta['valor']; maos: { cartas: Carta[] }[] };
     };

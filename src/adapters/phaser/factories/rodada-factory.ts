@@ -1,5 +1,7 @@
 import { BotDeterministico } from '@/adapters/bots/BotDeterministico';
+import { DecisorDeclaracaoBot } from '@/adapters/bots/DecisorDeclaracaoBot';
 import type { Carta, Valor } from '@/core/Carta';
+import type { DecisorDeclaracao } from '@/core/portas/DecisorDeclaracao';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
@@ -12,7 +14,11 @@ export interface CallbacksRodada {
   onManilhaVirada?: (cartaVirada: Carta, manilha: Valor) => void;
 }
 
-export function fabricarRodada(jogadores: Jogador[], decisorHumano: DecisorJogada, callbacks: CallbacksRodada): Rodada {
+export function fabricarRodada(
+  jogadores: Jogador[],
+  decisoresHumanos: { jogada: DecisorJogada; declaracao: DecisorDeclaracao },
+  callbacks: CallbacksRodada,
+): Rodada {
   const emissor = createEmissorEventos();
   emissor.on('CARTA_JOGADA', callbacks.onCartaJogada);
   emissor.on('TURNO_GANHO', (evento) => {
@@ -23,10 +29,16 @@ export function fabricarRodada(jogadores: Jogador[], decisorHumano: DecisorJogad
     callbacks.onManilhaVirada?.(evento.cartaVirada, evento.manilha);
   });
   const decisores = new Map<string, DecisorJogada>([
-    ['humano', decisorHumano],
+    ['humano', decisoresHumanos.jogada],
     ['bot1', new BotDeterministico()],
     ['bot2', new BotDeterministico()],
     ['bot3', new BotDeterministico()],
   ]);
-  return new Rodada(jogadores, decisores, emissor);
+  const decisoresDeclaracao = new Map<string, DecisorDeclaracao>([
+    ['humano', decisoresHumanos.declaracao],
+    ['bot1', new DecisorDeclaracaoBot()],
+    ['bot2', new DecisorDeclaracaoBot()],
+    ['bot3', new DecisorDeclaracaoBot()],
+  ]);
+  return new Rodada(jogadores, emissor, { jogada: decisores, declaracao: decisoresDeclaracao });
 }
