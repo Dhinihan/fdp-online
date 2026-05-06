@@ -8,13 +8,13 @@ export interface ConfigInteracaoHumano {
   cena: Scene;
   objetosMao: Phaser.GameObjects.GameObject[];
   cartas: Carta[];
-  partida: Rodada;
+  rodada: Rodada;
   decisorHumano: DecisorHumano;
   destaque: EstadoDestaque;
 }
 
 export function configurarInteracaoHumano(config: ConfigInteracaoHumano): void {
-  const { cena, objetosMao, cartas, partida, decisorHumano, destaque } = config;
+  const { cena, objetosMao, cartas, rodada, decisorHumano, destaque } = config;
   objetosMao.forEach((objeto, j) => {
     const container = objeto as Phaser.GameObjects.Container;
     container.setInteractive();
@@ -24,7 +24,7 @@ export function configurarInteracaoHumano(config: ConfigInteracaoHumano): void {
     }
     container.setData('carta', carta);
     container.on('pointerdown', () => {
-      aoClicarCarta({ cena, container, carta, partida, decisorHumano, destaque });
+      aoClicarCarta({ cena, container, carta, rodada, decisorHumano, destaque });
     });
   });
 }
@@ -54,14 +54,14 @@ interface ConfigClicarCarta {
   cena: Scene;
   container: Phaser.GameObjects.Container;
   carta: Carta;
-  partida: Rodada;
+  rodada: Rodada;
   decisorHumano: DecisorHumano;
   destaque: EstadoDestaque;
 }
 
 function aoClicarCarta(config: ConfigClicarCarta): void {
-  const { cena, container, carta, partida, decisorHumano, destaque } = config;
-  if (partida.estado.maos[partida.estado.jogadorAtual].jogador.id !== 'humano') {
+  const { cena, container, carta, rodada, decisorHumano, destaque } = config;
+  if (rodada.estado.maos[rodada.estado.jogadorAtual].jogador.id !== 'humano') {
     return;
   }
   if (destaque.container === container) {
