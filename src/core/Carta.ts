@@ -42,7 +42,7 @@ export function compararNaipe(a: Carta, b: Carta): boolean {
 
 export function obterProximoValor(valor: Valor): Valor {
   const indice = valoresOrdem.indexOf(valor);
-  const proximoIndice = (indice + 1) % valoresOrdem.length;
+  const proximoIndice = (indice - 1 + valoresOrdem.length) % valoresOrdem.length;
   return valoresOrdem[proximoIndice];
 }
 

@@ -22,7 +22,7 @@ describe('Rodada — carta virada removida', () => {
     expect(todasCartas).toHaveLength(4);
     expect(todasCartas).not.toContainEqual(criarCarta('A', '♣'));
     expect(rodada.estado.cartaVirada).toEqual(criarCarta('A', '♣'));
-    expect(rodada.estado.manilha).toBe('K');
+    expect(rodada.estado.manilha).toBe('2');
   });
 });
 
@@ -40,7 +40,7 @@ describe('Rodada — evento MANILHA_VIRADA', () => {
       expect.objectContaining({
         tipo: 'MANILHA_VIRADA',
         cartaVirada: criarCarta('5', '♥'),
-        manilha: '4',
+        manilha: '6',
       }),
     );
   });
