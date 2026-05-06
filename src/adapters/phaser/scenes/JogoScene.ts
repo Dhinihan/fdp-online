@@ -68,6 +68,8 @@ export class JogoScene extends Scene {
       decisorHumano: this.decisorDeclaracaoHumano,
       atualizarIndicadorVez: this.atualizarIndicadorVez.bind(this),
       iniciarTurnos: this.iniciarFluxoTurno.bind(this),
+    }).catch((erro: unknown) => {
+      console.error('Erro no fluxo de declaração:', erro);
     });
   }
   private async iniciarFluxoTurno(): Promise<void> {
