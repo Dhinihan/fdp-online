@@ -32,7 +32,7 @@ export class JogoScene extends Scene {
   private decisorHumano = new DecisorHumano();
   private mesaObjetos: Phaser.GameObjects.GameObject[] = [];
   private destaque: EstadoDestaque = {};
-  private partida?: Rodada;
+  private rodada?: Rodada;
   private labels: Phaser.GameObjects.Text[] = [];
   private direcoesLabels: ('horizontal' | 'vertical')[] = [];
   private tweenVez?: Phaser.Tweens.Tween;
@@ -45,11 +45,11 @@ export class JogoScene extends Scene {
   }
   create(): void {
     this.cameras.main.setBackgroundColor('#1a1a2e');
-    this.partida = this.criarRodada();
-    this.partida.distribuir(4);
+    this.rodada = this.criarRodada();
+    this.rodada.distribuir(4);
     this.turnoAnterior = 1;
     this.atualizarManilha();
-    this.desenharMaos(this.partida.estado.maos);
+    this.desenharMaos(this.rodada.estado.maos);
     this.atualizarIndicadorVez();
     void this.iniciarProcessamentoTurno();
     this.redesenhar = criarDebounceResize(this, this.redesenharTela);
@@ -74,30 +74,30 @@ export class JogoScene extends Scene {
   }
   private atualizarManilha(): void {
     limparManilha(this.manilhaObjetos);
-    if (!this.partida) return;
-    const { cartaVirada, manilha } = this.partida.estado;
+    if (!this.rodada) return;
+    const { cartaVirada, manilha } = this.rodada.estado;
     if (!cartaVirada) return;
     desenharManilha({ cena: this, cartaVirada, manilha, objetos: this.manilhaObjetos });
   }
   private async iniciarProcessamentoTurno(): Promise<void> {
-    while (this.partida && this.partida.estado.fase !== 'rodadaConcluida') {
-      const jogadorAtual = this.partida.estado.jogadorAtual;
-      const ehBot = this.partida.estado.maos[jogadorAtual].jogador.id !== 'humano';
+    while (this.rodada && this.rodada.estado.fase !== 'rodadaConcluida') {
+      const jogadorAtual = this.rodada.estado.jogadorAtual;
+      const ehBot = this.rodada.estado.maos[jogadorAtual].jogador.id !== 'humano';
       if (ehBot) await new Promise((resolve) => this.time.delayedCall(500, resolve));
       try {
-        await this.partida.jogarTurno();
+        await this.rodada.jogarTurno();
       } catch {
         break;
       }
-      if (this.partida.estado.turno > this.turnoAnterior) {
-        this.turnoAnterior = this.partida.estado.turno;
+      if (this.rodada.estado.turno > this.turnoAnterior) {
+        this.turnoAnterior = this.rodada.estado.turno;
         const vencedorId = this.vencedorTurno;
         this.animarRecolhimentoTurno();
         await new Promise((resolve) => this.time.delayedCall(800, resolve));
         atualizarLabelVencedor({
           vencedorId,
           jogadores: JOGADORES,
-          vazas: this.partida.estado.vazas,
+          vazas: this.rodada.estado.vazas,
           labels: this.labels,
           direcoes: this.direcoesLabels,
         });
@@ -107,16 +107,16 @@ export class JogoScene extends Scene {
   }
   private atualizarMesa(): void {
     this.limparMesa();
-    if (!this.partida) return;
-    const cartas = this.partida.estado.mesa.map((m) => m.carta);
+    if (!this.rodada) return;
+    const cartas = this.rodada.estado.mesa.map((m) => m.carta);
     renderizarMesa({ cena: this, mesa: cartas, objetos: this.mesaObjetos });
   }
   private atualizarIndicadorVez(): void {
-    if (!this.partida) return;
+    if (!this.rodada) return;
     this.tweenVez = atualizarIndicadorVez({
       cena: this,
       labels: this.labels,
-      jogadorAtual: this.partida.estado.jogadorAtual,
+      jogadorAtual: this.rodada.estado.jogadorAtual,
       tweenAtual: this.tweenVez,
     });
   }
@@ -125,8 +125,8 @@ export class JogoScene extends Scene {
     this.limparObjetos();
     this.atualizarManilha();
     this.limparMesa();
-    if (!this.partida) return;
-    this.desenharMaos(this.partida.estado.maos);
+    if (!this.rodada) return;
+    this.desenharMaos(this.rodada.estado.maos);
     this.atualizarMesa();
     this.atualizarIndicadorVez();
   };
@@ -146,7 +146,7 @@ export class JogoScene extends Scene {
         cena: this,
         mao,
         posicao: posicoes[i],
-        partida: this.partida as Rodada,
+        rodada: this.rodada as Rodada,
         decisorHumano: this.decisorHumano,
         destaque: this.destaque,
         objetos: this.objetos,
