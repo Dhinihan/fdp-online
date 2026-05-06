@@ -35,7 +35,11 @@ export async function processarDeclaracoes(config: ConfigDeclaracoes): Promise<v
     limparObjetosDeclaracao(config.objetos);
     config.atualizarIndicadorVez();
   }
-  if (rodada.estado.fase === 'aguardandoJogada') void config.iniciarTurnos();
+  if (rodada.estado.fase === 'aguardandoJogada') {
+    void config.iniciarTurnos().catch((erro: unknown) => {
+      console.error('Erro nos turnos:', erro);
+    });
+  }
 }
 
 async function prepararDeclaracaoAtual(config: ConfigDeclaracoes): Promise<void> {
