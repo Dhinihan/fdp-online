@@ -1,8 +1,8 @@
 import type { Jogador } from '@/types/entidades';
-import type { EstadoPartida } from '@/types/estado-partida';
+import type { EstadoRodada } from '@/types/estado-rodada';
 import type { EventoDominio } from '@/types/eventos-dominio';
 import { criarBaralho, distribuir, embaralhar } from './Baralho';
-import { compararNaipe, compararValor } from './Carta';
+import { compararNaipe, compararValor, ehManilha, obterProximoValor } from './Carta';
 import type { Carta } from './Carta';
 import type { DecisorJogada } from './portas/DecisorJogada';
 
@@ -10,8 +10,8 @@ interface Emissor {
   emit(evento: EventoDominio): void;
 }
 
-export class Partida {
-  private _estado: EstadoPartida;
+export class Rodada {
+  private _estado: EstadoRodada;
   private decisores: Map<string, DecisorJogada>;
   private emissor: Emissor;
   private jogadores: Jogador[];
@@ -28,23 +28,41 @@ export class Partida {
       vazas: {},
       turno: 1,
       cartasPorRodada: 0,
+      manilha: '3',
+      cartaVirada: null,
     };
   }
 
-  get estado(): EstadoPartida {
+  get estado(): EstadoRodada {
     return this._estado;
   }
 
-  distribuir(numeroCartas: number): void {
-    const baralho = embaralhar(criarBaralho());
-    const cartas = distribuir(baralho, numeroCartas, this.jogadores.length);
+  distribuir(numeroCartas: number, baralhoEntrada?: Carta[]): void {
+    const baralho = baralhoEntrada ?? embaralhar(criarBaralho());
+    const cartaVirada = baralho.length > 0 ? baralho[0] : null;
+    const baralhoRestante = cartaVirada ? baralho.slice(1) : baralho;
+    const manilha = cartaVirada ? obterProximoValor(cartaVirada.valor) : '3';
+
+    const cartas = distribuir(baralhoRestante, numeroCartas, this.jogadores.length);
     this._estado.maos = this.jogadores.map((jogador, i) => ({
       jogador,
       cartas: cartas[i],
       visivel: jogador.id === 'humano',
     }));
     this._estado.cartasPorRodada = numeroCartas;
+    this._estado.manilha = manilha;
+    this._estado.cartaVirada = cartaVirada;
     this._estado.fase = 'aguardandoJogada';
+
+    if (cartaVirada) {
+      this.emissor.emit({
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+        tipo: 'MANILHA_VIRADA',
+        cartaVirada,
+        manilha,
+      });
+    }
   }
 
   async jogarTurno(): Promise<void> {
@@ -125,9 +143,7 @@ export class Partida {
     for (let i = 1; i < this._estado.mesa.length; i++) {
       const cartaAtual = this._estado.mesa[i].carta;
       const cartaMelhor = this._estado.mesa[indiceMelhor].carta;
-      if (compararValor(cartaAtual, cartaMelhor)) {
-        indiceMelhor = i;
-      } else if (!compararValor(cartaMelhor, cartaAtual) && compararNaipe(cartaAtual, cartaMelhor)) {
+      if (this.cartaVence(cartaAtual, cartaMelhor)) {
         indiceMelhor = i;
       }
     }
@@ -135,6 +151,19 @@ export class Partida {
     const vencedor = this.jogadores.find((j) => j.id === jogadorId);
     if (!vencedor) throw new Error('Vencedor não encontrado');
     return vencedor;
+  }
+
+  private cartaVence(carta: Carta, outra: Carta): boolean {
+    const cartaEhManilha = ehManilha(carta, this._estado.manilha);
+    const outraEhManilha = ehManilha(outra, this._estado.manilha);
+
+    if (cartaEhManilha && !outraEhManilha) return true;
+    if (!cartaEhManilha && outraEhManilha) return false;
+    if (cartaEhManilha && outraEhManilha) return compararNaipe(carta, outra);
+
+    if (compararValor(carta, outra)) return true;
+    if (compararValor(outra, carta)) return false;
+    return compararNaipe(carta, outra);
   }
 
   private emitirTurnoGanho(vencedor: Jogador): void {

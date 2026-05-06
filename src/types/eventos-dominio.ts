@@ -14,8 +14,8 @@ export interface JogoIniciado extends EventoBase {
 
 export interface ManilhaVirada extends EventoBase {
   tipo: 'MANILHA_VIRADA';
-  manilha: Carta;
-  hierarquia: Valor[];
+  cartaVirada: Carta;
+  manilha: Valor;
 }
 
 export interface DeclaracaoFeita extends EventoBase {

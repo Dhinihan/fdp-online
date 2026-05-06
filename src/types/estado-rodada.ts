@@ -1,7 +1,7 @@
-import type { Carta } from '@/core/Carta';
+import type { Carta, Valor } from '@/core/Carta';
 import type { Jogador } from './entidades';
 
-export type FasePartida =
+export type FaseRodada =
   | 'distribuindo'
   | 'aguardandoJogada'
   | 'processandoTurno'
@@ -19,12 +19,14 @@ export interface MesaItem {
   carta: Carta;
 }
 
-export interface EstadoPartida {
-  fase: FasePartida;
+export interface EstadoRodada {
+  fase: FaseRodada;
   jogadorAtual: number;
   mesa: MesaItem[];
   maos: MaoJogador[];
   vazas: Record<string, number>;
   turno: number;
   cartasPorRodada: number;
+  manilha: Valor;
+  cartaVirada: Carta | null;
 }

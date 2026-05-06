@@ -1,14 +1,16 @@
 import { Scene } from 'phaser';
-import { Partida } from '@/core/Partida';
+import { Rodada } from '@/core/Rodada';
 import type { Jogador } from '@/types/entidades';
-import type { MaoJogador } from '@/types/estado-partida';
+import type { MaoJogador } from '@/types/estado-rodada';
 import { DecisorHumano } from '../DecisorHumano';
 import { obterDpr, escalar } from '../escala';
-import { fabricarPartida } from '../factories/partida-factory';
+import { fabricarRodada } from '../factories/rodada-factory';
 import { criarFundoInterativo } from '../input/input-humano';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 import { destruirDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
 import { atualizarLabelVencedor } from '../renderers/label-jogador';
+import { limparObjetos } from '../renderers/limpar-objetos';
+import { desenharManilha, limparManilha } from '../renderers/manilha-renderer';
 import { desenharMaoNaCena } from '../renderers/mao-scene-renderer';
 import { renderizarMesa } from '../renderers/mesa-renderer';
 import { calcularPosicoes } from '../renderers/posicoes-mao';
@@ -25,43 +27,38 @@ const JOGADORES: Jogador[] = [
   { id: 'bot3', nome: 'Bot 3', pontos: 5 },
 ];
 
-const MARGEM = 60;
-const MARGEM_INFERIOR = 80;
-const ESPACAMENTO_CARTAS = 40;
-const ALTURA_CARTA = 75;
-
 export class JogoScene extends Scene {
   private objetos: Phaser.GameObjects.GameObject[] = [];
   private redesenhar?: ResizeDebouncer;
   private decisorHumano = new DecisorHumano();
   private mesaObjetos: Phaser.GameObjects.GameObject[] = [];
   private destaque: EstadoDestaque = {};
-  private partida?: Partida;
+  private rodada?: Rodada;
   private labels: Phaser.GameObjects.Text[] = [];
   private direcoesLabels: ('horizontal' | 'vertical')[] = [];
   private tweenVez?: Phaser.Tweens.Tween;
   private turnoAnterior = 1;
   private vencedorTurno?: string;
+  private manilhaObjetos: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
     super({ key: 'JogoScene' });
   }
-
   create(): void {
     this.cameras.main.setBackgroundColor('#1a1a2e');
-    this.partida = this.criarPartida();
-    this.partida.distribuir(4);
+    this.rodada = this.criarRodada();
+    this.rodada.distribuir(4);
     this.turnoAnterior = 1;
-    this.desenharMaos(this.partida.estado.maos, this.partida);
+    this.atualizarManilha();
+    this.desenharMaos(this.rodada.estado.maos);
     this.atualizarIndicadorVez();
     void this.iniciarProcessamentoTurno();
     this.redesenhar = criarDebounceResize(this, this.redesenharTela);
     this.scale.on('resize', this.redesenhar);
     this.events.once('shutdown', this.aoEncerrar);
   }
-
-  private criarPartida(): Partida {
-    return fabricarPartida(JOGADORES, this.decisorHumano, {
+  private criarRodada(): Rodada {
+    return fabricarRodada(JOGADORES, this.decisorHumano, {
       onCartaJogada: () => {
         this.redesenharTela();
       },
@@ -71,28 +68,37 @@ export class JogoScene extends Scene {
       onRodadaEncerrada: () => {
         this.mostrarOverlayRodadaConcluida();
       },
+      onManilhaVirada: () => {
+        this.atualizarManilha();
+      },
     });
   }
-
+  private atualizarManilha(): void {
+    limparManilha(this.manilhaObjetos);
+    if (!this.rodada) return;
+    const { cartaVirada, manilha } = this.rodada.estado;
+    if (!cartaVirada) return;
+    desenharManilha({ cena: this, cartaVirada, manilha, objetos: this.manilhaObjetos });
+  }
   private async iniciarProcessamentoTurno(): Promise<void> {
-    while (this.partida && this.partida.estado.fase !== 'rodadaConcluida') {
-      const jogadorAtual = this.partida.estado.jogadorAtual;
-      const ehBot = this.partida.estado.maos[jogadorAtual].jogador.id !== 'humano';
-      if (ehBot) await this.esperar(500);
+    while (this.rodada && this.rodada.estado.fase !== 'rodadaConcluida') {
+      const jogadorAtual = this.rodada.estado.jogadorAtual;
+      const ehBot = this.rodada.estado.maos[jogadorAtual].jogador.id !== 'humano';
+      if (ehBot) await new Promise((resolve) => this.time.delayedCall(500, resolve));
       try {
-        await this.partida.jogarTurno();
+        await this.rodada.jogarTurno();
       } catch {
         break;
       }
-      if (this.partida.estado.turno > this.turnoAnterior) {
-        this.turnoAnterior = this.partida.estado.turno;
+      if (this.rodada.estado.turno > this.turnoAnterior) {
+        this.turnoAnterior = this.rodada.estado.turno;
         const vencedorId = this.vencedorTurno;
         this.animarRecolhimentoTurno();
-        await this.esperar(800);
+        await new Promise((resolve) => this.time.delayedCall(800, resolve));
         atualizarLabelVencedor({
           vencedorId,
           jogadores: JOGADORES,
-          vazas: this.partida.estado.vazas,
+          vazas: this.rodada.estado.vazas,
           labels: this.labels,
           direcoes: this.direcoesLabels,
         });
@@ -100,52 +106,43 @@ export class JogoScene extends Scene {
       this.atualizarIndicadorVez();
     }
   }
-
-  private esperar(ms: number): Promise<void> {
-    return new Promise((resolve) => this.time.delayedCall(ms, resolve));
-  }
-
   private atualizarMesa(): void {
-    this.limparMesa();
-    if (!this.partida) return;
-    const cartas = this.partida.estado.mesa.map((m) => m.carta);
+    limparObjetos(this.mesaObjetos);
+    if (!this.rodada) return;
+    const cartas = this.rodada.estado.mesa.map((m) => m.carta);
     renderizarMesa({ cena: this, mesa: cartas, objetos: this.mesaObjetos });
   }
-
   private atualizarIndicadorVez(): void {
-    if (!this.partida) return;
+    if (!this.rodada) return;
     this.tweenVez = atualizarIndicadorVez({
       cena: this,
       labels: this.labels,
-      jogadorAtual: this.partida.estado.jogadorAtual,
+      jogadorAtual: this.rodada.estado.jogadorAtual,
       tweenAtual: this.tweenVez,
     });
   }
-
   private redesenharTela = (): void => {
     destruirDestaque(this.destaque);
-    this.limparObjetos();
-    this.limparMesa();
-    if (!this.partida) return;
-    this.desenharMaos(this.partida.estado.maos, this.partida);
+    limparObjetos(this.objetos);
+    this.atualizarManilha();
+    limparObjetos(this.mesaObjetos);
+    if (!this.rodada) return;
+    this.desenharMaos(this.rodada.estado.maos);
     this.atualizarMesa();
     this.atualizarIndicadorVez();
   };
-
   private calcularPosicoesMaos(): ReturnType<typeof calcularPosicoes> {
-    const dpr = obterDpr(this);
     return calcularPosicoes({
       largura: this.cameras.main.width,
       altura: this.cameras.main.height,
-      margem: escalar(MARGEM, this),
-      margemInferior: escalar(MARGEM_INFERIOR, this),
-      espacamentoCartas: escalar(ESPACAMENTO_CARTAS, this),
-      alturaCarta: escalar(ALTURA_CARTA, this),
-      dpr,
+      margem: escalar(60, this),
+      margemInferior: escalar(80, this),
+      espacamentoCartas: escalar(40, this),
+      alturaCarta: escalar(75, this),
+      dpr: obterDpr(this),
     });
   }
-
-  private desenharMaos(maos: MaoJogador[], partida: Partida): void {
+  private desenharMaos(maos: MaoJogador[]): void {
     this.labels = [];
     const posicoes = this.calcularPosicoesMaos();
     this.direcoesLabels = posicoes.map((p) => p.mao.direcao);
@@ -154,7 +151,7 @@ export class JogoScene extends Scene {
         cena: this,
         mao,
         posicao: posicoes[i],
-        partida,
+        rodada: this.rodada as Rodada,
         decisorHumano: this.decisorHumano,
         destaque: this.destaque,
         objetos: this.objetos,
@@ -168,7 +165,6 @@ export class JogoScene extends Scene {
       destaque: this.destaque,
     });
   }
-
   private aoEncerrar = (): void => {
     if (this.redesenhar) {
       this.scale.off('resize', this.redesenhar);
@@ -180,18 +176,11 @@ export class JogoScene extends Scene {
       this.tweenVez.remove();
       this.tweenVez = undefined;
     }
-    this.limparObjetos();
-    this.limparMesa();
+    limparObjetos(this.objetos);
+    limparObjetos(this.mesaObjetos);
+    limparManilha(this.manilhaObjetos);
     destruirDestaque(this.destaque);
   };
-
-  private limparObjetos(): void {
-    this.objetos.forEach((o) => {
-      o.destroy();
-    });
-    this.objetos = [];
-  }
-
   private animarRecolhimentoTurno(): void {
     animarRecolhimentoTurno({
       cena: this,
@@ -203,15 +192,7 @@ export class JogoScene extends Scene {
     this.vencedorTurno = undefined;
     this.mesaObjetos = [];
   }
-
   private mostrarOverlayRodadaConcluida(): void {
     mostrarOverlayRodadaConcluida(this, this.objetos);
-  }
-
-  private limparMesa(): void {
-    this.mesaObjetos.forEach((o) => {
-      o.destroy();
-    });
-    this.mesaObjetos = [];
   }
 }
