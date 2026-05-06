@@ -18,8 +18,8 @@ describe('comparador-carta', () => {
     expect(cartaVence(criarCarta('2', '♦'), criarCarta('3', '♣'), '4')).toBe(false);
   });
 
-  it('deve desempatar pelo naipe quando valores são iguais', () => {
-    expect(cartaVence(criarCarta('3', '♣'), criarCarta('3', '♦'), '4')).toBe(true);
+  it('deve empatar quando cartas não-manilha têm o mesmo valor', () => {
+    expect(cartaVence(criarCarta('3', '♣'), criarCarta('3', '♦'), '4')).toBe(false);
     expect(cartaVence(criarCarta('3', '♦'), criarCarta('3', '♣'), '4')).toBe(false);
   });
 

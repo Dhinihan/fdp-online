@@ -11,7 +11,7 @@ export function cartaVence(carta: Carta, outra: Carta, manilha: Carta['valor']):
 
   if (compararValor(carta, outra)) return true;
   if (compararValor(outra, carta)) return false;
-  return compararNaipe(carta, outra);
+  return false;
 }
 
 export function calcularIndiceVencedor(mesa: { carta: Carta }[], manilha: Carta['valor']): number {
