@@ -100,7 +100,8 @@ async function tentarDeclarar(rodada: Rodada): Promise<boolean> {
   try {
     await rodada.declarar();
     return true;
-  } catch {
+  } catch (erro) {
+    console.error('Falha em declarar:', erro);
     return false;
   }
 }
@@ -109,7 +110,8 @@ async function tentarJogarTurno(rodada: Rodada): Promise<boolean> {
   try {
     await rodada.jogarTurno();
     return true;
-  } catch {
+  } catch (erro) {
+    console.error('Falha em jogarTurno:', erro);
     return false;
   }
 }
