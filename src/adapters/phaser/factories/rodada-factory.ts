@@ -10,6 +10,7 @@ import type { Jogador } from '@/types/entidades';
 export interface CallbacksRodada {
   onCartaJogada: () => void;
   onTurnoGanho: (jogadorId: string) => void;
+  onTurnoEmpatado: () => void;
   onRodadaEncerrada: () => void;
   onManilhaVirada?: (cartaVirada: Carta, manilha: Valor) => void;
 }
@@ -24,6 +25,7 @@ export function fabricarRodada(
   emissor.on('TURNO_GANHO', (evento) => {
     callbacks.onTurnoGanho(evento.jogadorId);
   });
+  emissor.on('TURNO_EMPATADO', callbacks.onTurnoEmpatado);
   emissor.on('RODADA_ENCERRADA', callbacks.onRodadaEncerrada);
   emissor.on('MANILHA_VIRADA', (evento) => {
     callbacks.onManilhaVirada?.(evento.cartaVirada, evento.manilha);

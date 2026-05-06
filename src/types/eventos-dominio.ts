@@ -37,6 +37,12 @@ export interface TurnoGanho extends EventoBase {
   cartas: Carta[];
 }
 
+export interface TurnoEmpatado extends EventoBase {
+  tipo: 'TURNO_EMPATADO';
+  ultimoEmpatadoId: string;
+  cartas: Carta[];
+}
+
 export interface RodadaEncerrada extends EventoBase {
   tipo: 'RODADA_ENCERRADA';
   placar: Record<string, number>;
@@ -54,5 +60,6 @@ export type EventoDominio =
   | DeclaracaoFeita
   | CartaJogada
   | TurnoGanho
+  | TurnoEmpatado
   | RodadaEncerrada
   | JogoEncerrado;

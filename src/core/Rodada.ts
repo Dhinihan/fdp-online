@@ -1,27 +1,31 @@
 import type { Jogador } from '@/types/entidades';
 import type { EstadoRodada } from '@/types/estado-rodada';
-import type { EventoDominio } from '@/types/eventos-dominio';
 import { criarBaralho, distribuir, embaralhar } from './Baralho';
 import { obterProximoValor } from './Carta';
 import type { Carta } from './Carta';
-import { calcularIndiceVencedor } from './comparador-carta';
+import { calcularIndiceVencedor, cartasEmpatam } from './comparador-carta';
+import {
+  emitirCartaJogada,
+  emitirDeclaracaoFeita,
+  emitirManilhaVirada,
+  emitirRodadaEncerrada,
+  emitirTurnoEmpatado,
+  emitirTurnoGanho,
+  type EmissorRodada,
+} from './eventos-rodada';
 import type { DecisorDeclaracao } from './portas/DecisorDeclaracao';
 import type { DecisorJogada } from './portas/DecisorJogada';
-
-interface Emissor {
-  emit(evento: EventoDominio): void;
-}
 
 export class Rodada {
   private _estado: EstadoRodada;
   private decisores: Map<string, DecisorJogada>;
   private decisoresDeclaracao: Map<string, DecisorDeclaracao>;
-  private emissor: Emissor;
+  private emissor: EmissorRodada;
   private jogadores: Jogador[];
 
   constructor(
     jogadores: Jogador[],
-    emissor: Emissor,
+    emissor: EmissorRodada,
     decisores: {
       jogada: Map<string, DecisorJogada>;
       declaracao: Map<string, DecisorDeclaracao>;
@@ -67,15 +71,7 @@ export class Rodada {
     this._estado.declaracoes = {};
     this._estado.fase = 'aguardandoDeclaracao';
 
-    if (cartaVirada) {
-      this.emissor.emit({
-        id: crypto.randomUUID(),
-        timestamp: Date.now(),
-        tipo: 'MANILHA_VIRADA',
-        cartaVirada,
-        manilha,
-      });
-    }
+    if (cartaVirada) emitirManilhaVirada(this.emissor, cartaVirada, manilha);
   }
 
   async declarar(): Promise<void> {
@@ -92,13 +88,7 @@ export class Rodada {
     try {
       const declaracao = await decisor.declarar(this._estado, this._estado.maos[this._estado.jogadorAtual].cartas);
       this._estado.declaracoes[jogador.id] = declaracao;
-      this.emissor.emit({
-        id: crypto.randomUUID(),
-        timestamp: Date.now(),
-        tipo: 'DECLARACAO_FEITA',
-        jogadorId: jogador.id,
-        declarado: declaracao,
-      });
+      emitirDeclaracaoFeita(this.emissor, jogador.id, declaracao);
       this.avancarDeclaracao();
     } catch (erro) {
       this._estado.fase = 'aguardandoDeclaracao';
@@ -143,10 +133,7 @@ export class Rodada {
     if (indiceCarta === -1) throw new Error(`Jogada inválida para jogador ${jogador.id}`);
     this._estado.maos[this._estado.jogadorAtual].cartas = [...mao.slice(0, indiceCarta), ...mao.slice(indiceCarta + 1)];
     this._estado.mesa.push({ jogadorId: jogador.id, carta });
-    this.emissor.emit({
-      id: crypto.randomUUID(),
-      timestamp: Date.now(),
-      tipo: 'CARTA_JOGADA',
+    emitirCartaJogada(this.emissor, {
       jogadorId: jogador.id,
       carta,
       posicaoMesa: this._estado.mesa.length - 1,
@@ -164,37 +151,46 @@ export class Rodada {
   }
 
   private resolverTurno(): void {
-    const vencedor = this.calcularVencedorTurno();
-    this._estado.vazas[vencedor.id] = (this._estado.vazas[vencedor.id] ?? 0) + 1;
-    this.emissor.emit({
-      id: crypto.randomUUID(),
-      timestamp: Date.now(),
-      tipo: 'TURNO_GANHO',
-      jogadorId: vencedor.id,
-      cartas: this._estado.mesa.map((m) => m.carta),
-    });
+    const resultado = this.calcularVencedorTurno();
+    let proximoJogadorId: string;
+    if (resultado.tipo === 'vitoria') {
+      this._estado.vazas[resultado.jogador.id] = (this._estado.vazas[resultado.jogador.id] ?? 0) + 1;
+      emitirTurnoGanho(this.emissor, resultado.jogador.id, this.cartasDaMesa());
+      proximoJogadorId = resultado.jogador.id;
+    } else {
+      emitirTurnoEmpatado(this.emissor, resultado.ultimoEmpatado.id, this.cartasDaMesa());
+      proximoJogadorId = resultado.ultimoEmpatado.id;
+    }
     this._estado.turno += 1;
     this._estado.mesa = [];
     if (this._estado.turno > this._estado.cartasPorRodada) {
       this._estado.fase = 'rodadaConcluida';
-      this.emissor.emit({
-        id: crypto.randomUUID(),
-        timestamp: Date.now(),
-        tipo: 'RODADA_ENCERRADA',
-        placar: { ...this._estado.vazas },
-        proximaRodada: null,
-      });
+      emitirRodadaEncerrada(this.emissor, { ...this._estado.vazas });
     } else {
       this._estado.fase = 'aguardandoJogada';
-      this._estado.jogadorAtual = this.jogadores.findIndex((j) => j.id === vencedor.id);
+      this._estado.jogadorAtual = this.jogadores.findIndex((j) => j.id === proximoJogadorId);
     }
   }
 
-  private calcularVencedorTurno(): Jogador {
+  private calcularVencedorTurno(): { tipo: 'vitoria'; jogador: Jogador } | { tipo: 'empate'; ultimoEmpatado: Jogador } {
     const indiceMelhor = calcularIndiceVencedor(this._estado.mesa, this._estado.manilha);
+    const cartaMelhor = this._estado.mesa[indiceMelhor].carta;
+    const empatados = this._estado.mesa.filter((item, i) => {
+      return i === indiceMelhor || cartasEmpatam(item.carta, cartaMelhor, this._estado.manilha);
+    });
+    if (empatados.length > 1) {
+      const ultimoEmpatado = empatados[empatados.length - 1];
+      const jogador = this.jogadores.find((j) => j.id === ultimoEmpatado.jogadorId);
+      if (!jogador) throw new Error('Último empatado não encontrado');
+      return { tipo: 'empate', ultimoEmpatado: jogador };
+    }
     const jogadorId = this._estado.mesa[indiceMelhor].jogadorId;
     const vencedor = this.jogadores.find((j) => j.id === jogadorId);
     if (!vencedor) throw new Error('Vencedor não encontrado');
-    return vencedor;
+    return { tipo: 'vitoria', jogador: vencedor };
+  }
+
+  private cartasDaMesa(): Carta[] {
+    return this._estado.mesa.map((m) => m.carta);
   }
 }

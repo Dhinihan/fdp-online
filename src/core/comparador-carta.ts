@@ -25,3 +25,11 @@ export function calcularIndiceVencedor(mesa: { carta: Carta }[], manilha: Carta[
   }
   return indiceMelhor;
 }
+
+export function cartasEmpatam(carta: Carta, outra: Carta, manilha: Carta['valor']): boolean {
+  const cartaEhManilha = ehManilha(carta, manilha);
+  const outraEhManilha = ehManilha(outra, manilha);
+  if (cartaEhManilha !== outraEhManilha) return false;
+  if (cartaEhManilha && outraEhManilha) return false;
+  return carta.valor === outra.valor;
+}
