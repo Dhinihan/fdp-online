@@ -12,7 +12,7 @@ export interface ConfigDesenharMao {
   cena: Scene;
   mao: MaoJogador;
   posicao: PosicaoTela;
-  partida: Rodada;
+  rodada: Rodada;
   decisorHumano: DecisorHumano;
   destaque: EstadoDestaque;
   objetos: Phaser.GameObjects.GameObject[];
@@ -20,8 +20,8 @@ export interface ConfigDesenharMao {
 }
 
 export function desenharMaoNaCena(config: ConfigDesenharMao): void {
-  const { cena, mao, posicao, partida, decisorHumano, destaque, objetos, labels } = config;
-  const vazas = partida.estado.vazas[mao.jogador.id] ?? 0;
+  const { cena, mao, posicao, rodada, decisorHumano, destaque, objetos, labels } = config;
+  const vazas = rodada.estado.vazas[mao.jogador.id] ?? 0;
   const texto = formatarLabelJogador(mao.jogador.nome, vazas, posicao.mao.direcao);
   const label = renderizarLabel({
     cena,
@@ -38,7 +38,7 @@ export function desenharMaoNaCena(config: ConfigDesenharMao): void {
       cena,
       objetosMao,
       cartas: mao.cartas,
-      partida,
+      rodada,
       decisorHumano,
       destaque,
     });
