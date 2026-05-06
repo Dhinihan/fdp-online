@@ -9,6 +9,7 @@ import { criarFundoInterativo } from '../input/input-humano';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 import { destruirDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
 import { atualizarLabelVencedor } from '../renderers/label-jogador';
+import { limparObjetos } from '../renderers/limpar-objetos';
 import { desenharManilha, limparManilha } from '../renderers/manilha-renderer';
 import { desenharMaoNaCena } from '../renderers/mao-scene-renderer';
 import { renderizarMesa } from '../renderers/mesa-renderer';
@@ -106,7 +107,7 @@ export class JogoScene extends Scene {
     }
   }
   private atualizarMesa(): void {
-    this.limparMesa();
+    limparObjetos(this.mesaObjetos);
     if (!this.rodada) return;
     const cartas = this.rodada.estado.mesa.map((m) => m.carta);
     renderizarMesa({ cena: this, mesa: cartas, objetos: this.mesaObjetos });
@@ -122,16 +123,16 @@ export class JogoScene extends Scene {
   }
   private redesenharTela = (): void => {
     destruirDestaque(this.destaque);
-    this.limparObjetos();
+    limparObjetos(this.objetos);
     this.atualizarManilha();
-    this.limparMesa();
+    limparObjetos(this.mesaObjetos);
     if (!this.rodada) return;
     this.desenharMaos(this.rodada.estado.maos);
     this.atualizarMesa();
     this.atualizarIndicadorVez();
   };
-  private desenharMaos(maos: MaoJogador[]): void {
-    const posicoes = calcularPosicoes({
+  private calcularPosicoesMaos(): ReturnType<typeof calcularPosicoes> {
+    return calcularPosicoes({
       largura: this.cameras.main.width,
       altura: this.cameras.main.height,
       margem: escalar(60, this),
@@ -140,6 +141,10 @@ export class JogoScene extends Scene {
       alturaCarta: escalar(75, this),
       dpr: obterDpr(this),
     });
+  }
+  private desenharMaos(maos: MaoJogador[]): void {
+    this.labels = [];
+    const posicoes = this.calcularPosicoesMaos();
     this.direcoesLabels = posicoes.map((p) => p.mao.direcao);
     maos.forEach((mao, i) => {
       desenharMaoNaCena({
@@ -171,15 +176,11 @@ export class JogoScene extends Scene {
       this.tweenVez.remove();
       this.tweenVez = undefined;
     }
-    this.limparObjetos();
-    this.limparMesa();
+    limparObjetos(this.objetos);
+    limparObjetos(this.mesaObjetos);
     limparManilha(this.manilhaObjetos);
     destruirDestaque(this.destaque);
   };
-  private limparObjetos(): void {
-    for (const o of this.objetos) o.destroy();
-    this.objetos = [];
-  }
   private animarRecolhimentoTurno(): void {
     animarRecolhimentoTurno({
       cena: this,
@@ -193,9 +194,5 @@ export class JogoScene extends Scene {
   }
   private mostrarOverlayRodadaConcluida(): void {
     mostrarOverlayRodadaConcluida(this, this.objetos);
-  }
-  private limparMesa(): void {
-    for (const o of this.mesaObjetos) o.destroy();
-    this.mesaObjetos = [];
   }
 }
