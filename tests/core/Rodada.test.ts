@@ -1,9 +1,23 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { Carta } from '@/core/Carta';
+import type { DecisorDeclaracao } from '@/core/portas/DecisorDeclaracao';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
+import type { Jogador } from '@/types/entidades';
 import { criarCarta, criarJogador, criarDecisor, criarRodada } from './rodada-fixtures';
+
+function jogadoresComHumano(): Jogador[] {
+  return [criarJogador('humano', 'Humano'), criarJogador('bot1', 'Bot 1'), criarJogador('bot2', 'Bot 2')];
+}
+
+function criarRodadaVisibilidade(numeroRodada: number): Rodada {
+  return new Rodada(jogadoresComHumano(), createEmissorEventos(), {
+    jogada: new Map(),
+    declaracao: new Map(),
+    numeroRodada,
+  });
+}
 
 describe('Rodada — transições', () => {
   it('deve iniciar na fase distribuindo e avançar para aguardandoJogada', () => {
@@ -19,6 +33,48 @@ describe('Rodada — transições', () => {
     expect(rodada.estado.fase).toBe('aguardandoDeclaracao');
     expect(rodada.estado.jogadorAtual).toBe(0);
     expect(rodada.estado.cartasPorRodada).toBe(1);
+  });
+});
+
+describe('Rodada — visibilidade', () => {
+  it('deve ocultar a mão do humano e mostrar as mãos dos bots na primeira rodada', () => {
+    const rodada = criarRodadaVisibilidade(1);
+    rodada.distribuir(1);
+    expect(rodada.estado.maos.map((mao) => [mao.jogador.id, mao.visivel])).toEqual([
+      ['humano', false],
+      ['bot1', true],
+      ['bot2', true],
+    ]);
+  });
+
+  it('deve mostrar a mão do humano e ocultar as mãos dos bots depois da primeira rodada', () => {
+    const rodada = criarRodadaVisibilidade(2);
+    rodada.distribuir(2);
+    expect(rodada.estado.maos.map((mao) => [mao.jogador.id, mao.visivel])).toEqual([
+      ['humano', true],
+      ['bot1', false],
+      ['bot2', false],
+    ]);
+  });
+});
+
+describe('Rodada — informação dos decisores', () => {
+  it('deve entregar a mão completa ao decisor mesmo quando ela não está visível', async () => {
+    const emissor = createEmissorEventos();
+    const jogadores = [criarJogador('humano', 'Humano')];
+    const declarar: DecisorDeclaracao['declarar'] = vi.fn().mockResolvedValue(0);
+    const rodada = new Rodada(jogadores, emissor, {
+      jogada: new Map(),
+      declaracao: new Map([['humano', { declarar }]]),
+      numeroRodada: 1,
+    });
+    rodada.distribuir(1);
+    await rodada.declarar();
+    const chamadas = vi.mocked(declarar).mock.calls;
+    expect(chamadas).toHaveLength(1);
+    const chamada = chamadas[0];
+    expect(chamada[0].maos[0].visivel).toBe(false);
+    expect(chamada[1]).toEqual(rodada.estado.maos[0].cartas);
   });
 });
 

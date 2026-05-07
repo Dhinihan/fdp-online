@@ -3,7 +3,7 @@ import type { EstadoRodada } from '@/types/estado-rodada';
 import { criarBaralho, distribuir, embaralhar } from './Baralho';
 import { obterProximoValor } from './Carta';
 import type { Carta } from './Carta';
-import { calcularIndiceVencedor, cartasEmpatam } from './comparador-carta';
+import type { DecisoresRodada } from './decisores-rodada';
 import {
   emitirCartaJogada,
   emitirDeclaracaoFeita,
@@ -17,6 +17,7 @@ import {
 import { aplicarPontuacao } from './pontuacao';
 import type { DecisorDeclaracao } from './portas/DecisorDeclaracao';
 import type { DecisorJogada } from './portas/DecisorJogada';
+import { calcularResultadoTurno } from './resultado-turno';
 
 export class Rodada {
   private _estado: EstadoRodada;
@@ -24,19 +25,14 @@ export class Rodada {
   private decisoresDeclaracao: Map<string, DecisorDeclaracao>;
   private emissor: EmissorRodada;
   private jogadores: Jogador[];
+  private numeroRodada: number;
 
-  constructor(
-    jogadores: Jogador[],
-    emissor: EmissorRodada,
-    decisores: {
-      jogada: Map<string, DecisorJogada>;
-      declaracao: Map<string, DecisorDeclaracao>;
-    },
-  ) {
+  constructor(jogadores: Jogador[], emissor: EmissorRodada, decisores: DecisoresRodada) {
     this.jogadores = jogadores;
     this.decisores = decisores.jogada;
     this.decisoresDeclaracao = decisores.declaracao;
     this.emissor = emissor;
+    this.numeroRodada = decisores.numeroRodada ?? 1;
     this._estado = {
       fase: 'distribuindo',
       jogadorAtual: 0,
@@ -64,10 +60,11 @@ export class Rodada {
     const manilha = cartaVirada ? obterProximoValor(cartaVirada.valor) : '3';
 
     const cartas = distribuir(baralhoRestante, numeroCartas, this.jogadores.length);
+    const primeiraRodada = this.numeroRodada === 1;
     this._estado.maos = this.jogadores.map((jogador, i) => ({
       jogador,
       cartas: cartas[i],
-      visivel: jogador.id === 'humano',
+      visivel: primeiraRodada ? jogador.id !== 'humano' : jogador.id === 'humano',
     }));
     this._estado.cartasPorRodada = numeroCartas;
     this._estado.manilha = manilha;
@@ -163,7 +160,7 @@ export class Rodada {
   }
 
   private resolverTurno(): void {
-    const resultado = this.calcularVencedorTurno();
+    const resultado = calcularResultadoTurno(this._estado.mesa, this._estado.manilha, this.jogadores);
     let proximoJogadorId: string;
     if (resultado.tipo === 'vitoria') {
       this._estado.vazas[resultado.jogador.id] = (this._estado.vazas[resultado.jogador.id] ?? 0) + 1;
@@ -187,24 +184,6 @@ export class Rodada {
       this._estado.fase = 'aguardandoJogada';
       this._estado.jogadorAtual = this.jogadores.findIndex((j) => j.id === proximoJogadorId);
     }
-  }
-
-  private calcularVencedorTurno(): { tipo: 'vitoria'; jogador: Jogador } | { tipo: 'empate'; ultimoEmpatado: Jogador } {
-    const indiceMelhor = calcularIndiceVencedor(this._estado.mesa, this._estado.manilha);
-    const cartaMelhor = this._estado.mesa[indiceMelhor].carta;
-    const empatados = this._estado.mesa.filter((item, i) => {
-      return i === indiceMelhor || cartasEmpatam(item.carta, cartaMelhor, this._estado.manilha);
-    });
-    if (empatados.length > 1) {
-      const ultimoEmpatado = empatados[empatados.length - 1];
-      const jogador = this.jogadores.find((j) => j.id === ultimoEmpatado.jogadorId);
-      if (!jogador) throw new Error('Último empatado não encontrado');
-      return { tipo: 'empate', ultimoEmpatado: jogador };
-    }
-    const jogadorId = this._estado.mesa[indiceMelhor].jogadorId;
-    const vencedor = this.jogadores.find((j) => j.id === jogadorId);
-    if (!vencedor) throw new Error('Vencedor não encontrado');
-    return { tipo: 'vitoria', jogador: vencedor };
   }
 
   private cartasDaMesa(): Carta[] {

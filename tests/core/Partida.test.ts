@@ -33,6 +33,24 @@ describe('Partida — estado público', () => {
     expect(partida.estado.numeroRodada).toBe(2);
     expect(partida.estado.jogadoresAtivos).toEqual(jogadores.map((jogador) => jogador.id));
   });
+
+  it('deve aplicar visibilidade invertida apenas na primeira rodada', () => {
+    const jogadores = [
+      { id: 'humano', nome: 'Humano', pontos: 5 },
+      { id: 'bot1', nome: 'Bot 1', pontos: 5 },
+    ];
+    const partida = criarPartida(jogadores);
+    partida.iniciarProximaRodada();
+    expect(partida.estado.maos.map((mao) => [mao.jogador.id, mao.visivel])).toEqual([
+      ['humano', false],
+      ['bot1', true],
+    ]);
+    partida.iniciarProximaRodada();
+    expect(partida.estado.maos.map((mao) => [mao.jogador.id, mao.visivel])).toEqual([
+      ['humano', true],
+      ['bot1', false],
+    ]);
+  });
 });
 
 describe('Partida — embaralhador', () => {
