@@ -25,6 +25,8 @@ export class Partida {
   private numeroRodada = 0;
   private rodada?: Rodada;
   private embaralhadorIndice: number;
+  private jogoEncerrado = false;
+  private eliminados: Jogador[] = [];
 
   constructor(jogadores: Jogador[], emissor: EmissorPartida, decisores: DecisoresPartida) {
     this.jogadores = jogadores;
@@ -44,12 +46,14 @@ export class Partida {
       numeroRodada: this.numeroRodada,
       jogadoresAtivos: this.jogadoresAtivos(),
       embaralhadorId: this.embaralhadorAtual().id,
+      jogoEncerrado: this.jogoEncerrado,
     };
   }
 
-  iniciarProximaRodada(): Rodada {
-    this.atualizarPontos();
-    this.numeroRodada += 1;
+  iniciarProximaRodada(): Rodada | undefined {
+    const teveEliminacao = this.atualizarPontosEEliminar();
+    if (this.encerrarSeNecessario()) return undefined;
+    this.numeroRodada = teveEliminacao ? 1 : this.numeroRodada + 1;
     if (this.numeroRodada > 1) this.rotacionarEmbaralhador();
     this.rodada = new Rodada(this.jogadores, this.emissor, { ...this.decisores, numeroRodada: this.numeroRodada });
     const cartasPorRodada = Math.min(this.numeroRodada, 13);
@@ -80,15 +84,49 @@ export class Partida {
       numeroRodada: this.numeroRodada,
       jogadoresAtivos: this.jogadoresAtivos(),
       embaralhadorId: this.embaralhadorAtual().id,
+      jogoEncerrado: this.jogoEncerrado,
     };
   }
 
-  private atualizarPontos(): void {
-    if (!this.rodada) return;
+  private atualizarPontosEEliminar(): boolean {
+    if (!this.rodada) return false;
     this.jogadores = this.jogadores.map((jogador) => ({
       ...jogador,
       pontos: this.rodada?.estado.pontos[jogador.id] ?? jogador.pontos,
     }));
+    return this.eliminarJogadoresSemPontos();
+  }
+
+  private eliminarJogadoresSemPontos(): boolean {
+    const eliminados = this.jogadores.filter((jogador) => jogador.pontos <= 0);
+    if (eliminados.length === 0) return false;
+    this.eliminados = [...this.eliminados, ...eliminados];
+    this.jogadores = this.jogadores.filter((jogador) => jogador.pontos > 0);
+    this.ajustarEmbaralhadorAposEliminacao();
+    eliminados.forEach((jogador) => {
+      this.emitirJogadorEliminado(jogador);
+    });
+    return true;
+  }
+
+  private ajustarEmbaralhadorAposEliminacao(): void {
+    if (this.jogadores.length === 0) {
+      this.embaralhadorIndice = 0;
+      return;
+    }
+    this.embaralhadorIndice %= this.jogadores.length;
+  }
+
+  private encerrarSeNecessario(): boolean {
+    if (this.jogadores.length !== 1) return false;
+    this.jogoEncerrado = true;
+    this.rodada = undefined;
+    this.emitirJogoEncerrado();
+    return true;
+  }
+
+  private emitirJogadorEliminado(jogador: Jogador): void {
+    this.emissor.emit({ ...eventoBase(), tipo: 'JOGADOR_ELIMINADO', jogador });
   }
 
   private emitirRodadaIniciada(cartasPorRodada: number): void {
@@ -112,5 +150,13 @@ export class Partida {
 
   private jogadoresAtivos(): string[] {
     return this.jogadores.map((jogador) => jogador.id);
+  }
+
+  private emitirJogoEncerrado(): void {
+    this.emissor.emit({
+      ...eventoBase(),
+      tipo: 'JOGO_ENCERRADO',
+      classificacao: [...this.jogadores, ...this.eliminados].sort((a, b) => b.pontos - a.pontos),
+    });
   }
 }

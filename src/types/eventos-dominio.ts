@@ -63,6 +63,11 @@ export interface PontuacaoAplicada extends EventoBase {
   penalidades: Record<string, number>;
 }
 
+export interface JogadorEliminado extends EventoBase {
+  tipo: 'JOGADOR_ELIMINADO';
+  jogador: Jogador;
+}
+
 export interface JogoEncerrado extends EventoBase {
   tipo: 'JOGO_ENCERRADO';
   classificacao: Jogador[];
@@ -78,4 +83,5 @@ export type EventoDominio =
   | RodadaEncerrada
   | RodadaIniciada
   | PontuacaoAplicada
+  | JogadorEliminado
   | JogoEncerrado;

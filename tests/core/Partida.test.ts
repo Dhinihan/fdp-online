@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Partida } from '@/core/Partida';
+import type { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
 import type { Jogador } from '@/types/entidades';
+import type { EventoDominio } from '@/types/eventos-dominio';
 import { criarDecisorPrimeiraCarta, jogadoresPadrao } from './rodada-fixtures';
 
 function criarPartida(jogadores: Jogador[] = jogadoresPadrao()): Partida {
@@ -10,6 +12,20 @@ function criarPartida(jogadores: Jogador[] = jogadoresPadrao()): Partida {
     jogada: decisoresJogada,
     declaracao: new Map(),
   });
+}
+
+function concluirRodadaComPontos(partida: Partida, pontos: Record<string, number>): void {
+  const rodada = partida.iniciarProximaRodada() as Rodada;
+  rodada.estado.fase = 'rodadaConcluida';
+  rodada.estado.pontos = pontos;
+}
+
+function criarPartidaComEmissor() {
+  const emissor = createEmissorEventos();
+  const jogadores = jogadoresPadrao();
+  const decisoresJogada = new Map(jogadores.map((jogador) => [jogador.id, criarDecisorPrimeiraCarta()]));
+  const partida = new Partida(jogadores, emissor, { jogada: decisoresJogada, declaracao: new Map() });
+  return { emissor, partida };
 }
 
 describe('Partida — contagem de cartas', () => {
@@ -67,12 +83,9 @@ describe('Partida — embaralhador', () => {
 
 describe('Partida — eventos', () => {
   it('deve emitir RODADA_INICIADA no início de cada rodada', () => {
-    const emissor = createEmissorEventos();
+    const { emissor, partida } = criarPartidaComEmissor();
     const handler = vi.fn<(ev: unknown) => void>();
     emissor.on('RODADA_INICIADA', handler);
-    const jogadores = jogadoresPadrao();
-    const decisoresJogada = new Map(jogadores.map((jogador) => [jogador.id, criarDecisorPrimeiraCarta()]));
-    const partida = new Partida(jogadores, emissor, { jogada: decisoresJogada, declaracao: new Map() });
     partida.iniciarProximaRodada();
     expect(handler).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -82,5 +95,74 @@ describe('Partida — eventos', () => {
         jogadoresAtivos: ['j1', 'j2', 'j3', 'j4'],
       }),
     );
+  });
+});
+
+describe('Partida — eliminação', () => {
+  it('deve eliminar jogador com 0 pontos', () => {
+    const partida = criarPartida();
+    concluirRodadaComPontos(partida, { j1: 0, j2: 4, j3: 5, j4: 5 });
+    partida.iniciarProximaRodada();
+    expect(partida.estado.jogadoresAtivos).toEqual(['j2', 'j3', 'j4']);
+    expect(partida.estado.maos.map((mao) => mao.jogador.id)).toEqual(['j2', 'j3', 'j4']);
+  });
+
+  it('deve eliminar jogador com pontos negativos', () => {
+    const partida = criarPartida();
+    concluirRodadaComPontos(partida, { j1: -1, j2: 4, j3: 5, j4: 5 });
+    partida.iniciarProximaRodada();
+    expect(partida.estado.jogadoresAtivos).toEqual(['j2', 'j3', 'j4']);
+  });
+
+  it('deve reiniciar a contagem em 1 após eliminação', () => {
+    const partida = criarPartida();
+    partida.iniciarProximaRodada();
+    concluirRodadaComPontos(partida, { j1: 0, j2: 4, j3: 5, j4: 5 });
+    partida.iniciarProximaRodada();
+    expect(partida.estado.numeroRodada).toBe(1);
+    expect(partida.estado.cartasPorRodada).toBe(1);
+  });
+
+  it('deve continuar a contagem quando ninguém é eliminado', () => {
+    const partida = criarPartida();
+    concluirRodadaComPontos(partida, { j1: 4, j2: 4, j3: 5, j4: 5 });
+    partida.iniciarProximaRodada();
+    expect(partida.estado.numeroRodada).toBe(2);
+  });
+});
+
+describe('Partida — eventos de eliminação', () => {
+  it('deve emitir JOGADOR_ELIMINADO por jogador eliminado', () => {
+    const { emissor, partida } = criarPartidaComEmissor();
+    const handler = vi.fn<(ev: unknown) => void>();
+    emissor.on('JOGADOR_ELIMINADO', handler);
+    concluirRodadaComPontos(partida, { j1: 0, j2: -1, j3: 5, j4: 5 });
+    partida.iniciarProximaRodada();
+    expect(handler).toHaveBeenCalledTimes(2);
+    expect(handler).toHaveBeenNthCalledWith(1, expect.objectContaining({ tipo: 'JOGADOR_ELIMINADO' }));
+  });
+});
+
+describe('Partida — encerramento', () => {
+  it('deve encerrar quando sobra 1 sobrevivente', () => {
+    const partida = criarPartida();
+    concluirRodadaComPontos(partida, { j1: 2, j2: 0, j3: -1, j4: 0 });
+    const proximaRodada = partida.iniciarProximaRodada();
+    expect(proximaRodada).toBeUndefined();
+    expect(partida.estado.jogoEncerrado).toBe(true);
+    expect(partida.estado.jogadoresAtivos).toEqual(['j1']);
+  });
+
+  it('deve emitir JOGO_ENCERRADO com classificação final', () => {
+    const { emissor, partida } = criarPartidaComEmissor();
+    const handler = vi.fn<(ev: EventoDominio) => void>();
+    emissor.on('JOGO_ENCERRADO', handler);
+    concluirRodadaComPontos(partida, { j1: 2, j2: 0, j3: -1, j4: 0 });
+    partida.iniciarProximaRodada();
+    expect(handler).toHaveBeenCalledTimes(1);
+    const evento = handler.mock.calls[0][0];
+    expect(evento).toMatchObject({ tipo: 'JOGO_ENCERRADO' });
+    if (evento.tipo !== 'JOGO_ENCERRADO') throw new Error('Evento JOGO_ENCERRADO não emitido');
+    expect(evento.classificacao[0]).toMatchObject({ id: 'j1', pontos: 2 });
   });
 });
