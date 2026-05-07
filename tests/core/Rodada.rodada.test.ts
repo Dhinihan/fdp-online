@@ -1,7 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { Carta } from '@/core/Carta';
 import { createEmissorEventos } from '@/store/emissor-eventos';
-import { criarCarta, criarDecisorPrimeiraCarta, criarRodadaComMao, jogadoresPadrao } from './rodada-fixtures';
+import {
+  criarCarta,
+  criarDecisorPrimeiraCarta,
+  criarRodada,
+  criarRodadaComMao,
+  jogadoresPadrao,
+} from './rodada-fixtures';
 
 const MAO_CURTA: Carta[][] = [
   [criarCarta('A', '♣')],
@@ -59,6 +65,17 @@ describe('Rodada — vazas e rodada', () => {
   it('deve iniciar todos os jogadores com 5 pontos', () => {
     const { rodada } = rodadaComMaoFixa(MAO_CURTA);
     expect(rodada.estado.pontos).toEqual({ j1: 5, j2: 5, j3: 5, j4: 5 });
+  });
+
+  it('deve preservar pontos atuais dos jogadores ao criar rodada', () => {
+    const emissor = createEmissorEventos();
+    const jogadores = jogadoresPadrao().map((jogador, indice) => ({
+      ...jogador,
+      pontos: 5 - indice,
+    }));
+    const decisores = new Map(jogadores.map((j) => [j.id, criarDecisorPrimeiraCarta()]));
+    const rodada = criarRodada({ jogadores, decisores, emissor });
+    expect(rodada.estado.pontos).toEqual({ j1: 5, j2: 4, j3: 3, j4: 2 });
   });
 
   it('deve acumular 4 vazas após 4 turnos', async () => {

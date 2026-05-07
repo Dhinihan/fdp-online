@@ -48,7 +48,7 @@ export class Rodada {
       manilha: '3',
       cartaVirada: null,
       declaracoes: {},
-      pontos: Object.fromEntries(jogadores.map((jogador) => [jogador.id, 5])),
+      pontos: Object.fromEntries(jogadores.map((jogador) => [jogador.id, jogador.pontos])),
     };
   }
 
