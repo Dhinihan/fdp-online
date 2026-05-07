@@ -5,6 +5,7 @@ import type {
   JogoIniciado,
   ManilhaVirada,
   PontuacaoAplicada,
+  RodadaIniciada,
   RodadaEncerrada,
   TurnoEmpatado,
   TurnoGanho,
@@ -21,6 +22,7 @@ export interface EventoMap {
   TURNO_GANHO: TurnoGanho;
   TURNO_EMPATADO: TurnoEmpatado;
   RODADA_ENCERRADA: RodadaEncerrada;
+  RODADA_INICIADA: RodadaIniciada;
   PONTUACAO_APLICADA: PontuacaoAplicada;
   JOGO_ENCERRADO: JogoEncerrado;
   // --- Eventos de input ---

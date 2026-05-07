@@ -58,7 +58,8 @@ export class Rodada {
 
   distribuir(numeroCartas: number, baralhoEntrada?: Carta[]): void {
     const baralho = baralhoEntrada ?? embaralhar(criarBaralho());
-    const cartaVirada = baralho.length > 0 ? baralho[0] : null;
+    const precisaDistribuir = numeroCartas * this.jogadores.length;
+    const cartaVirada = baralho.length > precisaDistribuir ? baralho[0] : null;
     const baralhoRestante = cartaVirada ? baralho.slice(1) : baralho;
     const manilha = cartaVirada ? obterProximoValor(cartaVirada.valor) : '3';
 

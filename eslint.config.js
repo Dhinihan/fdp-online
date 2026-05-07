@@ -28,7 +28,7 @@ export default defineConfig(
             'tests/core/*.ts',
             'tests/e2e/*.spec.ts',
           ],
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 16,
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 32,
           noWarnOnMultipleProjects: true,
         },
         tsconfigRootDir: import.meta.dirname,
