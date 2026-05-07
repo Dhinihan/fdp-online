@@ -1,32 +1,24 @@
 import { Scene } from 'phaser';
+import { Partida } from '@/core/Partida';
 import { Rodada } from '@/core/Rodada';
-import type { Jogador } from '@/types/entidades';
-import type { MaoJogador } from '@/types/estado-rodada';
 import { DecisorDeclaracaoHumano } from '../DecisorDeclaracaoHumano';
 import { DecisorHumano } from '../DecisorHumano';
-import { obterDpr, escalar } from '../escala';
-import { fabricarRodada } from '../factories/rodada-factory';
+import { fabricarPartida } from '../factories/rodada-factory';
 import { criarFundoInterativo } from '../input/input-humano';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 import { destruirDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
+import { desenharIndicadorRodada } from '../renderers/indicador-rodada-renderer';
 import { limparObjetos } from '../renderers/limpar-objetos';
 import { desenharManilha, limparManilha } from '../renderers/manilha-renderer';
-import { desenharMaoNaCena } from '../renderers/mao-scene-renderer';
 import { renderizarMesa } from '../renderers/mesa-renderer';
-import { calcularPosicoes } from '../renderers/posicoes-mao';
 import {
   animarRecolhimentoTurno,
   atualizarIndicadorVez,
   mostrarOverlayRodadaConcluida,
 } from '../renderers/turno-renderer';
+import { desenharMaosJogo } from './desenhar-maos-jogo';
+import { JOGADORES } from './jogadores';
 import { iniciarProcessamentoTurno, processarDeclaracoes } from './jogo-scene-loop';
-
-const JOGADORES: Jogador[] = [
-  { id: 'humano', nome: 'Você', pontos: 5 },
-  { id: 'bot1', nome: 'Bot 1', pontos: 5 },
-  { id: 'bot2', nome: 'Bot 2', pontos: 5 },
-  { id: 'bot3', nome: 'Bot 3', pontos: 5 },
-];
 
 export class JogoScene extends Scene {
   private objetos: Phaser.GameObjects.GameObject[] = [];
@@ -36,46 +28,44 @@ export class JogoScene extends Scene {
   private mesaObjetos: Phaser.GameObjects.GameObject[] = [];
   private objetosDeclaracao: Phaser.GameObjects.GameObject[] = [];
   private destaque: EstadoDestaque = {};
-  private rodada?: Rodada;
+  private partida?: Partida;
   private labels: Phaser.GameObjects.Text[] = [];
   private direcoesLabels: ('horizontal' | 'vertical')[] = [];
   private tweenVez?: Phaser.Tweens.Tween;
   private turnoAnterior = 1;
   private vencedorTurno?: string;
   private manilhaObjetos: Phaser.GameObjects.GameObject[] = [];
+  private indicadorRodadaObjetos: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
     super({ key: 'JogoScene' });
   }
   create(): void {
     this.cameras.main.setBackgroundColor('#1a1a2e');
-    this.rodada = this.criarRodada();
-    this.rodada.distribuir(4);
-    this.atualizarManilha();
-    this.desenharMaos(this.rodada.estado.maos);
-    this.atualizarIndicadorVez();
-    this.iniciarFluxoDeclaracao();
+    this.partida = this.criarPartida();
+    this.iniciarNovaRodada();
     this.redesenhar = criarDebounceResize(this, this.redesenharTela);
     this.scale.on('resize', this.redesenhar);
     this.events.once('shutdown', this.aoEncerrar);
   }
   private iniciarFluxoDeclaracao(): void {
-    if (!this.rodada) return;
+    const rodada = this.partida?.rodadaAtual;
+    if (!rodada) return;
     void processarDeclaracoes({
       cena: this,
-      rodada: this.rodada,
+      rodada,
       objetos: this.objetosDeclaracao,
       decisorHumano: this.decisorDeclaracaoHumano,
       atualizarIndicadorVez: this.atualizarIndicadorVez.bind(this),
       iniciarTurnos: this.iniciarFluxoTurno.bind(this),
-    }).catch((erro: unknown) => {
-      console.error('Erro no fluxo de declaração:', erro);
-    });
+    }).catch(() => undefined);
   }
   private async iniciarFluxoTurno(): Promise<void> {
+    const rodada = this.partida?.rodadaAtual;
+    if (!rodada) return;
     await iniciarProcessamentoTurno({
       cena: this,
-      rodada: this.rodada as Rodada,
+      rodada,
       getLabels: () => this.labels,
       getDirecoesLabels: () => this.direcoesLabels,
       turnoAnteriorRef: { valor: this.turnoAnterior },
@@ -85,8 +75,8 @@ export class JogoScene extends Scene {
       atualizarIndicadorVez: this.atualizarIndicadorVez.bind(this),
     });
   }
-  private criarRodada(): Rodada {
-    return fabricarRodada(
+  private criarPartida(): Partida {
+    return fabricarPartida(
       JOGADORES,
       { jogada: this.decisorHumano, declaracao: this.decisorDeclaracaoHumano },
       {
@@ -97,30 +87,52 @@ export class JogoScene extends Scene {
         onTurnoEmpatado: () => {
           this.vencedorTurno = undefined;
         },
-        onRodadaEncerrada: this.mostrarOverlayRodadaConcluida.bind(this),
+        onRodadaEncerrada: this.transicionarRodada.bind(this),
         onManilhaVirada: this.atualizarManilha.bind(this),
+        onRodadaIniciada: this.atualizarIndicadorRodada.bind(this),
       },
     );
   }
+  private iniciarNovaRodada(): void {
+    this.turnoAnterior = 1;
+    this.vencedorTurno = undefined;
+    this.partida?.iniciarProximaRodada();
+    this.atualizarManilha();
+    this.redesenharTela();
+    this.iniciarFluxoDeclaracao();
+  }
   private atualizarManilha(): void {
     limparManilha(this.manilhaObjetos);
-    if (!this.rodada) return;
-    const { cartaVirada, manilha } = this.rodada.estado;
+    const estado = this.partida?.estado;
+    if (!estado) return;
+    const { cartaVirada, manilha } = estado;
     if (!cartaVirada) return;
     desenharManilha({ cena: this, cartaVirada, manilha, objetos: this.manilhaObjetos });
   }
+  private atualizarIndicadorRodada(): void {
+    const estado = this.partida?.estado;
+    if (!estado?.numeroRodada) return;
+    desenharIndicadorRodada({
+      cena: this,
+      numeroRodada: estado.numeroRodada,
+      manilha: estado.manilha,
+      objetos: this.indicadorRodadaObjetos,
+    });
+  }
   private atualizarMesa(): void {
     limparObjetos(this.mesaObjetos);
-    if (!this.rodada) return;
-    const cartas = this.rodada.estado.mesa.map((m) => m.carta);
+    const estado = this.partida?.estado;
+    if (!estado) return;
+    const cartas = estado.mesa.map((m) => m.carta);
     renderizarMesa({ cena: this, mesa: cartas, objetos: this.mesaObjetos });
   }
   private atualizarIndicadorVez(): void {
-    if (!this.rodada) return;
+    const estado = this.partida?.estado;
+    if (!estado) return;
     this.tweenVez = atualizarIndicadorVez({
       cena: this,
       labels: this.labels,
-      jogadorAtual: this.rodada.estado.jogadorAtual,
+      jogadorAtual: estado.jogadorAtual,
       tweenAtual: this.tweenVez,
     });
   }
@@ -128,38 +140,24 @@ export class JogoScene extends Scene {
     destruirDestaque(this.destaque);
     limparObjetos(this.objetos);
     this.atualizarManilha();
+    this.atualizarIndicadorRodada();
     limparObjetos(this.mesaObjetos);
-    if (!this.rodada) return;
-    this.desenharMaos(this.rodada.estado.maos);
+    const estado = this.partida?.estado;
+    if (!estado) return;
+    this.desenharMaos(estado.maos);
     this.atualizarMesa();
     this.atualizarIndicadorVez();
   };
-  private calcularPosicoesMaos(): ReturnType<typeof calcularPosicoes> {
-    return calcularPosicoes({
-      largura: this.cameras.main.width,
-      altura: this.cameras.main.height,
-      margem: escalar(60, this),
-      margemInferior: escalar(80, this),
-      espacamentoCartas: escalar(40, this),
-      alturaCarta: escalar(75, this),
-      dpr: obterDpr(this),
-    });
-  }
-  private desenharMaos(maos: MaoJogador[]): void {
+  private desenharMaos(maos: Parameters<typeof desenharMaosJogo>[0]['maos']): void {
     this.labels = [];
-    const posicoes = this.calcularPosicoesMaos();
-    this.direcoesLabels = posicoes.map((p) => p.mao.direcao);
-    maos.forEach((mao, i) => {
-      desenharMaoNaCena({
-        cena: this,
-        mao,
-        posicao: posicoes[i],
-        rodada: this.rodada as Rodada,
-        decisorHumano: this.decisorHumano,
-        destaque: this.destaque,
-        objetos: this.objetos,
-        labels: this.labels,
-      });
+    this.direcoesLabels = desenharMaosJogo({
+      cena: this,
+      maos,
+      rodada: this.partida?.rodadaAtual as Rodada,
+      decisorHumano: this.decisorHumano,
+      destaque: this.destaque,
+      objetos: this.objetos,
+      labels: this.labels,
     });
     criarFundoInterativo({
       cena: this,
@@ -181,6 +179,7 @@ export class JogoScene extends Scene {
     }
     limparObjetos(this.objetos);
     limparObjetos(this.mesaObjetos);
+    limparObjetos(this.indicadorRodadaObjetos);
     limparManilha(this.manilhaObjetos);
     destruirDestaque(this.destaque);
   };
@@ -195,7 +194,8 @@ export class JogoScene extends Scene {
     this.vencedorTurno = undefined;
     this.mesaObjetos = [];
   }
-  private mostrarOverlayRodadaConcluida(): void {
+  private transicionarRodada(): void {
     mostrarOverlayRodadaConcluida(this, this.objetos);
+    this.time.delayedCall(900, this.iniciarNovaRodada.bind(this));
   }
 }

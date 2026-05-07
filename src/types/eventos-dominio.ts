@@ -49,6 +49,14 @@ export interface RodadaEncerrada extends EventoBase {
   proximaRodada: number | null;
 }
 
+export interface RodadaIniciada extends EventoBase {
+  tipo: 'RODADA_INICIADA';
+  numeroRodada: number;
+  cartasPorRodada: number;
+  embaralhadorId: string;
+  jogadoresAtivos: string[];
+}
+
 export interface PontuacaoAplicada extends EventoBase {
   tipo: 'PONTUACAO_APLICADA';
   placar: Record<string, number>;
@@ -68,5 +76,6 @@ export type EventoDominio =
   | TurnoGanho
   | TurnoEmpatado
   | RodadaEncerrada
+  | RodadaIniciada
   | PontuacaoAplicada
   | JogoEncerrado;
