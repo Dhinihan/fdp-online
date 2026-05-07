@@ -14,6 +14,7 @@ interface ConfigEncerramento {
   indicadorRodadaObjetos: Phaser.GameObjects.GameObject[];
   manilhaObjetos: Phaser.GameObjects.GameObject[];
   placarObjetos: Phaser.GameObjects.GameObject[];
+  fimJogoObjetos: Phaser.GameObjects.GameObject[];
   destaque: EstadoDestaque;
 }
 
@@ -21,10 +22,7 @@ export function aoEncerrarCena(config: ConfigEncerramento): {
   redesenhar?: ResizeDebouncer;
   tweenVez?: Phaser.Tweens.Tween;
 } {
-  if (config.redesenhar) {
-    config.cena.scale.off('resize', config.redesenhar);
-    config.redesenhar.limpar();
-  }
+  desativarResize(config.cena, config.redesenhar);
   config.tweenVez?.stop();
   config.tweenVez?.remove();
   limparObjetos(config.objetos);
@@ -32,8 +30,15 @@ export function aoEncerrarCena(config: ConfigEncerramento): {
   limparObjetos(config.indicadorRodadaObjetos);
   limparManilha(config.manilhaObjetos);
   limparPlacar(config.placarObjetos);
+  limparObjetos(config.fimJogoObjetos);
   destruirDestaque(config.destaque);
   return { redesenhar: undefined, tweenVez: undefined };
+}
+
+export function desativarResize(cena: Phaser.Scene, redesenhar?: ResizeDebouncer): void {
+  if (!redesenhar) return;
+  cena.scale.off('resize', redesenhar);
+  redesenhar.limpar();
 }
 
 export function transicionarRodada(

@@ -16,6 +16,7 @@ export interface CallbacksRodada {
   onManilhaVirada?: (cartaVirada: Carta, manilha: Valor) => void;
   onRodadaIniciada?: () => void;
   onPontuacaoAplicada?: () => void;
+  onJogoEncerrado?: (classificacao: Jogador[]) => void;
 }
 
 function registrarCallbacks(emissor: ReturnType<typeof createEmissorEventos>, callbacks: CallbacksRodada): void {
@@ -28,6 +29,7 @@ function registrarCallbacks(emissor: ReturnType<typeof createEmissorEventos>, ca
   emissor.on('RODADA_INICIADA', () => callbacks.onRodadaIniciada?.());
   emissor.on('PONTUACAO_APLICADA', () => callbacks.onPontuacaoAplicada?.());
   emissor.on('MANILHA_VIRADA', (evento) => callbacks.onManilhaVirada?.(evento.cartaVirada, evento.manilha));
+  emissor.on('JOGO_ENCERRADO', (evento) => callbacks.onJogoEncerrado?.(evento.classificacao));
 }
 
 function criarDecisores(decisoresHumanos: { jogada: DecisorJogada; declaracao: DecisorDeclaracao }): {
