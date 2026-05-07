@@ -12,7 +12,7 @@ import { desenharManilha, limparManilha } from '../renderers/manilha-renderer';
 import { renderizarMesa } from '../renderers/mesa-renderer';
 import { desenharPlacar } from '../renderers/placar-renderer';
 import { animarRecolhimentoTurno, atualizarIndicadorVez } from '../renderers/turno-renderer';
-import { aoEncerrarCena, transicionarRodada } from './ciclo-vida-cena';
+import { aoEncerrarCena, desativarResize, transicionarRodada } from './ciclo-vida-cena';
 import { desenharMaosJogo } from './desenhar-maos-jogo';
 import { mostrarFimJogoDaCena } from './fim-jogo-scene';
 import { iniciarDeclaracaoDaCena, iniciarTurnosDaCena } from './fluxo-jogo-scene';
@@ -94,6 +94,7 @@ export class JogoScene extends Scene {
         onRodadaIniciada: this.atualizarIndicadorRodada.bind(this),
         onPontuacaoAplicada: this.atualizarPlacar.bind(this),
         onJogoEncerrado: (classificacao) => {
+          desativarResize(this, this.redesenhar);
           mostrarFimJogoDaCena(this, classificacao);
         },
       },
