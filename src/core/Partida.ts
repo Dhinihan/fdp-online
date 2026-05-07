@@ -51,7 +51,7 @@ export class Partida {
     this.atualizarPontos();
     this.numeroRodada += 1;
     if (this.numeroRodada > 1) this.rotacionarEmbaralhador();
-    this.rodada = new Rodada(this.jogadores, this.emissor, this.decisores);
+    this.rodada = new Rodada(this.jogadores, this.emissor, { ...this.decisores, numeroRodada: this.numeroRodada });
     const cartasPorRodada = Math.min(this.numeroRodada, 13);
     this.rodada.distribuir(cartasPorRodada);
     this.emitirRodadaIniciada(cartasPorRodada);
