@@ -3,6 +3,7 @@ import type {
   CartaJogada,
   JogoEncerrado,
   JogoIniciado,
+  JogadorEliminado,
   ManilhaVirada,
   PontuacaoAplicada,
   RodadaIniciada,
@@ -24,6 +25,7 @@ export interface EventoMap {
   RODADA_ENCERRADA: RodadaEncerrada;
   RODADA_INICIADA: RodadaIniciada;
   PONTUACAO_APLICADA: PontuacaoAplicada;
+  JOGADOR_ELIMINADO: JogadorEliminado;
   JOGO_ENCERRADO: JogoEncerrado;
   // --- Eventos de input ---
   TOQUE_CARTA: ToqueCarta;
