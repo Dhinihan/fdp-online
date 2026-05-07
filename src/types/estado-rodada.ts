@@ -3,6 +3,8 @@ import type { Jogador } from './entidades';
 
 export type FaseRodada =
   | 'distribuindo'
+  | 'aguardandoDeclaracao'
+  | 'processandoDeclaracao'
   | 'aguardandoJogada'
   | 'processandoTurno'
   | 'turnoConcluido'
@@ -29,4 +31,5 @@ export interface EstadoRodada {
   cartasPorRodada: number;
   manilha: Valor;
   cartaVirada: Carta | null;
+  declaracoes: Record<string, number>;
 }

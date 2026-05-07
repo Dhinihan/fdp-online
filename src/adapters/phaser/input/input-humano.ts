@@ -61,6 +61,9 @@ interface ConfigClicarCarta {
 
 function aoClicarCarta(config: ConfigClicarCarta): void {
   const { cena, container, carta, rodada, decisorHumano, destaque } = config;
+  if (rodada.estado.fase !== 'aguardandoJogada' && rodada.estado.fase !== 'processandoTurno') {
+    return;
+  }
   if (rodada.estado.maos[rodada.estado.jogadorAtual].jogador.id !== 'humano') {
     return;
   }

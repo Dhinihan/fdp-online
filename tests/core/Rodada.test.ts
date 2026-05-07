@@ -13,10 +13,10 @@ describe('Rodada — transições', () => {
       ['j1', criarDecisor(criarCarta('4', '♣'))],
       ['j2', criarDecisor(criarCarta('5', '♥'))],
     ]);
-    const rodada = new Rodada(jogadores, decisores, emissor);
+    const rodada = new Rodada(jogadores, emissor, { jogada: decisores, declaracao: new Map() });
     expect(rodada.estado.fase).toBe('distribuindo');
     rodada.distribuir(1);
-    expect(rodada.estado.fase).toBe('aguardandoJogada');
+    expect(rodada.estado.fase).toBe('aguardandoDeclaracao');
     expect(rodada.estado.jogadorAtual).toBe(0);
     expect(rodada.estado.cartasPorRodada).toBe(1);
   });
