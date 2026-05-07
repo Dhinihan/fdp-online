@@ -4,18 +4,15 @@ import { Rodada } from '@/core/Rodada';
 import { DecisorDeclaracaoHumano } from '../DecisorDeclaracaoHumano';
 import { DecisorHumano } from '../DecisorHumano';
 import { fabricarPartida } from '../factories/rodada-factory';
-import { criarFundoInterativo } from '../input/input-humano';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 import { destruirDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
 import { desenharIndicadorRodada } from '../renderers/indicador-rodada-renderer';
 import { limparObjetos } from '../renderers/limpar-objetos';
 import { desenharManilha, limparManilha } from '../renderers/manilha-renderer';
 import { renderizarMesa } from '../renderers/mesa-renderer';
-import {
-  animarRecolhimentoTurno,
-  atualizarIndicadorVez,
-  mostrarOverlayRodadaConcluida,
-} from '../renderers/turno-renderer';
+import { desenharPlacar } from '../renderers/placar-renderer';
+import { animarRecolhimentoTurno, atualizarIndicadorVez } from '../renderers/turno-renderer';
+import { aoEncerrarCena, transicionarRodada } from './ciclo-vida-cena';
 import { desenharMaosJogo } from './desenhar-maos-jogo';
 import { JOGADORES } from './jogadores';
 import { iniciarProcessamentoTurno, processarDeclaracoes } from './jogo-scene-loop';
@@ -36,6 +33,7 @@ export class JogoScene extends Scene {
   private vencedorTurno?: string;
   private manilhaObjetos: Phaser.GameObjects.GameObject[] = [];
   private indicadorRodadaObjetos: Phaser.GameObjects.GameObject[] = [];
+  private placarObjetos: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
     super({ key: 'JogoScene' });
@@ -57,6 +55,7 @@ export class JogoScene extends Scene {
       objetos: this.objetosDeclaracao,
       decisorHumano: this.decisorDeclaracaoHumano,
       atualizarIndicadorVez: this.atualizarIndicadorVez.bind(this),
+      atualizarPlacar: this.atualizarPlacar.bind(this),
       iniciarTurnos: this.iniciarFluxoTurno.bind(this),
     }).catch(() => undefined);
   }
@@ -87,9 +86,10 @@ export class JogoScene extends Scene {
         onTurnoEmpatado: () => {
           this.vencedorTurno = undefined;
         },
-        onRodadaEncerrada: this.transicionarRodada.bind(this),
+        onRodadaEncerrada: this.aoEncerrarRodada.bind(this),
         onManilhaVirada: this.atualizarManilha.bind(this),
         onRodadaIniciada: this.atualizarIndicadorRodada.bind(this),
+        onPontuacaoAplicada: this.atualizarPlacar.bind(this),
       },
     );
   }
@@ -119,6 +119,52 @@ export class JogoScene extends Scene {
       objetos: this.indicadorRodadaObjetos,
     });
   }
+  private atualizarPlacar(): void {
+    const estado = this.partida?.estado;
+    if (!estado) return;
+    desenharPlacar({ cena: this, jogadores: JOGADORES, estado, objetos: this.placarObjetos });
+  }
+  private redesenharTela = (): void => {
+    destruirDestaque(this.destaque);
+    limparObjetos(this.objetos);
+    this.atualizarManilha();
+    this.atualizarIndicadorRodada();
+    this.atualizarPlacar();
+    limparObjetos(this.mesaObjetos);
+    const estado = this.partida?.estado;
+    if (!estado) return;
+    this.desenharMaos(estado.maos);
+    this.atualizarMesa();
+    this.atualizarIndicadorVez();
+  };
+  private desenharMaos(maos: Parameters<typeof desenharMaosJogo>[0]['maos']): void {
+    const rodada = this.partida?.rodadaAtual as Rodada;
+    const resultado = desenharMaosJogo({
+      cena: this,
+      maos,
+      rodada,
+      decisorHumano: this.decisorHumano,
+      destaque: this.destaque,
+      objetos: this.objetos,
+    });
+    this.labels = resultado.labels;
+    this.direcoesLabels = resultado.direcoes;
+  }
+  private aoEncerrar = (): void => {
+    const resultado = aoEncerrarCena({
+      cena: this,
+      redesenhar: this.redesenhar,
+      tweenVez: this.tweenVez,
+      objetos: this.objetos,
+      mesaObjetos: this.mesaObjetos,
+      indicadorRodadaObjetos: this.indicadorRodadaObjetos,
+      manilhaObjetos: this.manilhaObjetos,
+      placarObjetos: this.placarObjetos,
+      destaque: this.destaque,
+    });
+    this.redesenhar = resultado.redesenhar;
+    this.tweenVez = resultado.tweenVez;
+  };
   private atualizarMesa(): void {
     limparObjetos(this.mesaObjetos);
     const estado = this.partida?.estado;
@@ -136,53 +182,6 @@ export class JogoScene extends Scene {
       tweenAtual: this.tweenVez,
     });
   }
-  private redesenharTela = (): void => {
-    destruirDestaque(this.destaque);
-    limparObjetos(this.objetos);
-    this.atualizarManilha();
-    this.atualizarIndicadorRodada();
-    limparObjetos(this.mesaObjetos);
-    const estado = this.partida?.estado;
-    if (!estado) return;
-    this.desenharMaos(estado.maos);
-    this.atualizarMesa();
-    this.atualizarIndicadorVez();
-  };
-  private desenharMaos(maos: Parameters<typeof desenharMaosJogo>[0]['maos']): void {
-    this.labels = [];
-    this.direcoesLabels = desenharMaosJogo({
-      cena: this,
-      maos,
-      rodada: this.partida?.rodadaAtual as Rodada,
-      decisorHumano: this.decisorHumano,
-      destaque: this.destaque,
-      objetos: this.objetos,
-      labels: this.labels,
-    });
-    criarFundoInterativo({
-      cena: this,
-      objetos: this.objetos,
-      decisorHumano: this.decisorHumano,
-      destaque: this.destaque,
-    });
-  }
-  private aoEncerrar = (): void => {
-    if (this.redesenhar) {
-      this.scale.off('resize', this.redesenhar);
-      this.redesenhar.limpar();
-      this.redesenhar = undefined;
-    }
-    if (this.tweenVez) {
-      this.tweenVez.stop();
-      this.tweenVez.remove();
-      this.tweenVez = undefined;
-    }
-    limparObjetos(this.objetos);
-    limparObjetos(this.mesaObjetos);
-    limparObjetos(this.indicadorRodadaObjetos);
-    limparManilha(this.manilhaObjetos);
-    destruirDestaque(this.destaque);
-  };
   private animarRecolhimentoTurno(): void {
     animarRecolhimentoTurno({
       cena: this,
@@ -194,8 +193,7 @@ export class JogoScene extends Scene {
     this.vencedorTurno = undefined;
     this.mesaObjetos = [];
   }
-  private transicionarRodada(): void {
-    mostrarOverlayRodadaConcluida(this, this.objetos);
-    this.time.delayedCall(900, this.iniciarNovaRodada.bind(this));
+  private aoEncerrarRodada(): void {
+    transicionarRodada(this, this.objetos, this.iniciarNovaRodada.bind(this));
   }
 }
