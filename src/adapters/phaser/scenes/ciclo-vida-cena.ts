@@ -14,6 +14,7 @@ interface ConfigEncerramento {
   indicadorRodadaObjetos: Phaser.GameObjects.GameObject[];
   manilhaObjetos: Phaser.GameObjects.GameObject[];
   placarObjetos: Phaser.GameObjects.GameObject[];
+  fimJogoObjetos: Phaser.GameObjects.GameObject[];
   destaque: EstadoDestaque;
 }
 
@@ -32,6 +33,7 @@ export function aoEncerrarCena(config: ConfigEncerramento): {
   limparObjetos(config.indicadorRodadaObjetos);
   limparManilha(config.manilhaObjetos);
   limparPlacar(config.placarObjetos);
+  limparObjetos(config.fimJogoObjetos);
   destruirDestaque(config.destaque);
   return { redesenhar: undefined, tweenVez: undefined };
 }
