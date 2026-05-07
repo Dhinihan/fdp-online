@@ -59,23 +59,11 @@ interface EstadoPrivado {
   _estado: EstadoRodada;
 }
 
-export function criarRodadaComMao(config: {
-  jogadores: Jogador[];
-  decisores: Map<string, DecisorJogada>;
-  emissor: ReturnType<typeof createEmissorEventos>;
-  maos: Carta[][];
-  jogadorAtual?: number;
-  fase?: EstadoRodada['fase'];
-  turno?: number;
-  cartasPorRodada?: number;
-  manilha?: Carta['valor'];
-  declaracoes?: Record<string, number>;
-}): Rodada {
-  const rodada = new Rodada(config.jogadores, config.emissor, {
-    jogada: config.decisores,
-    declaracao: new Map<string, DecisorDeclaracao>(),
-  });
-  const estado = (rodada as unknown as EstadoPrivado)._estado;
+function pontosIniciais(jogadores: Jogador[]): Record<string, number> {
+  return Object.fromEntries(jogadores.map((jogador) => [jogador.id, jogador.pontos]));
+}
+
+function preencherEstadoComMao(estado: EstadoRodada, config: ConfigRodadaComMao): void {
   estado.maos = config.jogadores.map((jogador, i) => ({
     jogador,
     cartas: config.maos[i] ?? [],
@@ -87,6 +75,32 @@ export function criarRodadaComMao(config: {
   estado.cartasPorRodada = config.cartasPorRodada ?? 4;
   estado.manilha = config.manilha ?? '3';
   estado.declaracoes = config.declaracoes ?? {};
+  estado.pontos = config.pontos ?? pontosIniciais(config.jogadores);
+  estado.vazas = config.vazas ?? {};
+}
+
+interface ConfigRodadaComMao {
+  jogadores: Jogador[];
+  decisores: Map<string, DecisorJogada>;
+  emissor: ReturnType<typeof createEmissorEventos>;
+  maos: Carta[][];
+  jogadorAtual?: number;
+  fase?: EstadoRodada['fase'];
+  turno?: number;
+  cartasPorRodada?: number;
+  manilha?: Carta['valor'];
+  declaracoes?: Record<string, number>;
+  pontos?: Record<string, number>;
+  vazas?: Record<string, number>;
+}
+
+export function criarRodadaComMao(config: ConfigRodadaComMao): Rodada {
+  const rodada = new Rodada(config.jogadores, config.emissor, {
+    jogada: config.decisores,
+    declaracao: new Map<string, DecisorDeclaracao>(),
+  });
+  const estado = (rodada as unknown as EstadoPrivado)._estado;
+  preencherEstadoComMao(estado, config);
   return rodada;
 }
 

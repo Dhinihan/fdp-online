@@ -8,11 +8,13 @@ import {
   emitirCartaJogada,
   emitirDeclaracaoFeita,
   emitirManilhaVirada,
+  emitirPontuacaoAplicada,
   emitirRodadaEncerrada,
   emitirTurnoEmpatado,
   emitirTurnoGanho,
   type EmissorRodada,
 } from './eventos-rodada';
+import { aplicarPontuacao } from './pontuacao';
 import type { DecisorDeclaracao } from './portas/DecisorDeclaracao';
 import type { DecisorJogada } from './portas/DecisorJogada';
 
@@ -46,6 +48,7 @@ export class Rodada {
       manilha: '3',
       cartaVirada: null,
       declaracoes: {},
+      pontos: Object.fromEntries(jogadores.map((jogador) => [jogador.id, jogador.pontos])),
     };
   }
 
@@ -173,6 +176,11 @@ export class Rodada {
     this._estado.mesa = [];
     if (this._estado.turno > this._estado.cartasPorRodada) {
       this._estado.fase = 'rodadaConcluida';
+      const pontos = aplicarPontuacao(
+        this._estado,
+        this.jogadores.map((j) => j.id),
+      );
+      emitirPontuacaoAplicada(this.emissor, pontos.pontos, pontos.penalidades);
       emitirRodadaEncerrada(this.emissor, { ...this._estado.vazas });
     } else {
       this._estado.fase = 'aguardandoJogada';
