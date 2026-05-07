@@ -60,7 +60,7 @@ interface EstadoPrivado {
 }
 
 function pontosIniciais(jogadores: Jogador[]): Record<string, number> {
-  return Object.fromEntries(jogadores.map((jogador) => [jogador.id, 5]));
+  return Object.fromEntries(jogadores.map((jogador) => [jogador.id, jogador.pontos]));
 }
 
 function preencherEstadoComMao(estado: EstadoRodada, config: ConfigRodadaComMao): void {
