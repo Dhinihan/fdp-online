@@ -32,4 +32,5 @@ export interface EstadoRodada {
   manilha: Valor;
   cartaVirada: Carta | null;
   declaracoes: Record<string, number>;
+  pontos: Record<string, number>;
 }

@@ -39,3 +39,11 @@ export function emitirTurnoEmpatado(emissor: EmissorRodada, ultimoEmpatadoId: st
 export function emitirRodadaEncerrada(emissor: EmissorRodada, placar: Record<string, number>): void {
   emissor.emit({ ...base(), tipo: 'RODADA_ENCERRADA', placar, proximaRodada: null });
 }
+
+export function emitirPontuacaoAplicada(
+  emissor: EmissorRodada,
+  placar: Record<string, number>,
+  penalidades: Record<string, number>,
+): void {
+  emissor.emit({ ...base(), tipo: 'PONTUACAO_APLICADA', placar, penalidades });
+}
