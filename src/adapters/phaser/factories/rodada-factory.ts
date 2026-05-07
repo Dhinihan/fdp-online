@@ -17,43 +17,7 @@ export interface CallbacksRodada {
   onRodadaIniciada?: () => void;
 }
 
-export function fabricarRodada(
-  jogadores: Jogador[],
-  decisoresHumanos: { jogada: DecisorJogada; declaracao: DecisorDeclaracao },
-  callbacks: CallbacksRodada,
-): Rodada {
-  const emissor = createEmissorEventos();
-  emissor.on('CARTA_JOGADA', callbacks.onCartaJogada);
-  emissor.on('TURNO_GANHO', (evento) => {
-    callbacks.onTurnoGanho(evento.jogadorId);
-  });
-  emissor.on('TURNO_EMPATADO', callbacks.onTurnoEmpatado);
-  emissor.on('RODADA_ENCERRADA', callbacks.onRodadaEncerrada);
-  emissor.on('RODADA_INICIADA', () => callbacks.onRodadaIniciada?.());
-  emissor.on('MANILHA_VIRADA', (evento) => {
-    callbacks.onManilhaVirada?.(evento.cartaVirada, evento.manilha);
-  });
-  const decisores = new Map<string, DecisorJogada>([
-    ['humano', decisoresHumanos.jogada],
-    ['bot1', new BotDeterministico()],
-    ['bot2', new BotDeterministico()],
-    ['bot3', new BotDeterministico()],
-  ]);
-  const decisoresDeclaracao = new Map<string, DecisorDeclaracao>([
-    ['humano', decisoresHumanos.declaracao],
-    ['bot1', new DecisorDeclaracaoBot()],
-    ['bot2', new DecisorDeclaracaoBot()],
-    ['bot3', new DecisorDeclaracaoBot()],
-  ]);
-  return new Rodada(jogadores, emissor, { jogada: decisores, declaracao: decisoresDeclaracao });
-}
-
-export function fabricarPartida(
-  jogadores: Jogador[],
-  decisoresHumanos: { jogada: DecisorJogada; declaracao: DecisorDeclaracao },
-  callbacks: CallbacksRodada,
-): Partida {
-  const emissor = createEmissorEventos();
+function registrarCallbacks(emissor: ReturnType<typeof createEmissorEventos>, callbacks: CallbacksRodada): void {
   emissor.on('CARTA_JOGADA', callbacks.onCartaJogada);
   emissor.on('TURNO_GANHO', (evento) => {
     callbacks.onTurnoGanho(evento.jogadorId);
@@ -62,17 +26,45 @@ export function fabricarPartida(
   emissor.on('RODADA_ENCERRADA', callbacks.onRodadaEncerrada);
   emissor.on('RODADA_INICIADA', () => callbacks.onRodadaIniciada?.());
   emissor.on('MANILHA_VIRADA', (evento) => callbacks.onManilhaVirada?.(evento.cartaVirada, evento.manilha));
-  const decisores = new Map<string, DecisorJogada>([
+}
+
+function criarDecisores(decisoresHumanos: { jogada: DecisorJogada; declaracao: DecisorDeclaracao }): {
+  jogada: Map<string, DecisorJogada>;
+  declaracao: Map<string, DecisorDeclaracao>;
+} {
+  const jogada = new Map<string, DecisorJogada>([
     ['humano', decisoresHumanos.jogada],
     ['bot1', new BotDeterministico()],
     ['bot2', new BotDeterministico()],
     ['bot3', new BotDeterministico()],
   ]);
-  const decisoresDeclaracao = new Map<string, DecisorDeclaracao>([
+  const declaracao = new Map<string, DecisorDeclaracao>([
     ['humano', decisoresHumanos.declaracao],
     ['bot1', new DecisorDeclaracaoBot()],
     ['bot2', new DecisorDeclaracaoBot()],
     ['bot3', new DecisorDeclaracaoBot()],
   ]);
-  return new Partida(jogadores, emissor, { jogada: decisores, declaracao: decisoresDeclaracao });
+  return { jogada, declaracao };
+}
+
+export function fabricarRodada(
+  jogadores: Jogador[],
+  decisoresHumanos: { jogada: DecisorJogada; declaracao: DecisorDeclaracao },
+  callbacks: CallbacksRodada,
+): Rodada {
+  const emissor = createEmissorEventos();
+  registrarCallbacks(emissor, callbacks);
+  const decisores = criarDecisores(decisoresHumanos);
+  return new Rodada(jogadores, emissor, decisores);
+}
+
+export function fabricarPartida(
+  jogadores: Jogador[],
+  decisoresHumanos: { jogada: DecisorJogada; declaracao: DecisorDeclaracao },
+  callbacks: CallbacksRodada,
+): Partida {
+  const emissor = createEmissorEventos();
+  registrarCallbacks(emissor, callbacks);
+  const decisores = criarDecisores(decisoresHumanos);
+  return new Partida(jogadores, emissor, decisores);
 }
