@@ -39,8 +39,8 @@ export function animarRecolhimentoTurno(config: ConfigAnimarTurno): void {
   const { cena, labels, jogadores, vencedorId, mesaObjetos } = config;
   if (vencedorId) {
     const indice = jogadores.findIndex((j) => j.id === vencedorId);
-    if (indice >= 0) {
-      const label = labels[indice];
+    const label = labels[indice];
+    if (indice >= 0 && label.active) {
       cena.tweens.add({
         targets: label,
         scale: 1.4,
@@ -51,6 +51,7 @@ export function animarRecolhimentoTurno(config: ConfigAnimarTurno): void {
     }
   }
   mesaObjetos.forEach((obj) => {
+    if (!obj.active) return;
     cena.tweens.add({
       targets: obj,
       alpha: 0,

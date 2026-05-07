@@ -34,7 +34,6 @@ export class JogoScene extends Scene {
   private manilhaObjetos: Phaser.GameObjects.GameObject[] = [];
   private indicadorRodadaObjetos: Phaser.GameObjects.GameObject[] = [];
   private placarObjetos: Phaser.GameObjects.GameObject[] = [];
-
   constructor() {
     super({ key: 'JogoScene' });
   }
@@ -62,13 +61,14 @@ export class JogoScene extends Scene {
   private async iniciarFluxoTurno(): Promise<void> {
     const rodada = this.partida?.rodadaAtual;
     if (!rodada) return;
+    const jogadoresAtuais = rodada.estado.maos.map((m) => m.jogador);
     await iniciarProcessamentoTurno({
       cena: this,
       rodada,
       getLabels: () => this.labels,
       getDirecoesLabels: () => this.direcoesLabels,
       turnoAnteriorRef: { valor: this.turnoAnterior },
-      jogadores: JOGADORES,
+      jogadores: jogadoresAtuais,
       getVencedorTurno: () => this.vencedorTurno,
       animarRecolhimento: this.animarRecolhimentoTurno.bind(this),
       atualizarIndicadorVez: this.atualizarIndicadorVez.bind(this),
@@ -122,7 +122,8 @@ export class JogoScene extends Scene {
   private atualizarPlacar(): void {
     const estado = this.partida?.estado;
     if (!estado) return;
-    desenharPlacar({ cena: this, jogadores: JOGADORES, estado, objetos: this.placarObjetos });
+    const jogadores = estado.maos.map((m) => m.jogador);
+    desenharPlacar({ cena: this, jogadores, estado, objetos: this.placarObjetos });
   }
   private redesenharTela = (): void => {
     destruirDestaque(this.destaque);
@@ -134,7 +135,9 @@ export class JogoScene extends Scene {
     const estado = this.partida?.estado;
     if (!estado) return;
     this.desenharMaos(estado.maos);
-    this.atualizarMesa();
+    limparObjetos(this.mesaObjetos);
+    const cartas = estado.mesa.map((m) => m.carta);
+    renderizarMesa({ cena: this, mesa: cartas, objetos: this.mesaObjetos });
     this.atualizarIndicadorVez();
   };
   private desenharMaos(maos: Parameters<typeof desenharMaosJogo>[0]['maos']): void {
@@ -151,7 +154,7 @@ export class JogoScene extends Scene {
     this.direcoesLabels = resultado.direcoes;
   }
   private aoEncerrar = (): void => {
-    const resultado = aoEncerrarCena({
+    const r = aoEncerrarCena({
       cena: this,
       redesenhar: this.redesenhar,
       tweenVez: this.tweenVez,
@@ -162,16 +165,9 @@ export class JogoScene extends Scene {
       placarObjetos: this.placarObjetos,
       destaque: this.destaque,
     });
-    this.redesenhar = resultado.redesenhar;
-    this.tweenVez = resultado.tweenVez;
+    this.redesenhar = r.redesenhar;
+    this.tweenVez = r.tweenVez;
   };
-  private atualizarMesa(): void {
-    limparObjetos(this.mesaObjetos);
-    const estado = this.partida?.estado;
-    if (!estado) return;
-    const cartas = estado.mesa.map((m) => m.carta);
-    renderizarMesa({ cena: this, mesa: cartas, objetos: this.mesaObjetos });
-  }
   private atualizarIndicadorVez(): void {
     const estado = this.partida?.estado;
     if (!estado) return;
@@ -183,15 +179,18 @@ export class JogoScene extends Scene {
     });
   }
   private animarRecolhimentoTurno(): void {
+    const rodada = this.partida?.rodadaAtual;
+    const jogadoresAtuais = rodada?.estado.maos.map((m) => m.jogador) ?? [];
+    const objetosParaAnimar = this.mesaObjetos.filter((obj) => obj.active);
+    this.mesaObjetos = [];
     animarRecolhimentoTurno({
       cena: this,
       labels: this.labels,
-      jogadores: JOGADORES,
+      jogadores: jogadoresAtuais,
       vencedorId: this.vencedorTurno,
-      mesaObjetos: this.mesaObjetos,
+      mesaObjetos: objetosParaAnimar,
     });
     this.vencedorTurno = undefined;
-    this.mesaObjetos = [];
   }
   private aoEncerrarRodada(): void {
     transicionarRodada(this, this.objetos, this.iniciarNovaRodada.bind(this));
