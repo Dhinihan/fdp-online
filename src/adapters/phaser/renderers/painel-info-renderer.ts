@@ -6,14 +6,7 @@ import { estadoEmJogo } from '@/types/estado-rodada';
 import { escalar, escalarFonte } from '../escala';
 import type { LayoutPainel } from '../layout';
 import { limparObjetos } from './limpar-objetos';
-import { criarMiniCarta } from './mini-carta-renderer';
-
-interface Area {
-  x: number;
-  y: number;
-  largura: number;
-  altura: number;
-}
+import { desenharManilhaNoPainel, type Area } from './painel-manilha-renderer';
 
 export interface ConfigPainelInfo {
   cena: Scene;
@@ -43,12 +36,23 @@ export function desenharPainelInfo(config: ConfigPainelInfo): void {
   const { cena, layout, objetos } = config;
   limparObjetos(objetos);
   const { infoArea, orientacao } = layout;
+  const ehPaisagem = orientacao === 'paisagem';
   const base: ConfigDesenho = { cena, objetos, area: infoArea };
 
   desenharFundo(base);
   desenharCabecalhoRodada(base, config.numeroRodada);
-  desenharTabela(base, config);
-  desenharManilha(base, config, orientacao === 'paisagem');
+  const { colunas, areaManilha } = calcularLayoutTabela(cena, infoArea, ehPaisagem);
+  desenharTabela(base, config, colunas);
+  if (config.cartaVirada) {
+    desenharManilhaNoPainel({
+      cena,
+      objetos,
+      cartaVirada: config.cartaVirada,
+      manilha: config.manilha,
+      areaManilha,
+      ehPaisagem,
+    });
+  }
 }
 
 function desenharFundo(config: ConfigDesenho): void {
@@ -80,25 +84,33 @@ function desenharCabecalhoRodada(config: ConfigDesenho, numero: number): void {
   objetos.push(texto);
 }
 
-function desenharTabela(config: ConfigDesenho, painelConfig: ConfigPainelInfo): void {
+function calcularLayoutTabela(cena: Scene, area: Area, ehPaisagem: boolean): { colunas: Colunas; areaManilha: Area } {
+  const tabelaX = area.x + escalar(10, cena);
+  const larguraTabela = ehPaisagem ? area.largura - escalar(20, cena) : Math.round(area.largura * 0.6);
+  const colunas: Colunas = {
+    nome: tabelaX,
+    declarado: tabelaX + Math.round(larguraTabela * 0.42),
+    feito: tabelaX + Math.round(larguraTabela * 0.58),
+    pontos: tabelaX + Math.round(larguraTabela * 0.74),
+  };
+  const areaManilha = ehPaisagem
+    ? area
+    : {
+        x: area.x + Math.round(area.largura * 0.65),
+        y: area.y,
+        largura: Math.round(area.largura * 0.35),
+        altura: area.altura,
+      };
+  return { colunas, areaManilha };
+}
+
+function desenharTabela(config: ConfigDesenho, painelConfig: ConfigPainelInfo, colunas: Colunas): void {
   if (painelConfig.estado.fase === 'distribuindo') return;
   const { cena, objetos, area } = config;
   const emJogo = estadoEmJogo(painelConfig.estado);
-  const colunas = calcularColunas(cena, area);
   const cabecalhoY = area.y + escalar(44, cena);
   desenharCabecalhoTabela({ cena, objetos, colunas, y: cabecalhoY });
   desenharLinhasJogadores({ cena, objetos, colunas, cabecalhoY, jogadores: painelConfig.jogadores, emJogo });
-}
-
-function calcularColunas(cena: Scene, area: Area): Colunas {
-  const tabelaX = area.x + escalar(10, cena);
-  const larguraUtil = area.largura - escalar(20, cena);
-  return {
-    nome: tabelaX,
-    declarado: tabelaX + Math.round(larguraUtil * 0.42),
-    feito: tabelaX + Math.round(larguraUtil * 0.58),
-    pontos: tabelaX + Math.round(larguraUtil * 0.74),
-  };
 }
 
 interface ConfigCabecalho {
@@ -170,43 +182,4 @@ function desenharLinhasJogadores(config: ConfigLinhas): void {
     adicionarTexto(cena, objetos, { texto: String(feito), x: colunas.feito, y, cor: '#ffffff' });
     adicionarTexto(cena, objetos, { texto: String(pontos), x: colunas.pontos, y, cor: corPontos });
   });
-}
-
-function desenharManilha(config: ConfigDesenho, painelConfig: ConfigPainelInfo, ehPaisagem: boolean): void {
-  if (!painelConfig.cartaVirada) return;
-  const { cena, objetos, area } = config;
-  const posicao = calcularPosicaoManilha(cena, area, ehPaisagem);
-  const miniCarta = criarMiniCarta({ cena, x: posicao.x, y: posicao.y, carta: painelConfig.cartaVirada });
-  miniCarta.setDepth(81);
-  objetos.push(miniCarta);
-  const label = criarLabelManilha({ cena, manilha: painelConfig.manilha, posicao, ehPaisagem });
-  objetos.push(label);
-}
-
-function calcularPosicaoManilha(cena: Scene, area: Area, ehPaisagem: boolean): { x: number; y: number } {
-  if (ehPaisagem) {
-    return { x: area.x + area.largura / 2, y: area.y + area.altura - escalar(70, cena) };
-  }
-  return { x: area.x + area.largura - escalar(40, cena), y: area.y + area.altura / 2 };
-}
-
-interface ConfigLabelManilha {
-  cena: Scene;
-  manilha: Valor;
-  posicao: { x: number; y: number };
-  ehPaisagem: boolean;
-}
-
-function criarLabelManilha(config: ConfigLabelManilha): Phaser.GameObjects.Text {
-  const { cena, manilha, posicao, ehPaisagem } = config;
-  const labelX = ehPaisagem ? posicao.x : posicao.x - escalar(38, cena);
-  const labelY = ehPaisagem ? posicao.y + escalar(32, cena) : posicao.y;
-  return cena.add
-    .text(labelX, labelY, `Manilha: ${manilha}`, {
-      fontSize: escalarFonte(9, cena),
-      color: '#facc15',
-      fontFamily: 'Arial',
-    })
-    .setOrigin(ehPaisagem ? 0.5 : 1, 0.5)
-    .setDepth(81);
 }
