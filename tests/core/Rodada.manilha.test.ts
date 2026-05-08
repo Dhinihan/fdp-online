@@ -68,10 +68,12 @@ describe('Rodada — manilha vence não-manilha', () => {
     const rodada = new Rodada(jogadores, emissor, { jogada: decisores, declaracao: new Map() });
     const estadoPrivado = rodada as unknown as {
       _estado: { fase: string; manilha: Carta['valor']; maos: { cartas: Carta[] }[] };
+      fases: { definir(fase: string): void };
     };
     estadoPrivado._estado.maos = [{ cartas: [criarCarta('3', '♦')] }, { cartas: [criarCarta('4', '♣')] }];
     estadoPrivado._estado.manilha = '4';
     estadoPrivado._estado.fase = 'aguardandoJogada';
+    estadoPrivado.fases.definir('aguardandoJogada');
     await rodada.jogarTurno();
     await rodada.jogarTurno();
     expect(rodada.estado.vazas['j2']).toBe(1);
@@ -89,10 +91,12 @@ describe('Rodada — desempate de manilhas', () => {
     const rodada = new Rodada(jogadores, emissor, { jogada: decisores, declaracao: new Map() });
     const estadoPrivado = rodada as unknown as {
       _estado: { fase: string; manilha: Carta['valor']; maos: { cartas: Carta[] }[] };
+      fases: { definir(fase: string): void };
     };
     estadoPrivado._estado.maos = [{ cartas: [criarCarta('4', '♦')] }, { cartas: [criarCarta('4', '♣')] }];
     estadoPrivado._estado.manilha = '4';
     estadoPrivado._estado.fase = 'aguardandoJogada';
+    estadoPrivado.fases.definir('aguardandoJogada');
     await rodada.jogarTurno();
     await rodada.jogarTurno();
     expect(rodada.estado.vazas['j2']).toBe(1);
