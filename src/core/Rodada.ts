@@ -95,7 +95,7 @@ export class Rodada {
       emitirDeclaracaoFeita(this.emissor, jogador.id, declaracao);
       this.avancarDeclaracao();
     } catch (erro) {
-      this.transitarFase('aguardandoDeclaracao');
+      if (this.fases.eh('processandoDeclaracao')) this.transitarFase('aguardandoDeclaracao');
       throw erro;
     }
   }
@@ -132,7 +132,7 @@ export class Rodada {
     try {
       await this.executarJogada(jogador, decisor);
     } catch (erro) {
-      this.transitarFase('aguardandoJogada');
+      if (this.fases.eh('processandoTurno')) this.transitarFase('aguardandoJogada');
       throw erro;
     }
   }
