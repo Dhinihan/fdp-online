@@ -1,13 +1,13 @@
+import type { Scene } from 'phaser';
 import type { Rodada } from '@/core/Rodada';
 import type { Jogador } from '@/types/entidades';
 import { estadoEmJogo } from '@/types/estado-rodada';
 import type { DecisorDeclaracaoHumano } from '../DecisorDeclaracaoHumano';
 import { desenharBotoesDeclaracao, limparObjetosDeclaracao } from '../renderers/declaracao-renderer';
 import { atualizarLabelVencedor } from '../renderers/label-jogador';
-import type { JogoScene } from './JogoScene';
 
 interface ConfigDeclaracoes {
-  cena: JogoScene;
+  cena: Scene;
   rodada: Rodada;
   objetos: Phaser.GameObjects.GameObject[];
   decisorHumano: DecisorDeclaracaoHumano;
@@ -17,7 +17,7 @@ interface ConfigDeclaracoes {
 }
 
 interface ConfigTurnos {
-  cena: JogoScene;
+  cena: Scene;
   rodada: Rodada;
   getLabels: () => Phaser.GameObjects.Text[];
   getDirecoesLabels: () => ('horizontal' | 'vertical')[];
@@ -118,7 +118,7 @@ async function tentarJogarTurno(rodada: Rodada): Promise<boolean> {
   }
 }
 
-function esperar(cena: JogoScene, ms: number): Promise<void> {
+function esperar(cena: Scene, ms: number): Promise<void> {
   return new Promise((resolve) => {
     cena.time.delayedCall(ms, resolve);
   });
