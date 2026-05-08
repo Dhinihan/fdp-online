@@ -6,7 +6,6 @@ export type FaseComCartas =
   | 'processandoDeclaracao'
   | 'aguardandoJogada'
   | 'processandoTurno'
-  | 'turnoConcluido'
   | 'rodadaConcluida';
 
 export type FaseRodada = 'distribuindo' | FaseComCartas;
@@ -45,7 +44,6 @@ export type EstadoAguardandoDeclaracao = EstadoComCartasBase & { fase: 'aguardan
 export type EstadoProcessandoDeclaracao = EstadoComCartasBase & { fase: 'processandoDeclaracao' };
 export type EstadoAguardandoJogada = EstadoComCartasBase & { fase: 'aguardandoJogada' };
 export type EstadoProcessandoTurno = EstadoComCartasBase & { fase: 'processandoTurno' };
-export type EstadoTurnoConcluido = EstadoComCartasBase & { fase: 'turnoConcluido' };
 export type EstadoRodadaConcluida = EstadoComCartasBase & { fase: 'rodadaConcluida' };
 
 export type EstadoEmJogo =
@@ -53,7 +51,6 @@ export type EstadoEmJogo =
   | EstadoProcessandoDeclaracao
   | EstadoAguardandoJogada
   | EstadoProcessandoTurno
-  | EstadoTurnoConcluido
   | EstadoRodadaConcluida;
 
 export type EstadoRodada = EstadoDistribuindo | EstadoEmJogo;

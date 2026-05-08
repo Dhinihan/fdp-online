@@ -7,7 +7,6 @@ const TRANSICOES_VALIDAS: Record<FaseRodada, FaseRodada[]> = {
   aguardandoJogada: ['processandoTurno'],
   processandoTurno: ['aguardandoJogada', 'rodadaConcluida'],
   rodadaConcluida: [],
-  turnoConcluido: [],
 };
 
 export function validarTransicaoFase(faseAtual: FaseRodada, novaFase: FaseRodada): void {
