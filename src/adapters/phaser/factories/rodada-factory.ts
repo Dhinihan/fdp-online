@@ -1,36 +1,14 @@
 import { BotDeterministico } from '@/adapters/bots/BotDeterministico';
 import { DecisorDeclaracaoBot } from '@/adapters/bots/DecisorDeclaracaoBot';
-import type { Carta, Valor } from '@/core/Carta';
 import { Partida } from '@/core/Partida';
 import type { DecisorDeclaracao } from '@/core/portas/DecisorDeclaracao';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
 import type { Jogador } from '@/types/entidades';
+import { subscreverEventos, type CallbacksRodada } from './subscricao-eventos-rodada';
 
-export interface CallbacksRodada {
-  onCartaJogada: () => void;
-  onTurnoGanho: (jogadorId: string) => void;
-  onTurnoEmpatado: () => void;
-  onRodadaEncerrada: () => void;
-  onManilhaVirada?: (cartaVirada: Carta, manilha: Valor) => void;
-  onRodadaIniciada?: () => void;
-  onPontuacaoAplicada?: () => void;
-  onJogoEncerrado?: (classificacao: Jogador[]) => void;
-}
-
-function registrarCallbacks(emissor: ReturnType<typeof createEmissorEventos>, callbacks: CallbacksRodada): void {
-  emissor.on('CARTA_JOGADA', callbacks.onCartaJogada);
-  emissor.on('TURNO_GANHO', (evento) => {
-    callbacks.onTurnoGanho(evento.jogadorId);
-  });
-  emissor.on('TURNO_EMPATADO', callbacks.onTurnoEmpatado);
-  emissor.on('RODADA_ENCERRADA', callbacks.onRodadaEncerrada);
-  emissor.on('RODADA_INICIADA', () => callbacks.onRodadaIniciada?.());
-  emissor.on('PONTUACAO_APLICADA', () => callbacks.onPontuacaoAplicada?.());
-  emissor.on('MANILHA_VIRADA', (evento) => callbacks.onManilhaVirada?.(evento.cartaVirada, evento.manilha));
-  emissor.on('JOGO_ENCERRADO', (evento) => callbacks.onJogoEncerrado?.(evento.classificacao));
-}
+export type { CallbacksRodada } from './subscricao-eventos-rodada';
 
 function criarDecisores(decisoresHumanos: { jogada: DecisorJogada; declaracao: DecisorDeclaracao }): {
   jogada: Map<string, DecisorJogada>;
@@ -57,7 +35,7 @@ export function fabricarRodada(
   callbacks: CallbacksRodada,
 ): Rodada {
   const emissor = createEmissorEventos();
-  registrarCallbacks(emissor, callbacks);
+  subscreverEventos(emissor, callbacks);
   const decisores = criarDecisores(decisoresHumanos);
   return new Rodada(jogadores, emissor, decisores);
 }
@@ -68,7 +46,7 @@ export function fabricarPartida(
   callbacks: CallbacksRodada,
 ): Partida {
   const emissor = createEmissorEventos();
-  registrarCallbacks(emissor, callbacks);
+  subscreverEventos(emissor, callbacks);
   const decisores = criarDecisores(decisoresHumanos);
   return new Partida(jogadores, emissor, decisores);
 }
