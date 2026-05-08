@@ -1,8 +1,6 @@
 import type { ResizeDebouncer } from '../redimensionamento';
 import { destruirDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
 import { limparObjetos } from '../renderers/limpar-objetos';
-import { limparManilha } from '../renderers/manilha-renderer';
-import { limparPlacar } from '../renderers/placar-renderer';
 import { mostrarOverlayRodadaConcluida } from '../renderers/turno-renderer';
 
 interface ConfigEncerramento {
@@ -11,9 +9,7 @@ interface ConfigEncerramento {
   tweenVez?: Phaser.Tweens.Tween;
   objetos: Phaser.GameObjects.GameObject[];
   mesaObjetos: Phaser.GameObjects.GameObject[];
-  indicadorRodadaObjetos: Phaser.GameObjects.GameObject[];
-  manilhaObjetos: Phaser.GameObjects.GameObject[];
-  placarObjetos: Phaser.GameObjects.GameObject[];
+  painelObjetos: Phaser.GameObjects.GameObject[];
   fimJogoObjetos: Phaser.GameObjects.GameObject[];
   destaque: EstadoDestaque;
 }
@@ -27,9 +23,7 @@ export function aoEncerrarCena(config: ConfigEncerramento): {
   config.tweenVez?.remove();
   limparObjetos(config.objetos);
   limparObjetos(config.mesaObjetos);
-  limparObjetos(config.indicadorRodadaObjetos);
-  limparManilha(config.manilhaObjetos);
-  limparPlacar(config.placarObjetos);
+  limparObjetos(config.painelObjetos);
   limparObjetos(config.fimJogoObjetos);
   destruirDestaque(config.destaque);
   return { redesenhar: undefined, tweenVez: undefined };

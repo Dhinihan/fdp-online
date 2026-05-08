@@ -13,9 +13,7 @@ export interface DependenciasCena {
   decisorHumano: DecisorHumano;
   redesenharTela: () => void;
   atualizarIndicadorVez: () => void;
-  atualizarPlacar: () => void;
-  atualizarManilha: () => void;
-  atualizarIndicadorRodada: () => void;
+  atualizarPainel: () => void;
   animarRecolhimentoTurno: () => void;
   transicionarRodada: (continuar: () => void) => void;
   mostrarFimJogo: (classificacao: Jogador[]) => void;
@@ -57,9 +55,9 @@ export class JogoController {
         onRodadaEncerrada: () => {
           this.deps.transicionarRodada(this.iniciarNovaRodada.bind(this));
         },
-        onManilhaVirada: this.deps.atualizarManilha,
-        onRodadaIniciada: this.deps.atualizarIndicadorRodada,
-        onPontuacaoAplicada: this.deps.atualizarPlacar,
+        onManilhaVirada: this.deps.atualizarPainel,
+        onRodadaIniciada: this.deps.atualizarPainel,
+        onPontuacaoAplicada: this.deps.atualizarPainel,
         onJogoEncerrado: (classificacao) => {
           this.deps.desativarResize();
           this.deps.mostrarFimJogo(classificacao);
@@ -86,7 +84,7 @@ export class JogoController {
       objetos: this.deps.objetosDeclaracao,
       decisorHumano: this.decisorDeclaracaoHumano,
       atualizarIndicadorVez: this.deps.atualizarIndicadorVez,
-      atualizarPlacar: this.deps.atualizarPlacar,
+      atualizarPainel: this.deps.atualizarPainel,
       iniciarTurnos: this.iniciarFluxoTurno.bind(this),
     }).catch(() => undefined);
   }

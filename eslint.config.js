@@ -26,6 +26,7 @@ export default defineConfig(
             'tests/*.test.ts',
             'tests/core/*.test.ts',
             'tests/core/*.ts',
+            'tests/adapters/*.test.ts',
             'tests/e2e/*.spec.ts',
           ],
           maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 32,

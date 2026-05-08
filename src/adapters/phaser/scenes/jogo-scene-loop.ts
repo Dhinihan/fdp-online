@@ -12,7 +12,7 @@ interface ConfigDeclaracoes {
   objetos: Phaser.GameObjects.GameObject[];
   decisorHumano: DecisorDeclaracaoHumano;
   atualizarIndicadorVez: () => void;
-  atualizarPlacar: () => void;
+  atualizarPainel: () => void;
   iniciarTurnos: () => Promise<void>;
 }
 
@@ -35,7 +35,7 @@ export async function processarDeclaracoes(config: ConfigDeclaracoes): Promise<v
     const declarou = await tentarDeclarar(rodada);
     if (!declarou) return;
     limparObjetosDeclaracao(config.objetos);
-    config.atualizarPlacar();
+    config.atualizarPainel();
     config.atualizarIndicadorVez();
   }
   if (rodada.estado.fase === 'aguardandoJogada') {
