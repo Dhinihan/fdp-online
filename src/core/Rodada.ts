@@ -1,5 +1,5 @@
 import type { Jogador } from '@/types/entidades';
-import type { EstadoRodada } from '@/types/estado-rodada';
+import type { EstadoRodada, FaseRodada } from '@/types/estado-rodada';
 import { criarBaralho, distribuir, embaralhar } from './Baralho';
 import { obterProximoValor } from './Carta';
 import type { Carta } from './Carta';
@@ -14,6 +14,7 @@ import {
   emitirTurnoGanho,
   type EmissorRodada,
 } from './eventos-rodada';
+import { MaquinaFases } from './maquina-fases';
 import { aplicarPontuacao } from './pontuacao';
 import type { DecisorDeclaracao } from './portas/DecisorDeclaracao';
 import type { DecisorJogada } from './portas/DecisorJogada';
@@ -26,6 +27,7 @@ export class Rodada {
   private emissor: EmissorRodada;
   private jogadores: Jogador[];
   private numeroRodada: number;
+  private fases = new MaquinaFases();
 
   constructor(jogadores: Jogador[], emissor: EmissorRodada, decisores: DecisoresRodada) {
     this.jogadores = jogadores;
@@ -70,20 +72,20 @@ export class Rodada {
     this._estado.manilha = manilha;
     this._estado.cartaVirada = cartaVirada;
     this._estado.declaracoes = {};
-    this._estado.fase = 'aguardandoDeclaracao';
+    this.transitarFase('aguardandoDeclaracao');
 
     if (cartaVirada) emitirManilhaVirada(this.emissor, cartaVirada, manilha);
   }
 
   async declarar(): Promise<void> {
-    if (this._estado.fase !== 'aguardandoDeclaracao') {
-      throw new Error(`Não é possível declarar na fase ${this._estado.fase}`);
+    if (!this.fases.eh('aguardandoDeclaracao')) {
+      throw new Error(`Não é possível declarar na fase ${this.fases.atual}`);
     }
-    this._estado.fase = 'processandoDeclaracao';
+    this.transitarFase('processandoDeclaracao');
     const jogador = this.jogadores[this._estado.jogadorAtual];
     const decisor = this.decisoresDeclaracao.get(jogador.id);
     if (!decisor) {
-      this._estado.fase = 'aguardandoDeclaracao';
+      this.transitarFase('aguardandoDeclaracao');
       throw new Error(`Decisor de declaração não encontrado para jogador ${jogador.id}`);
     }
     try {
@@ -93,7 +95,7 @@ export class Rodada {
       emitirDeclaracaoFeita(this.emissor, jogador.id, declaracao);
       this.avancarDeclaracao();
     } catch (erro) {
-      this._estado.fase = 'aguardandoDeclaracao';
+      if (this.fases.eh('processandoDeclaracao')) this.transitarFase('aguardandoDeclaracao');
       throw erro;
     }
   }
@@ -108,29 +110,29 @@ export class Rodada {
   private avancarDeclaracao(): void {
     const totalDeclaracoes = Object.keys(this._estado.declaracoes).length;
     if (totalDeclaracoes === this.jogadores.length) {
-      this._estado.fase = 'aguardandoJogada';
+      this.transitarFase('aguardandoJogada');
       this._estado.jogadorAtual = 0;
     } else {
       this._estado.jogadorAtual = (this._estado.jogadorAtual + 1) % this.jogadores.length;
-      this._estado.fase = 'aguardandoDeclaracao';
+      this.transitarFase('aguardandoDeclaracao');
     }
   }
 
   async jogarTurno(): Promise<void> {
-    if (this._estado.fase !== 'aguardandoJogada') {
-      throw new Error(`Não é possível jogar na fase ${this._estado.fase}`);
+    if (!this.fases.eh('aguardandoJogada')) {
+      throw new Error(`Não é possível jogar na fase ${this.fases.atual}`);
     }
-    this._estado.fase = 'processandoTurno';
+    this.transitarFase('processandoTurno');
     const jogador = this.jogadores[this._estado.jogadorAtual];
     const decisor = this.decisores.get(jogador.id);
     if (!decisor) {
-      this._estado.fase = 'aguardandoJogada';
+      this.transitarFase('aguardandoJogada');
       throw new Error(`Decisor não encontrado para jogador ${jogador.id}`);
     }
     try {
       await this.executarJogada(jogador, decisor);
     } catch (erro) {
-      this._estado.fase = 'aguardandoJogada';
+      if (this.fases.eh('processandoTurno')) this.transitarFase('aguardandoJogada');
       throw erro;
     }
   }
@@ -156,7 +158,7 @@ export class Rodada {
       return;
     }
     this._estado.jogadorAtual = (this._estado.jogadorAtual + 1) % this.jogadores.length;
-    this._estado.fase = 'aguardandoJogada';
+    this.transitarFase('aguardandoJogada');
   }
 
   private resolverTurno(): void {
@@ -173,7 +175,7 @@ export class Rodada {
     this._estado.turno += 1;
     this._estado.mesa = [];
     if (this._estado.turno > this._estado.cartasPorRodada) {
-      this._estado.fase = 'rodadaConcluida';
+      this.transitarFase('rodadaConcluida');
       const pontos = aplicarPontuacao(
         this._estado,
         this.jogadores.map((j) => j.id),
@@ -181,9 +183,14 @@ export class Rodada {
       emitirPontuacaoAplicada(this.emissor, pontos.pontos, pontos.penalidades);
       emitirRodadaEncerrada(this.emissor, { ...this._estado.vazas });
     } else {
-      this._estado.fase = 'aguardandoJogada';
+      this.transitarFase('aguardandoJogada');
       this._estado.jogadorAtual = this.jogadores.findIndex((j) => j.id === proximoJogadorId);
     }
+  }
+
+  private transitarFase(novaFase: FaseRodada): void {
+    this.fases.transitar(novaFase);
+    this._estado.fase = novaFase;
   }
 
   private cartasDaMesa(): Carta[] {

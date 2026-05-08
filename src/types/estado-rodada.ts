@@ -7,7 +7,6 @@ export type FaseRodada =
   | 'processandoDeclaracao'
   | 'aguardandoJogada'
   | 'processandoTurno'
-  | 'turnoConcluido'
   | 'rodadaConcluida';
 
 export interface MaoJogador {
