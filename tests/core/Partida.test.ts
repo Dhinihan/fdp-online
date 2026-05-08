@@ -18,9 +18,11 @@ function criarPartida(jogadores: Jogador[] = jogadoresPadrao()): Partida {
 
 function concluirRodadaComPontos(partida: Partida, pontos: Record<string, number>): void {
   const rodada = partida.iniciarProximaRodada() as Rodada;
-  const estado = (rodada as unknown as { _estado: EstadoMutavel })._estado;
-  estado.fase = 'rodadaConcluida';
-  estado.pontos = pontos;
+  rodada.restaurarEstado({
+    ...rodada.estado,
+    fase: 'rodadaConcluida',
+    pontos,
+  } as EstadoMutavel);
 }
 
 function criarPartidaComEmissor() {

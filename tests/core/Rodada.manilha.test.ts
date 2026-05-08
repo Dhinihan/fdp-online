@@ -4,7 +4,7 @@ import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
 import { estadoEmJogo } from '@/types/estado-rodada';
-import { criarCarta, criarJogador, criarDecisorPrimeiraCarta } from './rodada-fixtures';
+import { criarCarta, criarJogador, criarDecisorPrimeiraCarta, criarRodadaComMao } from './rodada-fixtures';
 
 describe('Rodada — carta virada removida', () => {
   it('deve remover carta virada do baralho e não distribuir', () => {
@@ -66,13 +66,13 @@ describe('Rodada — manilha vence não-manilha', () => {
       ['j1', criarDecisorPrimeiraCarta()],
       ['j2', criarDecisorPrimeiraCarta()],
     ]);
-    const rodada = new Rodada(jogadores, emissor, { jogada: decisores, declaracao: new Map() });
-    const estadoPrivado = rodada as unknown as {
-      _estado: { fase: 'aguardandoJogada'; manilha: Carta['valor']; maos: { cartas: Carta[] }[] };
-    };
-    estadoPrivado._estado.maos = [{ cartas: [criarCarta('3', '♦')] }, { cartas: [criarCarta('4', '♣')] }];
-    estadoPrivado._estado.manilha = '4';
-    estadoPrivado._estado.fase = 'aguardandoJogada';
+    const rodada = criarRodadaComMao({
+      jogadores,
+      decisores,
+      emissor,
+      maos: [[criarCarta('3', '♦')], [criarCarta('4', '♣')]],
+      manilha: '4',
+    });
     await rodada.jogarTurno();
     await rodada.jogarTurno();
     expect(estadoEmJogo(rodada.estado).vazas['j2']).toBe(1);
@@ -87,13 +87,13 @@ describe('Rodada — desempate de manilhas', () => {
       ['j1', criarDecisorPrimeiraCarta()],
       ['j2', criarDecisorPrimeiraCarta()],
     ]);
-    const rodada = new Rodada(jogadores, emissor, { jogada: decisores, declaracao: new Map() });
-    const estadoPrivado = rodada as unknown as {
-      _estado: { fase: 'aguardandoJogada'; manilha: Carta['valor']; maos: { cartas: Carta[] }[] };
-    };
-    estadoPrivado._estado.maos = [{ cartas: [criarCarta('4', '♦')] }, { cartas: [criarCarta('4', '♣')] }];
-    estadoPrivado._estado.manilha = '4';
-    estadoPrivado._estado.fase = 'aguardandoJogada';
+    const rodada = criarRodadaComMao({
+      jogadores,
+      decisores,
+      emissor,
+      maos: [[criarCarta('4', '♦')], [criarCarta('4', '♣')]],
+      manilha: '4',
+    });
     await rodada.jogarTurno();
     await rodada.jogarTurno();
     expect(estadoEmJogo(rodada.estado).vazas['j2']).toBe(1);
