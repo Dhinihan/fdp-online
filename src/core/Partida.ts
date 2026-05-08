@@ -1,6 +1,7 @@
 import type { Jogador } from '@/types/entidades';
 import type { EstadoPartida } from '@/types/estado-partida';
 import type { EventoDominio } from '@/types/eventos-dominio';
+import { criarEventoBase } from './eventos-rodada';
 import type { DecisorDeclaracao } from './portas/DecisorDeclaracao';
 import type { DecisorJogada } from './portas/DecisorJogada';
 import { Rodada } from './Rodada';
@@ -12,10 +13,6 @@ interface EmissorPartida {
 interface DecisoresPartida {
   jogada: Map<string, DecisorJogada>;
   declaracao: Map<string, DecisorDeclaracao>;
-}
-
-function eventoBase() {
-  return { id: crypto.randomUUID(), timestamp: Date.now() };
 }
 
 export class Partida {
@@ -126,12 +123,12 @@ export class Partida {
   }
 
   private emitirJogadorEliminado(jogador: Jogador): void {
-    this.emissor.emit({ ...eventoBase(), tipo: 'JOGADOR_ELIMINADO', jogador });
+    this.emissor.emit({ ...criarEventoBase(), tipo: 'JOGADOR_ELIMINADO', jogador });
   }
 
   private emitirRodadaIniciada(cartasPorRodada: number): void {
     this.emissor.emit({
-      ...eventoBase(),
+      ...criarEventoBase(),
       tipo: 'RODADA_INICIADA',
       numeroRodada: this.numeroRodada,
       cartasPorRodada,
@@ -154,7 +151,7 @@ export class Partida {
 
   private emitirJogoEncerrado(): void {
     this.emissor.emit({
-      ...eventoBase(),
+      ...criarEventoBase(),
       tipo: 'JOGO_ENCERRADO',
       classificacao: [...this.jogadores, ...this.eliminados].sort((a, b) => b.pontos - a.pontos),
     });

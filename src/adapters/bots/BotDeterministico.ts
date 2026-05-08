@@ -1,6 +1,7 @@
 import type { Carta } from '@/core/Carta';
 import { compararValor, compararNaipe } from '@/core/Carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
+import type { EstadoRodada } from '@/types/estado-rodada';
 
 function ehMenor(a: Carta, b: Carta): boolean {
   if (a.valor !== b.valor) {
@@ -10,7 +11,7 @@ function ehMenor(a: Carta, b: Carta): boolean {
 }
 
 export class BotDeterministico implements DecisorJogada {
-  decidirJogada(mao: Carta[], _estado: unknown): Promise<Carta> {
+  decidirJogada(mao: Carta[], _estado: EstadoRodada): Promise<Carta> {
     if (mao.length === 0) {
       return Promise.reject(new Error('Mão vazia'));
     }

@@ -1,11 +1,12 @@
 import type { Carta } from '@/core/Carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
+import type { EstadoRodada } from '@/types/estado-rodada';
 
 export class DecisorHumano implements DecisorJogada {
   private resolver?: (carta: Carta) => void;
   private cartaSelecionada?: Carta;
 
-  decidirJogada(_mao: Carta[], _estado: unknown): Promise<Carta> {
+  decidirJogada(_mao: Carta[], _estado: EstadoRodada): Promise<Carta> {
     return new Promise((resolve) => {
       this.resolver = resolve;
     });
