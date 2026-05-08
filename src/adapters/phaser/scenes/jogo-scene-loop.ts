@@ -1,5 +1,6 @@
 import type { Rodada } from '@/core/Rodada';
 import type { Jogador } from '@/types/entidades';
+import { estadoEmJogo } from '@/types/estado-rodada';
 import type { DecisorDeclaracaoHumano } from '../DecisorDeclaracaoHumano';
 import { desenharBotoesDeclaracao, limparObjetosDeclaracao } from '../renderers/declaracao-renderer';
 import { atualizarLabelVencedor } from '../renderers/label-jogador';
@@ -44,7 +45,8 @@ export async function processarDeclaracoes(config: ConfigDeclaracoes): Promise<v
 
 async function prepararDeclaracaoAtual(config: ConfigDeclaracoes): Promise<void> {
   const { cena, rodada } = config;
-  const maoAtual = rodada.estado.maos[rodada.estado.jogadorAtual];
+  const emJogo = estadoEmJogo(rodada.estado);
+  const maoAtual = emJogo.maos[emJogo.jogadorAtual];
   if (maoAtual.jogador.id !== 'humano') {
     await esperar(cena, 400);
     return;
@@ -52,7 +54,7 @@ async function prepararDeclaracaoAtual(config: ConfigDeclaracoes): Promise<void>
   limparObjetosDeclaracao(config.objetos);
   desenharBotoesDeclaracao({
     cena,
-    maximo: rodada.estado.cartasPorRodada,
+    maximo: emJogo.cartasPorRodada,
     objetos: config.objetos,
     onSelecionar: (valor: number) => {
       config.decisorHumano.confirmar(valor);
@@ -72,21 +74,23 @@ export async function iniciarProcessamentoTurno(config: ConfigTurnos): Promise<v
 }
 
 async function aguardarBotAtual(config: ConfigTurnos): Promise<void> {
-  const maoAtual = config.rodada.estado.maos[config.rodada.estado.jogadorAtual];
+  const emJogo = estadoEmJogo(config.rodada.estado);
+  const maoAtual = emJogo.maos[emJogo.jogadorAtual];
   if (maoAtual.jogador.id !== 'humano') await esperar(config.cena, 500);
 }
 
 async function atualizarFimDeTurno(config: ConfigTurnos): Promise<void> {
   const { rodada, turnoAnteriorRef } = config;
-  if (rodada.estado.turno <= turnoAnteriorRef.valor) return;
-  turnoAnteriorRef.valor = rodada.estado.turno;
+  const emJogo = estadoEmJogo(rodada.estado);
+  if (emJogo.turno <= turnoAnteriorRef.valor) return;
+  turnoAnteriorRef.valor = emJogo.turno;
   const vencedorId = config.getVencedorTurno();
   config.animarRecolhimento();
   await esperar(config.cena, 800);
   atualizarLabelVencedor({
     vencedorId,
     jogadores: config.jogadores,
-    vazas: rodada.estado.vazas,
+    vazas: emJogo.vazas,
     labels: config.getLabels(),
     direcoes: config.getDirecoesLabels(),
   });

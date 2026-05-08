@@ -5,7 +5,7 @@ import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
 import type { Jogador } from '@/types/entidades';
-import type { EstadoRodada, FaseRodada } from '@/types/estado-rodada';
+import type { EstadoMutavel, EstadoRodada, FaseComCartas } from '@/types/estado-rodada';
 
 export function criarCarta(valor: Carta['valor'], naipe: Carta['naipe']): Carta {
   return { valor, naipe };
@@ -52,32 +52,24 @@ export function criarRodada(config: {
   const privado = rodada as unknown as EstadoPrivado;
   privado._estado.fase = 'aguardandoJogada';
   privado._estado.declaracoes = {};
-  privado.fases.definir('aguardandoJogada');
   return rodada;
 }
 
 interface EstadoPrivado {
-  _estado: EstadoRodada;
-  fases: { definir(fase: FaseRodada): void };
+  _estado: EstadoMutavel;
 }
 
 function pontosIniciais(jogadores: Jogador[]): Record<string, number> {
   return Object.fromEntries(jogadores.map((jogador) => [jogador.id, jogador.pontos]));
 }
 
-function preencherEstadoComMao(
-  estado: EstadoRodada,
-  config: ConfigRodadaComMao,
-  fases: { definir(fase: FaseRodada): void },
-): void {
+function preencherEstadoComMao(estado: EstadoMutavel, config: ConfigRodadaComMao): void {
   estado.maos = config.jogadores.map((jogador, i) => ({
     jogador,
     cartas: config.maos[i] ?? [],
     visivel: jogador.id === 'humano',
   }));
-  const fase = config.fase ?? 'aguardandoJogada';
-  estado.fase = fase;
-  fases.definir(fase);
+  estado.fase = config.fase ?? 'aguardandoJogada';
   estado.jogadorAtual = config.jogadorAtual ?? 0;
   estado.turno = config.turno ?? 1;
   estado.cartasPorRodada = config.cartasPorRodada ?? 4;
@@ -93,7 +85,7 @@ interface ConfigRodadaComMao {
   emissor: ReturnType<typeof createEmissorEventos>;
   maos: Carta[][];
   jogadorAtual?: number;
-  fase?: EstadoRodada['fase'];
+  fase?: FaseComCartas;
   turno?: number;
   cartasPorRodada?: number;
   manilha?: Carta['valor'];
@@ -108,7 +100,7 @@ export function criarRodadaComMao(config: ConfigRodadaComMao): Rodada {
     declaracao: new Map<string, DecisorDeclaracao>(),
   });
   const privado = rodada as unknown as EstadoPrivado;
-  preencherEstadoComMao(privado._estado, config, privado.fases);
+  preencherEstadoComMao(privado._estado, config);
   return rodada;
 }
 

@@ -3,6 +3,7 @@ import { Partida } from '@/core/Partida';
 import type { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
 import type { Jogador } from '@/types/entidades';
+import { estadoEmJogo } from '@/types/estado-rodada';
 import type { EventoDominio } from '@/types/eventos-dominio';
 import { criarDecisorPrimeiraCarta, jogadoresPadrao } from './rodada-fixtures';
 
@@ -34,7 +35,7 @@ describe('Partida — contagem de cartas', () => {
     const cartasPorRodada: number[] = [];
     for (let i = 0; i < 15; i++) {
       partida.iniciarProximaRodada();
-      cartasPorRodada.push(partida.estado.cartasPorRodada);
+      cartasPorRodada.push(estadoEmJogo(partida.estado).cartasPorRodada);
     }
     expect(cartasPorRodada).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 13, 13]);
   });
@@ -57,12 +58,12 @@ describe('Partida — estado público', () => {
     ];
     const partida = criarPartida(jogadores);
     partida.iniciarProximaRodada();
-    expect(partida.estado.maos.map((mao) => [mao.jogador.id, mao.visivel])).toEqual([
+    expect(estadoEmJogo(partida.estado).maos.map((mao) => [mao.jogador.id, mao.visivel])).toEqual([
       ['humano', false],
       ['bot1', true],
     ]);
     partida.iniciarProximaRodada();
-    expect(partida.estado.maos.map((mao) => [mao.jogador.id, mao.visivel])).toEqual([
+    expect(estadoEmJogo(partida.estado).maos.map((mao) => [mao.jogador.id, mao.visivel])).toEqual([
       ['humano', true],
       ['bot1', false],
     ]);
@@ -104,7 +105,7 @@ describe('Partida — eliminação', () => {
     concluirRodadaComPontos(partida, { j1: 0, j2: 4, j3: 5, j4: 5 });
     partida.iniciarProximaRodada();
     expect(partida.estado.jogadoresAtivos).toEqual(['j2', 'j3', 'j4']);
-    expect(partida.estado.maos.map((mao) => mao.jogador.id)).toEqual(['j2', 'j3', 'j4']);
+    expect(estadoEmJogo(partida.estado).maos.map((mao) => mao.jogador.id)).toEqual(['j2', 'j3', 'j4']);
   });
 
   it('deve eliminar jogador com pontos negativos', () => {
@@ -120,7 +121,7 @@ describe('Partida — eliminação', () => {
     concluirRodadaComPontos(partida, { j1: 0, j2: 4, j3: 5, j4: 5 });
     partida.iniciarProximaRodada();
     expect(partida.estado.numeroRodada).toBe(1);
-    expect(partida.estado.cartasPorRodada).toBe(1);
+    expect(estadoEmJogo(partida.estado).cartasPorRodada).toBe(1);
   });
 
   it('deve continuar a contagem quando ninguém é eliminado', () => {

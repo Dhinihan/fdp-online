@@ -7,33 +7,12 @@ const TRANSICOES_VALIDAS: Record<FaseRodada, FaseRodada[]> = {
   aguardandoJogada: ['processandoTurno'],
   processandoTurno: ['aguardandoJogada', 'rodadaConcluida'],
   rodadaConcluida: [],
+  turnoConcluido: [],
 };
 
-export class MaquinaFases {
-  private fase: FaseRodada;
-
-  constructor(faseInicial: FaseRodada = 'distribuindo') {
-    this.fase = faseInicial;
-  }
-
-  get atual(): FaseRodada {
-    return this.fase;
-  }
-
-  eh(fase: FaseRodada): boolean {
-    return this.fase === fase;
-  }
-
-  transitar(novaFase: FaseRodada): void {
-    const validas = TRANSICOES_VALIDAS[this.fase];
-    if (!validas.includes(novaFase)) {
-      throw new Error(`Transição inválida: ${this.fase} → ${novaFase}`);
-    }
-    this.fase = novaFase;
-  }
-
-  /** Define a fase sem validação. Uso interno para restauração de estado. */
-  definir(fase: FaseRodada): void {
-    this.fase = fase;
+export function validarTransicaoFase(faseAtual: FaseRodada, novaFase: FaseRodada): void {
+  const validas = TRANSICOES_VALIDAS[faseAtual];
+  if (!validas.includes(novaFase)) {
+    throw new Error(`Transição inválida: ${faseAtual} → ${novaFase}`);
   }
 }

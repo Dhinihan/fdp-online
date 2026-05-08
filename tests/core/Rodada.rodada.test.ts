@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { Carta } from '@/core/Carta';
 import { createEmissorEventos } from '@/store/emissor-eventos';
+import { estadoEmJogo } from '@/types/estado-rodada';
 import {
   criarCarta,
   criarDecisorPrimeiraCarta,
@@ -42,7 +43,7 @@ describe('Rodada — cálculo de vencedor', () => {
   it('deve definir maior valor como vencedor do turno', async () => {
     const { rodada } = rodadaComMaoFixa(MAO_CURTA);
     await jogarTurnos(rodada, 4);
-    expect(rodada.estado.vazas['j1']).toBe(1);
+    expect(estadoEmJogo(rodada.estado).vazas['j1']).toBe(1);
   });
 
   it('deve desempatar pelo naipe quando valores são iguais (manilhas)', async () => {
@@ -57,7 +58,7 @@ describe('Rodada — cálculo de vencedor', () => {
       manilha: '4',
     });
     await jogarTurnos(rodada, 4);
-    expect(rodada.estado.vazas['j4']).toBe(1);
+    expect(estadoEmJogo(rodada.estado).vazas['j4']).toBe(1);
   });
 });
 
@@ -81,7 +82,7 @@ describe('Rodada — vazas e rodada', () => {
   it('deve acumular 4 vazas após 4 turnos', async () => {
     const { rodada } = rodadaComMaoFixa(MAO_LONGA, 4);
     await jogarTurnos(rodada, 16);
-    expect(rodada.estado.vazas).toEqual({ j1: 1, j2: 1, j3: 1, j4: 1 });
+    expect(estadoEmJogo(rodada.estado).vazas).toEqual({ j1: 1, j2: 1, j3: 1, j4: 1 });
   });
 
   it('deve transitar para rodadaConcluida após o último turno', async () => {

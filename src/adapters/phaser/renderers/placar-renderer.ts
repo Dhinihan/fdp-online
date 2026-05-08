@@ -1,6 +1,7 @@
 import type { Scene } from 'phaser';
 import type { Jogador } from '@/types/entidades';
 import type { EstadoRodada } from '@/types/estado-rodada';
+import { estadoEmJogo } from '@/types/estado-rodada';
 import { escalar, escalarFonte } from '../escala';
 
 interface ConfigPlacar {
@@ -49,11 +50,12 @@ export function desenharPlacar(config: ConfigPlacar): void {
 }
 
 function criarLinhas(jogadores: Jogador[], estado: EstadoRodada): LinhaPlacar[] {
+  const emJogo = estadoEmJogo(estado);
   return jogadores.map((jogador) => ({
     jogador,
-    declarado: estado.declaracoes[jogador.id] ?? null,
-    feito: estado.vazas[jogador.id] ?? 0,
-    pontos: estado.pontos[jogador.id] ?? jogador.pontos,
+    declarado: emJogo.declaracoes[jogador.id] ?? null,
+    feito: emJogo.vazas[jogador.id] ?? 0,
+    pontos: emJogo.pontos[jogador.id] ?? jogador.pontos,
   }));
 }
 

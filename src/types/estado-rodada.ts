@@ -1,13 +1,15 @@
 import type { Carta, Valor } from '@/core/Carta';
 import type { Jogador } from './entidades';
 
-export type FaseRodada =
-  | 'distribuindo'
+export type FaseComCartas =
   | 'aguardandoDeclaracao'
   | 'processandoDeclaracao'
   | 'aguardandoJogada'
   | 'processandoTurno'
+  | 'turnoConcluido'
   | 'rodadaConcluida';
+
+export type FaseRodada = 'distribuindo' | FaseComCartas;
 
 export interface MaoJogador {
   jogador: Jogador;
@@ -20,16 +22,49 @@ export interface MesaItem {
   carta: Carta;
 }
 
-export interface EstadoRodada {
-  fase: FaseRodada;
+export interface EstadoDistribuindo {
+  fase: 'distribuindo';
   jogadorAtual: number;
-  mesa: MesaItem[];
+  pontos: Record<string, number>;
+}
+
+interface EstadoComCartasBase {
+  jogadorAtual: number;
+  pontos: Record<string, number>;
   maos: MaoJogador[];
-  vazas: Record<string, number>;
-  turno: number;
   cartasPorRodada: number;
   manilha: Valor;
   cartaVirada: Carta | null;
   declaracoes: Record<string, number>;
-  pontos: Record<string, number>;
+  mesa: MesaItem[];
+  vazas: Record<string, number>;
+  turno: number;
+}
+
+export type EstadoAguardandoDeclaracao = EstadoComCartasBase & { fase: 'aguardandoDeclaracao' };
+export type EstadoProcessandoDeclaracao = EstadoComCartasBase & { fase: 'processandoDeclaracao' };
+export type EstadoAguardandoJogada = EstadoComCartasBase & { fase: 'aguardandoJogada' };
+export type EstadoProcessandoTurno = EstadoComCartasBase & { fase: 'processandoTurno' };
+export type EstadoTurnoConcluido = EstadoComCartasBase & { fase: 'turnoConcluido' };
+export type EstadoRodadaConcluida = EstadoComCartasBase & { fase: 'rodadaConcluida' };
+
+export type EstadoEmJogo =
+  | EstadoAguardandoDeclaracao
+  | EstadoProcessandoDeclaracao
+  | EstadoAguardandoJogada
+  | EstadoProcessandoTurno
+  | EstadoTurnoConcluido
+  | EstadoRodadaConcluida;
+
+export type EstadoRodada = EstadoDistribuindo | EstadoEmJogo;
+
+export interface EstadoMutavel extends Omit<EstadoComCartasBase, 'fase'> {
+  fase: FaseRodada;
+}
+
+export function estadoEmJogo(estado: EstadoRodada): EstadoEmJogo {
+  if (estado.fase === 'distribuindo') {
+    throw new Error('Estado não deveria estar em distribuindo');
+  }
+  return estado;
 }

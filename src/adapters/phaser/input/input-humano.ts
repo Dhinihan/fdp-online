@@ -1,6 +1,7 @@
 import type { Scene } from 'phaser';
 import type { Carta } from '@/core/Carta';
 import type { Rodada } from '@/core/Rodada';
+import { estadoEmJogo } from '@/types/estado-rodada';
 import type { DecisorHumano } from '../DecisorHumano';
 import { destacarCarta, removerDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
 
@@ -64,7 +65,8 @@ function aoClicarCarta(config: ConfigClicarCarta): void {
   if (rodada.estado.fase !== 'aguardandoJogada' && rodada.estado.fase !== 'processandoTurno') {
     return;
   }
-  if (rodada.estado.maos[rodada.estado.jogadorAtual].jogador.id !== 'humano') {
+  const emJogo = estadoEmJogo(rodada.estado);
+  if (emJogo.maos[emJogo.jogadorAtual].jogador.id !== 'humano') {
     return;
   }
   if (destaque.container === container) {

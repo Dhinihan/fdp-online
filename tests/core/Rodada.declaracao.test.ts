@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import type { DecisorDeclaracao } from '@/core/portas/DecisorDeclaracao';
 import { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
+import { estadoEmJogo } from '@/types/estado-rodada';
 import { criarJogador, jogadoresPadrao } from './rodada-fixtures';
 
 function criarDecisorDeclaracao(valor: number): DecisorDeclaracao {
@@ -17,8 +18,8 @@ describe('Rodada — declaração — transições', () => {
     rodada.distribuir(1);
     expect(rodada.estado.fase).toBe('aguardandoDeclaracao');
     expect(rodada.estado.jogadorAtual).toBe(0);
-    expect(rodada.estado.cartasPorRodada).toBe(1);
-    expect(rodada.estado.declaracoes).toEqual({});
+    expect(estadoEmJogo(rodada.estado).cartasPorRodada).toBe(1);
+    expect(estadoEmJogo(rodada.estado).declaracoes).toEqual({});
   });
 
   it('deve rejeitar jogarTurno na fase aguardandoDeclaracao', async () => {
@@ -58,7 +59,7 @@ describe('Rodada — declaração — estado', () => {
     rodada.distribuir(3);
     await rodada.declarar();
     await rodada.declarar();
-    expect(rodada.estado.declaracoes).toEqual({ j1: 2, j2: 0 });
+    expect(estadoEmJogo(rodada.estado).declaracoes).toEqual({ j1: 2, j2: 0 });
   });
 });
 
@@ -132,7 +133,7 @@ describe('Rodada — declaração — valor zero', () => {
     const rodada = new Rodada(jogadores, emissor, { jogada: new Map(), declaracao: decisoresDeclaracao });
     rodada.distribuir(3);
     await rodada.declarar();
-    expect(rodada.estado.declaracoes['j1']).toBe(0);
+    expect(estadoEmJogo(rodada.estado).declaracoes['j1']).toBe(0);
   });
 });
 
@@ -173,7 +174,7 @@ describe('Rodada — declaração — valores invalidos', () => {
     rodada.distribuir(2);
     await expect(rodada.declarar()).rejects.toThrow('Declaração inválida');
     expect(rodada.estado.fase).toBe('aguardandoDeclaracao');
-    expect(rodada.estado.declaracoes).toEqual({});
+    expect(estadoEmJogo(rodada.estado).declaracoes).toEqual({});
     expect(handler).not.toHaveBeenCalled();
   });
 });

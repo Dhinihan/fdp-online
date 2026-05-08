@@ -1,6 +1,7 @@
 import type { Scene } from 'phaser';
 import type { Rodada } from '@/core/Rodada';
 import type { MaoJogador } from '@/types/estado-rodada';
+import { estadoEmJogo } from '@/types/estado-rodada';
 import type { DecisorHumano } from '../DecisorHumano';
 import { configurarInteracaoHumano } from '../input/input-humano';
 import type { EstadoDestaque } from './destaque-renderer';
@@ -21,7 +22,7 @@ export interface ConfigDesenharMao {
 
 export function desenharMaoNaCena(config: ConfigDesenharMao): void {
   const { cena, mao, posicao, rodada, decisorHumano, destaque, objetos, labels } = config;
-  const vazas = rodada.estado.vazas[mao.jogador.id] ?? 0;
+  const vazas = estadoEmJogo(rodada.estado).vazas[mao.jogador.id] ?? 0;
   const texto = formatarLabelJogador(mao.jogador.nome, vazas, posicao.mao.direcao);
   const label = renderizarLabel({
     cena,

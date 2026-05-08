@@ -5,6 +5,7 @@ import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
 import type { Jogador } from '@/types/entidades';
+import { estadoEmJogo } from '@/types/estado-rodada';
 import { criarCarta, criarJogador, criarDecisor, criarRodada } from './rodada-fixtures';
 
 function jogadoresComHumano(): Jogador[] {
@@ -32,7 +33,7 @@ describe('Rodada — transições', () => {
     rodada.distribuir(1);
     expect(rodada.estado.fase).toBe('aguardandoDeclaracao');
     expect(rodada.estado.jogadorAtual).toBe(0);
-    expect(rodada.estado.cartasPorRodada).toBe(1);
+    expect(estadoEmJogo(rodada.estado).cartasPorRodada).toBe(1);
   });
 });
 
@@ -40,7 +41,7 @@ describe('Rodada — visibilidade', () => {
   it('deve ocultar a mão do humano e mostrar as mãos dos bots na primeira rodada', () => {
     const rodada = criarRodadaVisibilidade(1);
     rodada.distribuir(1);
-    expect(rodada.estado.maos.map((mao) => [mao.jogador.id, mao.visivel])).toEqual([
+    expect(estadoEmJogo(rodada.estado).maos.map((mao) => [mao.jogador.id, mao.visivel])).toEqual([
       ['humano', false],
       ['bot1', true],
       ['bot2', true],
@@ -50,7 +51,7 @@ describe('Rodada — visibilidade', () => {
   it('deve mostrar a mão do humano e ocultar as mãos dos bots depois da primeira rodada', () => {
     const rodada = criarRodadaVisibilidade(2);
     rodada.distribuir(2);
-    expect(rodada.estado.maos.map((mao) => [mao.jogador.id, mao.visivel])).toEqual([
+    expect(estadoEmJogo(rodada.estado).maos.map((mao) => [mao.jogador.id, mao.visivel])).toEqual([
       ['humano', true],
       ['bot1', false],
       ['bot2', false],
@@ -73,8 +74,8 @@ describe('Rodada — informação dos decisores', () => {
     const chamadas = vi.mocked(declarar).mock.calls;
     expect(chamadas).toHaveLength(1);
     const chamada = chamadas[0];
-    expect(chamada[0].maos[0].visivel).toBe(false);
-    expect(chamada[1]).toEqual(rodada.estado.maos[0].cartas);
+    expect(estadoEmJogo(chamada[0]).maos[0].visivel).toBe(false);
+    expect(chamada[1]).toEqual(estadoEmJogo(rodada.estado).maos[0].cartas);
   });
 });
 
@@ -94,7 +95,7 @@ describe('Rodada — avanço de jogadorAtual', () => {
     }
     await rodada.jogarTurno();
     expect(rodada.estado.fase).toBe('aguardandoJogada');
-    expect(rodada.estado.turno).toBe(2);
+    expect(estadoEmJogo(rodada.estado).turno).toBe(2);
   });
 });
 
@@ -132,7 +133,7 @@ describe('Rodada — eventos', () => {
       ['j1', { decidirJogada: (mao: Carta[]) => Promise.resolve(mao[0]) }],
     ]);
     const rodada = criarRodada({ jogadores, decisores, emissor });
-    const cartaEsperada = rodada.estado.maos[0].cartas[0];
+    const cartaEsperada = estadoEmJogo(rodada.estado).maos[0].cartas[0];
     await rodada.jogarTurno();
     expect(handler).toHaveBeenCalledTimes(1);
     expect(handler).toHaveBeenCalledWith(
