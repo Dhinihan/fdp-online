@@ -3,6 +3,7 @@ import { Partida } from '@/core/Partida';
 import type { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
 import type { Jogador } from '@/types/entidades';
+import type { EstadoMutavel } from '@/types/estado-rodada';
 import { estadoEmJogo } from '@/types/estado-rodada';
 import type { EventoDominio } from '@/types/eventos-dominio';
 import { criarDecisorPrimeiraCarta, jogadoresPadrao } from './rodada-fixtures';
@@ -17,8 +18,9 @@ function criarPartida(jogadores: Jogador[] = jogadoresPadrao()): Partida {
 
 function concluirRodadaComPontos(partida: Partida, pontos: Record<string, number>): void {
   const rodada = partida.iniciarProximaRodada() as Rodada;
-  rodada.estado.fase = 'rodadaConcluida';
-  rodada.estado.pontos = pontos;
+  const estado = (rodada as unknown as { _estado: EstadoMutavel })._estado;
+  estado.fase = 'rodadaConcluida';
+  estado.pontos = pontos;
 }
 
 function criarPartidaComEmissor() {

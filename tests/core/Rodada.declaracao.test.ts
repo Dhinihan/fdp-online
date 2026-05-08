@@ -43,7 +43,9 @@ describe('Rodada — declaração — decisor', () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(mockDecisor.declarar).toHaveBeenCalledTimes(1);
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    expect(mockDecisor.declarar).toHaveBeenCalledWith(rodada.estado, expect.any(Array));
+    const estadoRecebido = vi.mocked(mockDecisor.declarar).mock.calls[0][0];
+    expect(estadoRecebido).toMatchObject({ fase: 'aguardandoDeclaracao', jogadorAtual: 0 });
+    expect(estadoEmJogo(estadoRecebido).declaracoes).toEqual({});
   });
 });
 

@@ -22,7 +22,9 @@ export interface ConfigDesenharMao {
 
 export function desenharMaoNaCena(config: ConfigDesenharMao): void {
   const { cena, mao, posicao, rodada, decisorHumano, destaque, objetos, labels } = config;
-  const vazas = estadoEmJogo(rodada.estado).vazas[mao.jogador.id] ?? 0;
+  const estado = rodada.estado;
+  if (estado.fase === 'distribuindo') return;
+  const vazas = estadoEmJogo(estado).vazas[mao.jogador.id] ?? 0;
   const texto = formatarLabelJogador(mao.jogador.nome, vazas, posicao.mao.direcao);
   const label = renderizarLabel({
     cena,

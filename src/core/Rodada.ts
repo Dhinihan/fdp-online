@@ -20,6 +20,7 @@ import { aplicarPontuacao } from './pontuacao';
 import type { DecisorDeclaracao } from './portas/DecisorDeclaracao';
 import type { DecisorJogada } from './portas/DecisorJogada';
 import { calcularResultadoTurno } from './resultado-turno';
+import { criarSnapshotEstadoRodada } from './snapshot-estado-rodada';
 export class Rodada {
   private _estado: EstadoMutavel;
   private decisores: Map<string, DecisorJogada>;
@@ -48,14 +49,7 @@ export class Rodada {
     };
   }
   get estado(): EstadoRodada {
-    if (this._estado.fase === 'distribuindo') {
-      return {
-        fase: 'distribuindo',
-        jogadorAtual: this._estado.jogadorAtual,
-        pontos: this._estado.pontos,
-      };
-    }
-    return this._estado;
+    return criarSnapshotEstadoRodada(this._estado);
   }
   distribuir(numeroCartas: number, baralhoEntrada?: Carta[]): void {
     const baralho = baralhoEntrada ?? embaralhar(criarBaralho());
