@@ -6,7 +6,6 @@ const TRANSICOES_VALIDAS: Record<FaseRodada, FaseRodada[]> = {
   processandoDeclaracao: ['aguardandoDeclaracao', 'aguardandoJogada'],
   aguardandoJogada: ['processandoTurno'],
   processandoTurno: ['aguardandoJogada', 'rodadaConcluida'],
-  turnoConcluido: [],
   rodadaConcluida: [],
 };
 

@@ -3,6 +3,7 @@ import type { Carta } from '@/core/Carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
+import type { FaseRodada } from '@/types/estado-rodada';
 import { criarCarta, criarJogador, criarDecisorPrimeiraCarta } from './rodada-fixtures';
 
 describe('Rodada — carta virada removida', () => {
@@ -67,8 +68,8 @@ describe('Rodada — manilha vence não-manilha', () => {
     ]);
     const rodada = new Rodada(jogadores, emissor, { jogada: decisores, declaracao: new Map() });
     const estadoPrivado = rodada as unknown as {
-      _estado: { fase: string; manilha: Carta['valor']; maos: { cartas: Carta[] }[] };
-      fases: { definir(fase: string): void };
+      _estado: { fase: FaseRodada; manilha: Carta['valor']; maos: { cartas: Carta[] }[] };
+      fases: { definir(fase: FaseRodada): void };
     };
     estadoPrivado._estado.maos = [{ cartas: [criarCarta('3', '♦')] }, { cartas: [criarCarta('4', '♣')] }];
     estadoPrivado._estado.manilha = '4';
@@ -90,8 +91,8 @@ describe('Rodada — desempate de manilhas', () => {
     ]);
     const rodada = new Rodada(jogadores, emissor, { jogada: decisores, declaracao: new Map() });
     const estadoPrivado = rodada as unknown as {
-      _estado: { fase: string; manilha: Carta['valor']; maos: { cartas: Carta[] }[] };
-      fases: { definir(fase: string): void };
+      _estado: { fase: FaseRodada; manilha: Carta['valor']; maos: { cartas: Carta[] }[] };
+      fases: { definir(fase: FaseRodada): void };
     };
     estadoPrivado._estado.maos = [{ cartas: [criarCarta('4', '♦')] }, { cartas: [criarCarta('4', '♣')] }];
     estadoPrivado._estado.manilha = '4';

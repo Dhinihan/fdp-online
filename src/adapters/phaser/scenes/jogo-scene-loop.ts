@@ -38,9 +38,7 @@ export async function processarDeclaracoes(config: ConfigDeclaracoes): Promise<v
     config.atualizarIndicadorVez();
   }
   if (rodada.estado.fase === 'aguardandoJogada') {
-    void config.iniciarTurnos().catch((erro: unknown) => {
-      console.error('Erro nos turnos:', erro);
-    });
+    void config.iniciarTurnos().catch(() => undefined);
   }
 }
 
@@ -102,8 +100,7 @@ async function tentarDeclarar(rodada: Rodada): Promise<boolean> {
   try {
     await rodada.declarar();
     return true;
-  } catch (erro) {
-    console.error('Falha em declarar:', erro);
+  } catch {
     return false;
   }
 }
@@ -112,8 +109,7 @@ async function tentarJogarTurno(rodada: Rodada): Promise<boolean> {
   try {
     await rodada.jogarTurno();
     return true;
-  } catch (erro) {
-    console.error('Falha em jogarTurno:', erro);
+  } catch {
     return false;
   }
 }

@@ -85,7 +85,7 @@ export class Rodada {
     const jogador = this.jogadores[this._estado.jogadorAtual];
     const decisor = this.decisoresDeclaracao.get(jogador.id);
     if (!decisor) {
-      this._estado.fase = 'aguardandoDeclaracao';
+      this.transitarFase('aguardandoDeclaracao');
       throw new Error(`Decisor de declaração não encontrado para jogador ${jogador.id}`);
     }
     try {
@@ -126,7 +126,7 @@ export class Rodada {
     const jogador = this.jogadores[this._estado.jogadorAtual];
     const decisor = this.decisores.get(jogador.id);
     if (!decisor) {
-      this._estado.fase = 'aguardandoJogada';
+      this.transitarFase('aguardandoJogada');
       throw new Error(`Decisor não encontrado para jogador ${jogador.id}`);
     }
     try {
