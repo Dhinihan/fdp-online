@@ -16,19 +16,19 @@ export function criarJogador(id: string, nome: string): Jogador {
 }
 
 export function criarDecisor(carta: Carta): DecisorJogada {
-  const mock = vi.fn<(mao: Carta[], estado: unknown) => Promise<Carta>>().mockResolvedValue(carta);
+  const mock = vi.fn<(mao: Carta[], estado: EstadoRodada) => Promise<Carta>>().mockResolvedValue(carta);
   return { decidirJogada: mock };
 }
 
 export function criarDecisorPrimeiraCarta(): DecisorJogada {
-  const mock = vi.fn<(mao: Carta[], estado: unknown) => Promise<Carta>>();
+  const mock = vi.fn<(mao: Carta[], estado: EstadoRodada) => Promise<Carta>>();
   mock.mockImplementation((mao: Carta[]) => Promise.resolve(mao[0]));
   return { decidirJogada: mock };
 }
 
 export function criarDecisorSequencia(cartas: Carta[]): DecisorJogada {
   let indice = 0;
-  const mock = vi.fn<(mao: Carta[], estado: unknown) => Promise<Carta>>();
+  const mock = vi.fn<(mao: Carta[], estado: EstadoRodada) => Promise<Carta>>();
   mock.mockImplementation(() => {
     const carta = cartas[indice];
     indice += 1;
