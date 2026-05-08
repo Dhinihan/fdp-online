@@ -1,21 +1,15 @@
 import type { Scene } from 'phaser';
 import type { Carta, Valor } from '@/core/Carta';
 import { escalar, escalarFonte } from '../escala';
+import type { Retangulo } from '../layout';
 import { criarMiniCarta } from './mini-carta-renderer';
-
-interface Area {
-  x: number;
-  y: number;
-  largura: number;
-  altura: number;
-}
 
 interface ConfigManilha {
   cena: Scene;
   objetos: Phaser.GameObjects.GameObject[];
   cartaVirada: Carta;
   manilha: Valor;
-  areaManilha: Area;
+  areaManilha: Retangulo;
   ehPaisagem: boolean;
 }
 
@@ -29,7 +23,7 @@ export function desenharManilhaNoPainel(config: ConfigManilha): void {
   objetos.push(label);
 }
 
-function calcularPosicaoManilha(cena: Scene, area: Area, ehPaisagem: boolean): { x: number; y: number } {
+function calcularPosicaoManilha(cena: Scene, area: Retangulo, ehPaisagem: boolean): { x: number; y: number } {
   if (ehPaisagem) {
     return { x: area.x + area.largura / 2, y: area.y + area.altura - escalar(70, cena) };
   }
@@ -53,5 +47,3 @@ function criarLabelManilha(config: ConfigLabel): Phaser.GameObjects.Text {
     .setOrigin(0.5, 0.5)
     .setDepth(81);
 }
-
-export type { Area };

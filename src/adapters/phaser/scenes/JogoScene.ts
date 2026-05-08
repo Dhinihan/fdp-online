@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { VALOR_MINIMO } from '@/core/Carta';
 import { Rodada } from '@/core/Rodada';
 import { estadoEmJogo } from '@/types/estado-rodada';
 import { DecisorHumano } from '../DecisorHumano';
@@ -81,7 +82,7 @@ export class JogoScene extends Scene {
       jogadores,
       estado,
       numeroRodada: estado.numeroRodada,
-      manilha: emJogo?.manilha ?? ('4' as const),
+      manilha: emJogo?.manilha ?? VALOR_MINIMO,
       cartaVirada: emJogo?.cartaVirada ?? null,
       layout: this.layout,
       objetos: this.painelObjetos,

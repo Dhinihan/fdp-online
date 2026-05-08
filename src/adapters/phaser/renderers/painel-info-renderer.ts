@@ -1,12 +1,12 @@
 import type { Scene } from 'phaser';
 import type { Carta, Valor } from '@/core/Carta';
 import type { Jogador } from '@/types/entidades';
-import type { EstadoRodada } from '@/types/estado-rodada';
+import type { EstadoRodada, EstadoEmJogo } from '@/types/estado-rodada';
 import { estadoEmJogo } from '@/types/estado-rodada';
 import { escalar, escalarFonte } from '../escala';
-import type { LayoutPainel } from '../layout';
+import type { LayoutPainel, Retangulo } from '../layout';
 import { limparObjetos } from './limpar-objetos';
-import { desenharManilhaNoPainel, type Area } from './painel-manilha-renderer';
+import { desenharManilhaNoPainel } from './painel-manilha-renderer';
 
 export interface ConfigPainelInfo {
   cena: Scene;
@@ -22,7 +22,7 @@ export interface ConfigPainelInfo {
 interface ConfigDesenho {
   cena: Scene;
   objetos: Phaser.GameObjects.GameObject[];
-  area: Area;
+  area: Retangulo;
 }
 
 interface Colunas {
@@ -84,7 +84,11 @@ function desenharCabecalhoRodada(config: ConfigDesenho, numero: number): void {
   objetos.push(texto);
 }
 
-function calcularLayoutTabela(cena: Scene, area: Area, ehPaisagem: boolean): { colunas: Colunas; areaManilha: Area } {
+function calcularLayoutTabela(
+  cena: Scene,
+  area: Retangulo,
+  ehPaisagem: boolean,
+): { colunas: Colunas; areaManilha: Retangulo } {
   const tabelaX = area.x + escalar(10, cena);
   const larguraTabela = ehPaisagem ? area.largura - escalar(20, cena) : Math.round(area.largura * 0.6);
   const colunas: Colunas = {
@@ -147,19 +151,13 @@ function adicionarTexto(cena: Scene, objetos: Phaser.GameObjects.GameObject[], a
   objetos.push(obj);
 }
 
-interface DadosEmJogo {
-  declaracoes: Partial<Record<string, number>>;
-  vazas: Record<string, number>;
-  pontos: Record<string, number>;
-}
-
 interface ConfigLinhas {
   cena: Scene;
   objetos: Phaser.GameObjects.GameObject[];
   colunas: Colunas;
   cabecalhoY: number;
   jogadores: Jogador[];
-  emJogo: DadosEmJogo;
+  emJogo: EstadoEmJogo;
 }
 
 function desenharLinhasJogadores(config: ConfigLinhas): void {
@@ -168,7 +166,7 @@ function desenharLinhasJogadores(config: ConfigLinhas): void {
   const espacamento = escalar(18, cena);
   jogadores.forEach((jogador, indice) => {
     const y = linhaY + indice * espacamento;
-    const declarado = emJogo.declaracoes[jogador.id] ?? null;
+    const declarado = jogador.id in emJogo.declaracoes ? emJogo.declaracoes[jogador.id] : null;
     const feito = emJogo.vazas[jogador.id] ?? 0;
     const pontos = emJogo.pontos[jogador.id] ?? jogador.pontos;
     const corPontos = pontos < 0 ? '#ff6b6b' : '#ffffff';
