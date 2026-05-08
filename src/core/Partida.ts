@@ -38,8 +38,9 @@ export class Partida {
 
   get estado(): EstadoPartida {
     if (!this.rodada) return this.estadoInicial();
+    const estadoRodada = this.rodada.estado;
     return {
-      ...this.rodada.estado,
+      ...estadoRodada,
       numeroRodada: this.numeroRodada,
       jogadoresAtivos: this.jogadoresAtivos(),
       embaralhadorId: this.embaralhadorAtual().id,
@@ -69,14 +70,6 @@ export class Partida {
     return {
       fase: 'distribuindo',
       jogadorAtual: 0,
-      mesa: [],
-      maos: [],
-      vazas: {},
-      turno: 1,
-      cartasPorRodada: 0,
-      manilha: '3',
-      cartaVirada: null,
-      declaracoes: {},
       pontos: Object.fromEntries(this.jogadores.map((jogador) => [jogador.id, jogador.pontos])),
       numeroRodada: this.numeroRodada,
       jogadoresAtivos: this.jogadoresAtivos(),

@@ -3,6 +3,7 @@ import type { Carta } from '@/core/Carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
+import { estadoEmJogo } from '@/types/estado-rodada';
 import { criarCarta, criarJogador, criarDecisorPrimeiraCarta, criarRodadaComMao } from './rodada-fixtures';
 
 function criarRodadaEmpate(maos: Carta[][], manilha: Carta['valor'] = '3') {
@@ -36,7 +37,7 @@ describe('Rodada — empate entre não-manilhas do mesmo valor', () => {
     emissor.on('TURNO_EMPATADO', handler);
     await jogarTurnos(rodada, 4);
     expect(handler).toHaveBeenCalledTimes(1);
-    expect(rodada.estado.vazas).toEqual({});
+    expect(estadoEmJogo(rodada.estado).vazas).toEqual({});
   });
 
   it('não deve incrementar vaza para nenhum jogador no empate', async () => {
@@ -47,10 +48,10 @@ describe('Rodada — empate entre não-manilhas do mesmo valor', () => {
       [criarCarta('4', '♦')],
     ]);
     await jogarTurnos(rodada, 4);
-    expect(rodada.estado.vazas['j1']).toBeUndefined();
-    expect(rodada.estado.vazas['j2']).toBeUndefined();
-    expect(rodada.estado.vazas['j3']).toBeUndefined();
-    expect(rodada.estado.vazas['j4']).toBeUndefined();
+    expect(estadoEmJogo(rodada.estado).vazas['j1']).toBeUndefined();
+    expect(estadoEmJogo(rodada.estado).vazas['j2']).toBeUndefined();
+    expect(estadoEmJogo(rodada.estado).vazas['j3']).toBeUndefined();
+    expect(estadoEmJogo(rodada.estado).vazas['j4']).toBeUndefined();
   });
 });
 
@@ -64,7 +65,7 @@ describe('Rodada — empate e próximo turno', () => {
     ]);
     await jogarTurnos(rodada, 4);
     expect(rodada.estado.jogadorAtual).toBe(1); // j2 foi o último empatado
-    expect(rodada.estado.turno).toBe(2);
+    expect(estadoEmJogo(rodada.estado).turno).toBe(2);
   });
 
   it('deve fazer o último empatado iniciar quando o naipe maior é jogado por último', async () => {
@@ -76,7 +77,7 @@ describe('Rodada — empate e próximo turno', () => {
     ]);
     await jogarTurnos(rodada, 4);
     expect(rodada.estado.jogadorAtual).toBe(1); // j2 foi o último empatado
-    expect(rodada.estado.turno).toBe(2);
+    expect(estadoEmJogo(rodada.estado).turno).toBe(2);
   });
 });
 
@@ -87,7 +88,7 @@ describe('Rodada — manilha vs não-manilha não é empate', () => {
       '4',
     );
     await jogarTurnos(rodada, 4);
-    expect(rodada.estado.vazas['j2']).toBe(1);
+    expect(estadoEmJogo(rodada.estado).vazas['j2']).toBe(1);
   });
 });
 
@@ -98,6 +99,6 @@ describe('Rodada — desempate entre manilhas por naipe', () => {
       '4',
     );
     await jogarTurnos(rodada, 4);
-    expect(rodada.estado.vazas['j4']).toBe(1);
+    expect(estadoEmJogo(rodada.estado).vazas['j4']).toBe(1);
   });
 });
