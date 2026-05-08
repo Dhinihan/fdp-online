@@ -1,8 +1,7 @@
 import type { Jogador } from '@/types/entidades';
 import type { EstadoEmJogo, EstadoMutavel, EstadoRodada, FaseRodada } from '@/types/estado-rodada';
 import { criarBaralho, distribuir, embaralhar } from './Baralho';
-import { obterProximoValor } from './Carta';
-import type { Carta } from './Carta';
+import { obterProximoValor, type Carta } from './Carta';
 import { criarMaosRodada } from './criar-maos-rodada';
 import type { DecisoresRodada } from './decisores-rodada';
 import {
@@ -50,6 +49,10 @@ export class Rodada {
   }
   get estado(): EstadoRodada {
     return criarSnapshotEstadoRodada(this._estado);
+  }
+  /** @testOnly Substitui o estado interno da rodada. */
+  restaurarEstado(estado: EstadoMutavel): void {
+    this._estado = estado;
   }
   distribuir(numeroCartas: number, baralhoEntrada?: Carta[]): void {
     const baralho = baralhoEntrada ?? embaralhar(criarBaralho());

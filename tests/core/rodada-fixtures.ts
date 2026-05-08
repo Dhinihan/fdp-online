@@ -49,34 +49,36 @@ export function criarRodada(config: {
     declaracao: config.decisoresDeclaracao ?? new Map<string, DecisorDeclaracao>(),
   });
   rodada.distribuir(config.cartasPorRodada ?? 1);
-  const privado = rodada as unknown as EstadoPrivado;
-  privado._estado.fase = 'aguardandoJogada';
-  privado._estado.declaracoes = {};
+  rodada.restaurarEstado({
+    ...rodada.estado,
+    fase: 'aguardandoJogada',
+    declaracoes: {},
+  } as EstadoMutavel);
   return rodada;
-}
-
-interface EstadoPrivado {
-  _estado: EstadoMutavel;
 }
 
 function pontosIniciais(jogadores: Jogador[]): Record<string, number> {
   return Object.fromEntries(jogadores.map((jogador) => [jogador.id, jogador.pontos]));
 }
 
-function preencherEstadoComMao(estado: EstadoMutavel, config: ConfigRodadaComMao): void {
-  estado.maos = config.jogadores.map((jogador, i) => ({
-    jogador,
-    cartas: config.maos[i] ?? [],
-    visivel: jogador.id === 'humano',
-  }));
-  estado.fase = config.fase ?? 'aguardandoJogada';
-  estado.jogadorAtual = config.jogadorAtual ?? 0;
-  estado.turno = config.turno ?? 1;
-  estado.cartasPorRodada = config.cartasPorRodada ?? 4;
-  estado.manilha = config.manilha ?? '3';
-  estado.declaracoes = config.declaracoes ?? {};
-  estado.pontos = config.pontos ?? pontosIniciais(config.jogadores);
-  estado.vazas = config.vazas ?? {};
+function criarEstadoComMao(config: ConfigRodadaComMao): EstadoMutavel {
+  return {
+    maos: config.jogadores.map((jogador, i) => ({
+      jogador,
+      cartas: config.maos[i] ?? [],
+      visivel: jogador.id === 'humano',
+    })),
+    fase: config.fase ?? 'aguardandoJogada',
+    jogadorAtual: config.jogadorAtual ?? 0,
+    turno: config.turno ?? 1,
+    cartasPorRodada: config.cartasPorRodada ?? 4,
+    manilha: config.manilha ?? '3',
+    declaracoes: config.declaracoes ?? {},
+    pontos: config.pontos ?? pontosIniciais(config.jogadores),
+    vazas: config.vazas ?? {},
+    mesa: [],
+    cartaVirada: null,
+  };
 }
 
 interface ConfigRodadaComMao {
@@ -99,8 +101,7 @@ export function criarRodadaComMao(config: ConfigRodadaComMao): Rodada {
     jogada: config.decisores,
     declaracao: new Map<string, DecisorDeclaracao>(),
   });
-  const privado = rodada as unknown as EstadoPrivado;
-  preencherEstadoComMao(privado._estado, config);
+  rodada.restaurarEstado(criarEstadoComMao(config));
   return rodada;
 }
 
