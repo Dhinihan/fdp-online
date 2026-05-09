@@ -103,7 +103,6 @@ export class JogoScene extends Scene {
     if (!estado || estado.fase === 'distribuindo') return;
     const gameArea = this.obterGameArea();
     this.desenharMaos(estado.maos, gameArea);
-    limparObjetos(this.mesaObjetos);
     const cartas = estado.mesa.map((m) => m.carta);
     renderizarMesa({ cena: this, mesa: cartas, objetos: this.mesaObjetos, gameArea });
     this.atualizarIndicadorVez();
