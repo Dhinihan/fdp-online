@@ -5,6 +5,7 @@ import { estadoEmJogo } from '@/types/estado-rodada';
 import { DecisorDeclaracaoHumano } from '../DecisorDeclaracaoHumano';
 import type { DecisorHumano } from '../DecisorHumano';
 import { fabricarPartida } from '../factories/rodada-factory';
+import type { Retangulo } from '../layout';
 import { JOGADORES } from './jogadores';
 import { iniciarProcessamentoTurno, processarDeclaracoes } from './jogo-scene-loop';
 
@@ -18,6 +19,7 @@ export interface DependenciasCena {
   transicionarRodada: (continuar: () => void) => void;
   mostrarFimJogo: (classificacao: Jogador[]) => void;
   desativarResize: () => void;
+  getGameArea: () => Retangulo;
   objetosDeclaracao: Phaser.GameObjects.GameObject[];
   getLabels: () => Phaser.GameObjects.Text[];
   getDirecoesLabels: () => ('horizontal' | 'vertical')[];
@@ -83,6 +85,7 @@ export class JogoController {
       rodada,
       objetos: this.deps.objetosDeclaracao,
       decisorHumano: this.decisorDeclaracaoHumano,
+      gameArea: this.deps.getGameArea(),
       atualizarIndicadorVez: this.deps.atualizarIndicadorVez,
       atualizarPainel: this.deps.atualizarPainel,
       iniciarTurnos: this.iniciarFluxoTurno.bind(this),

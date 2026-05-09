@@ -4,6 +4,7 @@ import type { MaoJogador } from '@/types/estado-rodada';
 import type { DecisorHumano } from '../DecisorHumano';
 import { obterDpr, escalar } from '../escala';
 import { criarFundoInterativo } from '../input/input-humano';
+import type { Retangulo } from '../layout';
 import type { EstadoDestaque } from '../renderers/destaque-renderer';
 import { desenharMaoNaCena } from '../renderers/mao-scene-renderer';
 import { calcularPosicoes } from '../renderers/posicoes-mao';
@@ -12,6 +13,7 @@ interface ConfigMaosJogo {
   cena: Scene;
   rodada: Rodada;
   maos: MaoJogador[];
+  gameArea: Retangulo;
   decisorHumano: DecisorHumano;
   destaque: EstadoDestaque;
   objetos: Phaser.GameObjects.GameObject[];
@@ -22,7 +24,7 @@ export function desenharMaosJogo(config: ConfigMaosJogo): {
   direcoes: ('horizontal' | 'vertical')[];
 } {
   const labels: Phaser.GameObjects.Text[] = [];
-  const posicoes = calcularPosicoesMaos(config.cena);
+  const posicoes = calcularPosicoesMaos(config.cena, config.gameArea);
   config.maos.forEach((mao, i) => {
     desenharMaoNaCena({
       cena: config.cena,
@@ -38,16 +40,16 @@ export function desenharMaosJogo(config: ConfigMaosJogo): {
   criarFundoInterativo({
     cena: config.cena,
     objetos: config.objetos,
+    gameArea: config.gameArea,
     decisorHumano: config.decisorHumano,
     destaque: config.destaque,
   });
   return { labels, direcoes: posicoes.map((p) => p.mao.direcao) };
 }
 
-function calcularPosicoesMaos(cena: Scene): ReturnType<typeof calcularPosicoes> {
+function calcularPosicoesMaos(cena: Scene, gameArea: Retangulo): ReturnType<typeof calcularPosicoes> {
   return calcularPosicoes({
-    largura: cena.cameras.main.width,
-    altura: cena.cameras.main.height,
+    gameArea,
     margem: escalar(60, cena),
     margemInferior: escalar(80, cena),
     espacamentoCartas: escalar(40, cena),

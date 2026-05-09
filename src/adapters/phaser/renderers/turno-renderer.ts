@@ -1,5 +1,6 @@
 import type { Scene } from 'phaser';
 import { escalar, escalarFonte } from '../escala';
+import type { Retangulo } from '../layout';
 
 export interface ConfigIndicadorVez {
   cena: Scene;
@@ -63,9 +64,13 @@ export function animarRecolhimentoTurno(config: ConfigAnimarTurno): void {
   });
 }
 
-export function mostrarOverlayRodadaConcluida(cena: Scene, objetos: Phaser.GameObjects.GameObject[]): void {
-  const cx = cena.cameras.main.width / 2;
-  const cy = cena.cameras.main.height / 2;
+export function mostrarOverlayRodadaConcluida(
+  cena: Scene,
+  objetos: Phaser.GameObjects.GameObject[],
+  gameArea: Retangulo,
+): void {
+  const cx = gameArea.x + gameArea.largura / 2;
+  const cy = gameArea.y + gameArea.altura / 2;
   const largura = escalar(320, cena);
   const altura = escalar(80, cena);
   const fundo = cena.add.rectangle(cx, cy, largura, altura, 0x000000, 0.7).setDepth(200);

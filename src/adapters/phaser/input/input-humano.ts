@@ -3,6 +3,7 @@ import type { Carta } from '@/core/Carta';
 import type { Rodada } from '@/core/Rodada';
 import { estadoEmJogo } from '@/types/estado-rodada';
 import type { DecisorHumano } from '../DecisorHumano';
+import type { Retangulo } from '../layout';
 import { destacarCarta, removerDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
 
 export interface ConfigInteracaoHumano {
@@ -33,15 +34,22 @@ export function configurarInteracaoHumano(config: ConfigInteracaoHumano): void {
 export interface ConfigFundo {
   cena: Scene;
   objetos: Phaser.GameObjects.GameObject[];
+  gameArea: Retangulo;
   decisorHumano: DecisorHumano;
   destaque: EstadoDestaque;
 }
 
 export function criarFundoInterativo(config: ConfigFundo): void {
-  const { cena, objetos, decisorHumano, destaque } = config;
-  const { width: largura, height: altura } = cena.cameras.main;
+  const { cena, objetos, gameArea, decisorHumano, destaque } = config;
   const fundo = cena.add
-    .rectangle(largura / 2, altura / 2, largura, altura, 0x000000, 0)
+    .rectangle(
+      gameArea.x + gameArea.largura / 2,
+      gameArea.y + gameArea.altura / 2,
+      gameArea.largura,
+      gameArea.altura,
+      0x000000,
+      0,
+    )
     .setInteractive()
     .setDepth(-100);
   objetos.push(fundo);

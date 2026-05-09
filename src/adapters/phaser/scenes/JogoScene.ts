@@ -3,7 +3,7 @@ import { VALOR_MINIMO } from '@/core/Carta';
 import { Rodada } from '@/core/Rodada';
 import { estadoEmJogo } from '@/types/estado-rodada';
 import { DecisorHumano } from '../DecisorHumano';
-import { calcularLayout, type LayoutPainel } from '../layout';
+import { calcularLayout, type LayoutPainel, type Retangulo } from '../layout';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 import { destruirDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
 import { limparObjetos } from '../renderers/limpar-objetos';
@@ -52,7 +52,7 @@ export class JogoScene extends Scene {
       atualizarPainel: this.atualizarPainel.bind(this),
       animarRecolhimentoTurno: this.animarRecolhimentoTurno.bind(this),
       transicionarRodada: (cb) => {
-        transicionarRodada(this, this.objetos, cb);
+        transicionarRodada({ cena: this, objetos: this.objetos, callback: cb, gameArea: this.obterGameArea() });
       },
       mostrarFimJogo: (classificacao) => {
         mostrarFimJogoDaCena(this, classificacao);
@@ -60,6 +60,7 @@ export class JogoScene extends Scene {
       desativarResize: () => {
         desativarResize(this, this.redesenhar);
       },
+      getGameArea: () => this.obterGameArea(),
       objetosDeclaracao: this.objetosDeclaracao,
       getLabels: () => this.labels,
       getDirecoesLabels: () => this.direcoesLabels,
@@ -69,6 +70,10 @@ export class JogoScene extends Scene {
   private obterLayout(): LayoutPainel {
     const { width, height } = this.cameras.main;
     return calcularLayout(width, height);
+  }
+
+  private obterGameArea(): Retangulo {
+    return this.obterLayout().gameArea;
   }
 
   private atualizarPainel(): void {
@@ -96,18 +101,20 @@ export class JogoScene extends Scene {
     limparObjetos(this.mesaObjetos);
     const estado = this.controller?.partida?.estado;
     if (!estado || estado.fase === 'distribuindo') return;
-    this.desenharMaos(estado.maos);
+    const gameArea = this.obterGameArea();
+    this.desenharMaos(estado.maos, gameArea);
     limparObjetos(this.mesaObjetos);
     const cartas = estado.mesa.map((m) => m.carta);
-    renderizarMesa({ cena: this, mesa: cartas, objetos: this.mesaObjetos });
+    renderizarMesa({ cena: this, mesa: cartas, objetos: this.mesaObjetos, gameArea });
     this.atualizarIndicadorVez();
   };
 
-  private desenharMaos(maos: Parameters<typeof desenharMaosJogo>[0]['maos']): void {
+  private desenharMaos(maos: Parameters<typeof desenharMaosJogo>[0]['maos'], gameArea: Retangulo): void {
     const rodada = this.controller?.partida?.rodadaAtual as Rodada;
     const resultado = desenharMaosJogo({
       cena: this,
       maos,
+      gameArea,
       rodada,
       decisorHumano: this.decisorHumano,
       destaque: this.destaque,
