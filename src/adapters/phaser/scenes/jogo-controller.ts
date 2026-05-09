@@ -5,6 +5,7 @@ import { estadoEmJogo } from '@/types/estado-rodada';
 import { DecisorDeclaracaoHumano } from '../DecisorDeclaracaoHumano';
 import type { DecisorHumano } from '../DecisorHumano';
 import { fabricarPartida } from '../factories/rodada-factory';
+import type { Retangulo } from '../layout';
 import { JOGADORES } from './jogadores';
 import { iniciarProcessamentoTurno, processarDeclaracoes } from './jogo-scene-loop';
 
@@ -13,13 +14,12 @@ export interface DependenciasCena {
   decisorHumano: DecisorHumano;
   redesenharTela: () => void;
   atualizarIndicadorVez: () => void;
-  atualizarPlacar: () => void;
-  atualizarManilha: () => void;
-  atualizarIndicadorRodada: () => void;
+  atualizarPainel: () => void;
   animarRecolhimentoTurno: () => void;
   transicionarRodada: (continuar: () => void) => void;
   mostrarFimJogo: (classificacao: Jogador[]) => void;
   desativarResize: () => void;
+  getGameArea: () => Retangulo;
   objetosDeclaracao: Phaser.GameObjects.GameObject[];
   getLabels: () => Phaser.GameObjects.Text[];
   getDirecoesLabels: () => ('horizontal' | 'vertical')[];
@@ -57,9 +57,9 @@ export class JogoController {
         onRodadaEncerrada: () => {
           this.deps.transicionarRodada(this.iniciarNovaRodada.bind(this));
         },
-        onManilhaVirada: this.deps.atualizarManilha,
-        onRodadaIniciada: this.deps.atualizarIndicadorRodada,
-        onPontuacaoAplicada: this.deps.atualizarPlacar,
+        onManilhaVirada: this.deps.atualizarPainel,
+        onRodadaIniciada: this.deps.atualizarPainel,
+        onPontuacaoAplicada: this.deps.atualizarPainel,
         onJogoEncerrado: (classificacao) => {
           this.deps.desativarResize();
           this.deps.mostrarFimJogo(classificacao);
@@ -85,8 +85,9 @@ export class JogoController {
       rodada,
       objetos: this.deps.objetosDeclaracao,
       decisorHumano: this.decisorDeclaracaoHumano,
+      gameArea: this.deps.getGameArea(),
       atualizarIndicadorVez: this.deps.atualizarIndicadorVez,
-      atualizarPlacar: this.deps.atualizarPlacar,
+      atualizarPainel: this.deps.atualizarPainel,
       iniciarTurnos: this.iniciarFluxoTurno.bind(this),
     }).catch(() => undefined);
   }

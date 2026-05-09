@@ -3,6 +3,7 @@ import type { Rodada } from '@/core/Rodada';
 import type { Jogador } from '@/types/entidades';
 import { estadoEmJogo } from '@/types/estado-rodada';
 import type { DecisorDeclaracaoHumano } from '../DecisorDeclaracaoHumano';
+import type { Retangulo } from '../layout';
 import { desenharBotoesDeclaracao, limparObjetosDeclaracao } from '../renderers/declaracao-renderer';
 import { atualizarLabelVencedor } from '../renderers/label-jogador';
 
@@ -11,8 +12,9 @@ interface ConfigDeclaracoes {
   rodada: Rodada;
   objetos: Phaser.GameObjects.GameObject[];
   decisorHumano: DecisorDeclaracaoHumano;
+  gameArea: Retangulo;
   atualizarIndicadorVez: () => void;
-  atualizarPlacar: () => void;
+  atualizarPainel: () => void;
   iniciarTurnos: () => Promise<void>;
 }
 
@@ -35,7 +37,7 @@ export async function processarDeclaracoes(config: ConfigDeclaracoes): Promise<v
     const declarou = await tentarDeclarar(rodada);
     if (!declarou) return;
     limparObjetosDeclaracao(config.objetos);
-    config.atualizarPlacar();
+    config.atualizarPainel();
     config.atualizarIndicadorVez();
   }
   if (rodada.estado.fase === 'aguardandoJogada') {
@@ -56,6 +58,7 @@ async function prepararDeclaracaoAtual(config: ConfigDeclaracoes): Promise<void>
     cena,
     maximo: emJogo.cartasPorRodada,
     objetos: config.objetos,
+    gameArea: config.gameArea,
     onSelecionar: (valor: number) => {
       config.decisorHumano.confirmar(valor);
     },

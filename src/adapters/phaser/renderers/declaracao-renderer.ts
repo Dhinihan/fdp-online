@@ -1,17 +1,19 @@
 import type { Scene } from 'phaser';
 import { escalar } from '../escala';
+import type { Retangulo } from '../layout';
 
 export interface ConfigDeclaracaoRenderer {
   cena: Scene;
   maximo: number;
   objetos: Phaser.GameObjects.GameObject[];
+  gameArea: Retangulo;
   onSelecionar: (valor: number) => void;
 }
 
 export function desenharBotoesDeclaracao(config: ConfigDeclaracaoRenderer): void {
-  const { cena, maximo, objetos, onSelecionar } = config;
-  const centroX = cena.cameras.main.width / 2;
-  const centroY = cena.cameras.main.height / 2;
+  const { cena, maximo, objetos, gameArea, onSelecionar } = config;
+  const centroX = gameArea.x + gameArea.largura / 2;
+  const centroY = gameArea.y + gameArea.altura / 2;
   const titulo = cena.add
     .text(centroX, centroY - escalar(30, cena), 'Declare quantas vai fazer:', {
       fontSize: `${String(escalar(20, cena))}px`,

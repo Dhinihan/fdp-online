@@ -1,15 +1,15 @@
 import { Scene } from 'phaser';
+import { VALOR_MINIMO } from '@/core/Carta';
 import { Rodada } from '@/core/Rodada';
 import { estadoEmJogo } from '@/types/estado-rodada';
 import { DecisorHumano } from '../DecisorHumano';
+import { calcularLayout, type LayoutPainel, type Retangulo } from '../layout';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 import { destruirDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
-import { desenharIndicadorRodada } from '../renderers/indicador-rodada-renderer';
 import { limparObjetos } from '../renderers/limpar-objetos';
 import { renderizarMesa } from '../renderers/mesa-renderer';
-import { desenharPlacar } from '../renderers/placar-renderer';
+import { desenharPainelInfo } from '../renderers/painel-info-renderer';
 import { animarRecolhimentoTurno, atualizarIndicadorVez } from '../renderers/turno-renderer';
-import { atualizarManilhaDaCena } from './atualizar-manilha-cena';
 import { aoEncerrarCena, desativarResize, transicionarRodada } from './ciclo-vida-cena';
 import { desenharMaosJogo } from './desenhar-maos-jogo';
 import { mostrarFimJogoDaCena } from './fim-jogo-scene';
@@ -20,10 +20,9 @@ export class JogoScene extends Scene {
   mesaObjetos: Phaser.GameObjects.GameObject[] = [];
   objetosDeclaracao: Phaser.GameObjects.GameObject[] = [];
   destaque: EstadoDestaque = {};
-  manilhaObjetos: Phaser.GameObjects.GameObject[] = [];
-  indicadorRodadaObjetos: Phaser.GameObjects.GameObject[] = [];
-  placarObjetos: Phaser.GameObjects.GameObject[] = [];
+  painelObjetos: Phaser.GameObjects.GameObject[] = [];
   fimJogoObjetos: Phaser.GameObjects.GameObject[] = [];
+  private layout?: LayoutPainel;
   private redesenhar?: ResizeDebouncer;
   private decisorHumano = new DecisorHumano();
   private labels: Phaser.GameObjects.Text[] = [];
@@ -50,12 +49,10 @@ export class JogoScene extends Scene {
       decisorHumano: this.decisorHumano,
       redesenharTela: this.redesenharTela,
       atualizarIndicadorVez: this.atualizarIndicadorVez.bind(this),
-      atualizarPlacar: this.atualizarPlacar.bind(this),
-      atualizarManilha: this.atualizarManilha.bind(this),
-      atualizarIndicadorRodada: this.atualizarIndicadorRodada.bind(this),
+      atualizarPainel: this.atualizarPainel.bind(this),
       animarRecolhimentoTurno: this.animarRecolhimentoTurno.bind(this),
       transicionarRodada: (cb) => {
-        transicionarRodada(this, this.objetos, cb);
+        transicionarRodada({ cena: this, objetos: this.objetos, callback: cb, gameArea: this.obterGameArea() });
       },
       mostrarFimJogo: (classificacao) => {
         mostrarFimJogoDaCena(this, classificacao);
@@ -63,55 +60,60 @@ export class JogoScene extends Scene {
       desativarResize: () => {
         desativarResize(this, this.redesenhar);
       },
+      getGameArea: () => this.obterGameArea(),
       objetosDeclaracao: this.objetosDeclaracao,
       getLabels: () => this.labels,
       getDirecoesLabels: () => this.direcoesLabels,
     };
   }
 
-  private atualizarManilha(): void {
-    atualizarManilhaDaCena(this, this.controller?.partida, this.manilhaObjetos);
+  private obterLayout(): LayoutPainel {
+    const { width, height } = this.cameras.main;
+    return calcularLayout(width, height);
   }
 
-  private atualizarIndicadorRodada(): void {
+  private obterGameArea(): Retangulo {
+    return this.obterLayout().gameArea;
+  }
+
+  private atualizarPainel(): void {
+    this.layout = this.obterLayout();
     const estado = this.controller?.partida?.estado;
-    if (!estado || estado.fase === 'distribuindo' || !estado.numeroRodada) return;
-    desenharIndicadorRodada({
+    if (!estado) return;
+    const emJogo = estado.fase !== 'distribuindo' ? estadoEmJogo(estado) : null;
+    const jogadores = emJogo ? emJogo.maos.map((m) => m.jogador) : [];
+    desenharPainelInfo({
       cena: this,
+      jogadores,
+      estado,
       numeroRodada: estado.numeroRodada,
-      manilha: estado.manilha,
-      objetos: this.indicadorRodadaObjetos,
+      manilha: emJogo?.manilha ?? VALOR_MINIMO,
+      cartaVirada: emJogo?.cartaVirada ?? null,
+      layout: this.layout,
+      objetos: this.painelObjetos,
     });
-  }
-
-  private atualizarPlacar(): void {
-    const estado = this.controller?.partida?.estado;
-    if (!estado || estado.fase === 'distribuindo') return;
-    const jogadores = estado.maos.map((m) => m.jogador);
-    desenharPlacar({ cena: this, jogadores, estado, objetos: this.placarObjetos });
   }
 
   private redesenharTela = (): void => {
     destruirDestaque(this.destaque);
     limparObjetos(this.objetos);
-    this.atualizarManilha();
-    this.atualizarIndicadorRodada();
-    this.atualizarPlacar();
+    this.atualizarPainel();
     limparObjetos(this.mesaObjetos);
     const estado = this.controller?.partida?.estado;
     if (!estado || estado.fase === 'distribuindo') return;
-    this.desenharMaos(estado.maos);
-    limparObjetos(this.mesaObjetos);
+    const gameArea = this.obterGameArea();
+    this.desenharMaos(estado.maos, gameArea);
     const cartas = estado.mesa.map((m) => m.carta);
-    renderizarMesa({ cena: this, mesa: cartas, objetos: this.mesaObjetos });
+    renderizarMesa({ cena: this, mesa: cartas, objetos: this.mesaObjetos, gameArea });
     this.atualizarIndicadorVez();
   };
 
-  private desenharMaos(maos: Parameters<typeof desenharMaosJogo>[0]['maos']): void {
+  private desenharMaos(maos: Parameters<typeof desenharMaosJogo>[0]['maos'], gameArea: Retangulo): void {
     const rodada = this.controller?.partida?.rodadaAtual as Rodada;
     const resultado = desenharMaosJogo({
       cena: this,
       maos,
+      gameArea,
       rodada,
       decisorHumano: this.decisorHumano,
       destaque: this.destaque,
@@ -128,9 +130,7 @@ export class JogoScene extends Scene {
       tweenVez: this.tweenVez,
       objetos: this.objetos,
       mesaObjetos: this.mesaObjetos,
-      indicadorRodadaObjetos: this.indicadorRodadaObjetos,
-      manilhaObjetos: this.manilhaObjetos,
-      placarObjetos: this.placarObjetos,
+      painelObjetos: this.painelObjetos,
       fimJogoObjetos: this.fimJogoObjetos,
       destaque: this.destaque,
     });

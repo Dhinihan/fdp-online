@@ -1,5 +1,8 @@
 export type Valor = '3' | '2' | 'A' | 'K' | 'Q' | 'J' | '10' | '9' | '8' | '7' | '6' | '5' | '4';
 
+/** Valor mais baixo do baralho, usado como fallback quando a manilha ainda não foi definida. */
+export const VALOR_MINIMO: Valor = '4';
+
 export type Naipe = '♣' | '♥' | '♠' | '♦';
 
 export interface Carta {
