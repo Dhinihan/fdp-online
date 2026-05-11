@@ -109,6 +109,32 @@ describe('Rodada — declaração — ordem', () => {
   });
 });
 
+describe('Rodada — declaração — indice inicial', () => {
+  it('deve respeitar indice inicial durante declaracao e jogada', async () => {
+    const emissor = createEmissorEventos();
+    const jogadores = [criarJogador('j1', 'J1'), criarJogador('j2', 'J2'), criarJogador('j3', 'J3')];
+    const decisoresDeclaracao = new Map([
+      ['j1', criarDecisorDeclaracao(1)],
+      ['j2', criarDecisorDeclaracao(1)],
+      ['j3', criarDecisorDeclaracao(1)],
+    ]);
+    const rodada = new Rodada(jogadores, emissor, {
+      jogada: new Map(),
+      declaracao: decisoresDeclaracao,
+      jogadorInicialIndice: 1,
+    });
+    rodada.distribuir(2);
+    expect(rodada.estado.jogadorAtual).toBe(1);
+    await rodada.declarar();
+    expect(rodada.estado.jogadorAtual).toBe(2);
+    await rodada.declarar();
+    expect(rodada.estado.jogadorAtual).toBe(0);
+    await rodada.declarar();
+    expect(rodada.estado.jogadorAtual).toBe(1);
+    expect(rodada.estado.fase).toBe('aguardandoJogada');
+  });
+});
+
 describe('Rodada — declaração — transicao', () => {
   it('deve transitar para aguardandoJogada apos todos declararem', async () => {
     const emissor = createEmissorEventos();

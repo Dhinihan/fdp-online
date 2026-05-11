@@ -75,7 +75,16 @@ describe('Partida — estado público', () => {
 });
 
 describe('Partida — embaralhador', () => {
+  it('deve sortear o embaralhador da primeira rodada', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const partida = criarPartida();
+    partida.iniciarProximaRodada();
+    expect(partida.estado.embaralhadorId).toBe('j3');
+    random.mockRestore();
+  });
+
   it('deve rotacionar o embaralhador para o jogador à direita', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.99);
     const partida = criarPartida();
     const embaralhadores: string[] = [];
     for (let i = 0; i < 5; i++) {
@@ -83,6 +92,21 @@ describe('Partida — embaralhador', () => {
       embaralhadores.push(partida.estado.embaralhadorId);
     }
     expect(embaralhadores).toEqual(['j4', 'j1', 'j2', 'j3', 'j4']);
+    random.mockRestore();
+  });
+});
+
+describe('Partida — primeiro jogador', () => {
+  it('deve iniciar declaracao e jogada no proximo jogador apos o embaralhador', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    const partida = criarPartida();
+    const jogadoresAtuais: number[] = [];
+    for (let i = 0; i < 4; i++) {
+      partida.iniciarProximaRodada();
+      jogadoresAtuais.push(partida.estado.jogadorAtual);
+    }
+    expect(jogadoresAtuais).toEqual([0, 1, 2, 3]);
+    random.mockRestore();
   });
 });
 
