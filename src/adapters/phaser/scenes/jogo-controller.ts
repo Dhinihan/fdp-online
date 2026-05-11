@@ -6,6 +6,7 @@ import { DecisorDeclaracaoHumano } from '../DecisorDeclaracaoHumano';
 import type { DecisorHumano } from '../DecisorHumano';
 import { fabricarPartida } from '../factories/rodada-factory';
 import type { Retangulo } from '../layout';
+import { desenharBotoesDeclaracao, limparObjetosDeclaracao } from '../renderers/declaracao-renderer';
 import { JOGADORES } from './jogadores';
 import { iniciarProcessamentoTurno, processarDeclaracoes } from './jogo-scene-loop';
 
@@ -29,6 +30,7 @@ export class JogoController {
   partida?: Partida;
   vencedorTurno?: string;
   private turnoAnterior = 1;
+  private valorDeclaracaoAtual = 0;
   private readonly decisorDeclaracaoHumano = new DecisorDeclaracaoHumano();
 
   private readonly deps: DependenciasCena;
@@ -70,12 +72,39 @@ export class JogoController {
 
   iniciarNovaRodada(): void {
     this.turnoAnterior = 1;
+    this.valorDeclaracaoAtual = 0;
     this.vencedorTurno = undefined;
     const rodada = this.partida?.iniciarProximaRodada();
     if (!rodada) return;
     this.deps.redesenharTela();
     this.iniciarFluxoDeclaracao();
   }
+
+  redesenharDeclaracaoAtual(): void {
+    const rodada = this.partida?.rodadaAtual;
+    if (!rodada) return;
+    const estado = rodada.estado;
+    if (estado.fase !== 'aguardandoDeclaracao' && estado.fase !== 'processandoDeclaracao') return;
+    const emJogo = estadoEmJogo(estado);
+    const maoAtual = emJogo.maos[emJogo.jogadorAtual];
+    if (maoAtual.jogador.id !== 'humano') return;
+    limparObjetosDeclaracao(this.deps.objetosDeclaracao);
+    desenharBotoesDeclaracao({
+      cena: this.deps.scene,
+      maximo: emJogo.cartasPorRodada,
+      objetos: this.deps.objetosDeclaracao,
+      gameArea: this.deps.getGameArea(),
+      valorInicial: this.valorDeclaracaoAtual,
+      onAlterar: this.atualizarValorDeclaracao,
+      onSelecionar: (valor) => {
+        this.decisorDeclaracaoHumano.confirmar(valor);
+      },
+    });
+  }
+
+  private atualizarValorDeclaracao = (valor: number): void => {
+    this.valorDeclaracaoAtual = valor;
+  };
 
   private iniciarFluxoDeclaracao(): void {
     const rodada = this.partida?.rodadaAtual;
@@ -85,7 +114,9 @@ export class JogoController {
       rodada,
       objetos: this.deps.objetosDeclaracao,
       decisorHumano: this.decisorDeclaracaoHumano,
-      gameArea: this.deps.getGameArea(),
+      getGameArea: this.deps.getGameArea,
+      getValorDeclaracao: () => this.valorDeclaracaoAtual,
+      onAlterarDeclaracao: this.atualizarValorDeclaracao,
       atualizarIndicadorVez: this.deps.atualizarIndicadorVez,
       atualizarPainel: this.deps.atualizarPainel,
       iniciarTurnos: this.iniciarFluxoTurno.bind(this),

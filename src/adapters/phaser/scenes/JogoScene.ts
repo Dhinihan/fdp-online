@@ -105,6 +105,7 @@ export class JogoScene extends Scene {
     this.desenharMaos(estado.maos, gameArea);
     const cartas = estado.mesa.map((m) => m.carta);
     renderizarMesa({ cena: this, mesa: cartas, objetos: this.mesaObjetos, gameArea });
+    this.controller?.redesenharDeclaracaoAtual();
     this.atualizarIndicadorVez();
   };
 
