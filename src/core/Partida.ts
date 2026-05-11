@@ -29,7 +29,7 @@ export class Partida {
     this.jogadores = jogadores;
     this.emissor = emissor;
     this.decisores = decisores;
-    this.embaralhadorIndice = jogadores.length - 1;
+    this.embaralhadorIndice = this.sortearEmbaralhadorIndice();
   }
 
   get rodadaAtual(): Rodada | undefined {
@@ -53,7 +53,11 @@ export class Partida {
     if (this.encerrarSeNecessario()) return undefined;
     this.numeroRodada = teveEliminacao ? 1 : this.numeroRodada + 1;
     if (this.numeroRodada > 1) this.rotacionarEmbaralhador();
-    this.rodada = new Rodada(this.jogadores, this.emissor, { ...this.decisores, numeroRodada: this.numeroRodada });
+    this.rodada = new Rodada(this.jogadores, this.emissor, {
+      ...this.decisores,
+      numeroRodada: this.numeroRodada,
+      jogadorInicialIndice: this.primeiroJogadorIndice(),
+    });
     const cartasPorRodada = Math.min(this.numeroRodada, 13);
     this.rodada.distribuir(cartasPorRodada);
     this.emitirRodadaIniciada(cartasPorRodada);
@@ -132,6 +136,14 @@ export class Partida {
 
   private rotacionarEmbaralhador(): void {
     this.embaralhadorIndice = (this.embaralhadorIndice + 1) % this.jogadores.length;
+  }
+
+  private primeiroJogadorIndice(): number {
+    return (this.embaralhadorIndice + 1) % this.jogadores.length;
+  }
+
+  private sortearEmbaralhadorIndice(): number {
+    return Math.floor(Math.random() * this.jogadores.length);
   }
 
   private embaralhadorAtual(): Jogador {

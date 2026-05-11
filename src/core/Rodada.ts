@@ -27,15 +27,17 @@ export class Rodada {
   private emissor: EmissorRodada;
   private jogadores: Jogador[];
   private numeroRodada: number;
+  private jogadorInicialIndice: number;
   constructor(jogadores: Jogador[], emissor: EmissorRodada, decisores: DecisoresRodada) {
     this.jogadores = jogadores;
     this.decisores = decisores.jogada;
     this.decisoresDeclaracao = decisores.declaracao;
     this.emissor = emissor;
     this.numeroRodada = decisores.numeroRodada ?? 1;
+    this.jogadorInicialIndice = decisores.jogadorInicialIndice ?? 0;
     this._estado = {
       fase: 'distribuindo',
-      jogadorAtual: 0,
+      jogadorAtual: this.jogadorInicialIndice,
       mesa: [],
       maos: [],
       vazas: {},
@@ -112,6 +114,7 @@ export class Rodada {
     this._estado.mesa = [];
     this._estado.vazas = {};
     this._estado.turno = 1;
+    this._estado.jogadorAtual = this.jogadorInicialIndice;
   }
   private validarDeclaracao(declaracao: number): void {
     const maximo = this._estado.cartasPorRodada;
@@ -123,7 +126,7 @@ export class Rodada {
     const totalDeclaracoes = Object.keys(this._estado.declaracoes).length;
     if (totalDeclaracoes === this.jogadores.length) {
       this.transitarFase('aguardandoJogada');
-      this._estado.jogadorAtual = 0;
+      this._estado.jogadorAtual = this.jogadorInicialIndice;
       return;
     }
     this._estado.jogadorAtual = (this._estado.jogadorAtual + 1) % this.jogadores.length;

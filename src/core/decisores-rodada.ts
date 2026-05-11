@@ -5,4 +5,5 @@ export interface DecisoresRodada {
   jogada: Map<string, DecisorJogada>;
   declaracao: Map<string, DecisorDeclaracao>;
   numeroRodada?: number;
+  jogadorInicialIndice?: number;
 }
