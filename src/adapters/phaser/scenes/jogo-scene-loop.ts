@@ -13,6 +13,8 @@ interface ConfigDeclaracoes {
   objetos: Phaser.GameObjects.GameObject[];
   decisorHumano: DecisorDeclaracaoHumano;
   getGameArea: () => Retangulo;
+  getValorDeclaracao: () => number;
+  onAlterarDeclaracao: (valor: number) => void;
   atualizarIndicadorVez: () => void;
   atualizarPainel: () => void;
   iniciarTurnos: () => Promise<void>;
@@ -59,6 +61,8 @@ async function prepararDeclaracaoAtual(config: ConfigDeclaracoes): Promise<void>
     maximo: emJogo.cartasPorRodada,
     objetos: config.objetos,
     gameArea: config.getGameArea(),
+    valorInicial: config.getValorDeclaracao(),
+    onAlterar: config.onAlterarDeclaracao,
     onSelecionar: (valor: number) => {
       config.decisorHumano.confirmar(valor);
     },

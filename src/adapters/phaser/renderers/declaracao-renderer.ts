@@ -8,6 +8,8 @@ export interface ConfigDeclaracaoRenderer {
   objetos: Phaser.GameObjects.GameObject[];
   gameArea: Retangulo;
   onSelecionar: (valor: number) => void;
+  valorInicial?: number;
+  onAlterar?: (valor: number) => void;
 }
 
 interface Posicao {
@@ -40,12 +42,13 @@ export function desenharBotoesDeclaracao(config: ConfigDeclaracaoRenderer): void
 }
 
 function criarControleDeclaracao(config: ConfigDeclaracaoRenderer, centro: Posicao): Phaser.GameObjects.GameObject[] {
-  const { cena, maximo, onSelecionar, gameArea } = config;
-  let valor = 0;
+  const { cena, maximo, onSelecionar, gameArea, valorInicial = 0, onAlterar } = config;
+  let valor = valorInicial;
   const numero = criarNumero(cena, { x: centro.x, y: centro.y + escalar(4, cena) }, valor);
   const definirValor = (novoValor: number): void => {
     valor = novoValor;
     numero.setText(String(valor));
+    onAlterar?.(valor);
   };
   const diminuir = (): void => {
     definirValor(Math.max(0, valor - 1));

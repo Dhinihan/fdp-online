@@ -30,6 +30,7 @@ export class JogoController {
   partida?: Partida;
   vencedorTurno?: string;
   private turnoAnterior = 1;
+  private valorDeclaracaoAtual = 0;
   private readonly decisorDeclaracaoHumano = new DecisorDeclaracaoHumano();
 
   private readonly deps: DependenciasCena;
@@ -71,6 +72,7 @@ export class JogoController {
 
   iniciarNovaRodada(): void {
     this.turnoAnterior = 1;
+    this.valorDeclaracaoAtual = 0;
     this.vencedorTurno = undefined;
     const rodada = this.partida?.iniciarProximaRodada();
     if (!rodada) return;
@@ -92,11 +94,17 @@ export class JogoController {
       maximo: emJogo.cartasPorRodada,
       objetos: this.deps.objetosDeclaracao,
       gameArea: this.deps.getGameArea(),
+      valorInicial: this.valorDeclaracaoAtual,
+      onAlterar: this.atualizarValorDeclaracao,
       onSelecionar: (valor) => {
         this.decisorDeclaracaoHumano.confirmar(valor);
       },
     });
   }
+
+  private atualizarValorDeclaracao = (valor: number): void => {
+    this.valorDeclaracaoAtual = valor;
+  };
 
   private iniciarFluxoDeclaracao(): void {
     const rodada = this.partida?.rodadaAtual;
@@ -107,6 +115,8 @@ export class JogoController {
       objetos: this.deps.objetosDeclaracao,
       decisorHumano: this.decisorDeclaracaoHumano,
       getGameArea: this.deps.getGameArea,
+      getValorDeclaracao: () => this.valorDeclaracaoAtual,
+      onAlterarDeclaracao: this.atualizarValorDeclaracao,
       atualizarIndicadorVez: this.deps.atualizarIndicadorVez,
       atualizarPainel: this.deps.atualizarPainel,
       iniciarTurnos: this.iniciarFluxoTurno.bind(this),
