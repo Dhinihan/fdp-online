@@ -9,12 +9,6 @@ Interview me relentlessly about every aspect of this plan until we reach a share
 
 Ask the questions one at a time, waiting for feedback on each question before continuing.
 
-Prefer using an interactive question tool for each question when the possible answers can be expressed as options.
-
-If a question needs richer nuance than fixed options allow, ask it directly in plain text as a fallback.
-
-Only use a multi-question form when the user explicitly wants to answer multiple structured questions in one interaction; otherwise keep the flow strictly one question at a time.
-
 If a question can be answered by exploring the codebase, explore the codebase instead.
 
 </what-to-do>
