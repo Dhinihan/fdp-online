@@ -92,10 +92,20 @@ export class Partida {
   }
 
   private eliminarJogadoresSemPontos(): boolean {
-    const eliminados = this.jogadores.filter((jogador) => jogador.pontos <= 0);
+    const jogadoresSemPontos = this.jogadores.filter((jogador) => jogador.pontos <= 0);
+    if (jogadoresSemPontos.length === 0) return false;
+
+    const temJogadorPositivo = this.jogadores.some((jogador) => jogador.pontos > 0);
+    const maiorPontuacaoSemPontos = Math.max(...jogadoresSemPontos.map((jogador) => jogador.pontos));
+    const deveEliminar = (jogador: Jogador): boolean => {
+      if (jogador.pontos > 0) return false;
+      return temJogadorPositivo || jogador.pontos < maiorPontuacaoSemPontos;
+    };
+
+    const eliminados = this.jogadores.filter(deveEliminar);
     if (eliminados.length === 0) return false;
     this.eliminados = [...this.eliminados, ...eliminados];
-    this.jogadores = this.jogadores.filter((jogador) => jogador.pontos > 0);
+    this.jogadores = this.jogadores.filter((jogador) => !deveEliminar(jogador));
     this.ajustarEmbaralhadorAposEliminacao();
     eliminados.forEach((jogador) => {
       this.emitirJogadorEliminado(jogador);
