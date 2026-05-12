@@ -24,7 +24,8 @@ export function desenharMaosJogo(config: ConfigMaosJogo): {
   direcoes: ('horizontal' | 'vertical')[];
 } {
   const labels: Phaser.GameObjects.Text[] = [];
-  const posicoes = calcularPosicoesMaos(config.cena, config.gameArea);
+  const quantidadesCartas = config.maos.map((mao) => mao.cartas.length);
+  const posicoes = calcularPosicoesMaos(config.cena, config.gameArea, quantidadesCartas);
   config.maos.forEach((mao, i) => {
     desenharMaoNaCena({
       cena: config.cena,
@@ -47,13 +48,19 @@ export function desenharMaosJogo(config: ConfigMaosJogo): {
   return { labels, direcoes: posicoes.map((p) => p.mao.direcao) };
 }
 
-function calcularPosicoesMaos(cena: Scene, gameArea: Retangulo): ReturnType<typeof calcularPosicoes> {
+function calcularPosicoesMaos(
+  cena: Scene,
+  gameArea: Retangulo,
+  quantidadesCartas: number[],
+): ReturnType<typeof calcularPosicoes> {
   return calcularPosicoes({
     gameArea,
     margem: escalar(60, cena),
     margemInferior: escalar(80, cena),
-    espacamentoCartas: escalar(40, cena),
+    espacamentoHorizontal: escalar(18, cena),
+    espacamentoVertical: escalar(6, cena),
     alturaCarta: escalar(75, cena),
+    quantidadesCartas,
     dpr: obterDpr(cena),
   });
 }

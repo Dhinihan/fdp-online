@@ -28,15 +28,41 @@ export function criarCartaFrente(config: ConfigCartaFrente): GameObjects.Contain
   frente.fillStyle(0xffffff, 1);
   frente.fillRoundedRect(rx, ry, largura, altura, raio);
 
-  const texto = cena.add
-    .text(0, 0, `${carta.valor}${carta.naipe}`, {
-      fontSize: escalarFonte(14, cena),
-      fontStyle: 'bold',
-      color: '#000000',
-    })
-    .setOrigin(0.5);
+  const cantoSuperior = criarIndiceCarta({ cena, carta, x: rx + escalar(9, cena), y: ry + escalar(13, cena) });
+  const cantoInferior = criarIndiceCarta({
+    cena,
+    carta,
+    x: rx + largura - escalar(9, cena),
+    y: ry + altura - escalar(13, cena),
+  });
+  cantoInferior.setRotation(Math.PI);
 
-  return cena.add.container(Math.round(x), Math.round(y), [frente, texto]).setSize(largura, altura);
+  return cena.add
+    .container(Math.round(x), Math.round(y), [frente, cantoSuperior, cantoInferior])
+    .setSize(largura, altura);
+}
+
+interface ConfigIndiceCarta {
+  cena: Scene;
+  carta: Carta;
+  x: number;
+  y: number;
+}
+
+function criarIndiceCarta(config: ConfigIndiceCarta): GameObjects.Container {
+  const { cena, carta, x, y } = config;
+  const estilo = {
+    fontSize: escalarFonte(14, cena),
+    fontStyle: 'bold',
+    color: obterCorNaipe(carta.naipe),
+  };
+  const valor = cena.add.text(0, -escalar(5, cena), carta.valor, estilo).setOrigin(0.5);
+  const naipe = cena.add.text(0, escalar(6, cena), carta.naipe, estilo).setOrigin(0.5);
+  return cena.add.container(x, y, [valor, naipe]);
+}
+
+function obterCorNaipe(naipe: Carta['naipe']): string {
+  return naipe === '♥' || naipe === '♦' ? '#cc0000' : '#000000';
 }
 
 export interface ConfigCartaVerso {
