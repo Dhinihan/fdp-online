@@ -30,6 +30,7 @@ interface ConfigTurnos {
   getVencedorTurno: () => string | undefined;
   animarRecolhimento: () => void;
   atualizarIndicadorVez: () => void;
+  atualizarPainel: () => void;
 }
 
 export async function processarDeclaracoes(config: ConfigDeclaracoes): Promise<void> {
@@ -94,6 +95,7 @@ async function atualizarFimDeTurno(config: ConfigTurnos): Promise<void> {
   const vencedorId = config.getVencedorTurno();
   config.animarRecolhimento();
   await esperar(config.cena, 800);
+  config.atualizarPainel();
   atualizarLabelVencedor({
     vencedorId,
     jogadores: config.jogadores,
