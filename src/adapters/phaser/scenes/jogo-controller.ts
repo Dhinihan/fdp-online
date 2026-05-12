@@ -136,6 +136,7 @@ export class JogoController {
       getVencedorTurno: () => this.vencedorTurno,
       animarRecolhimento: this.deps.animarRecolhimentoTurno,
       atualizarIndicadorVez: this.deps.atualizarIndicadorVez,
+      atualizarPainel: this.deps.atualizarPainel,
     });
   }
 }
