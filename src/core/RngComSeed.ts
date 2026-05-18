@@ -1,3 +1,5 @@
+import { unsafeUniformIntDistribution, xoroshiro128plus, type RandomGenerator } from 'pure-rand';
+
 export interface GeradorAleatorio {
   random(): number;
   randomInt(min: number, max: number): number;
@@ -5,25 +7,21 @@ export interface GeradorAleatorio {
 }
 
 export class RngComSeed implements GeradorAleatorio {
-  private estado: number;
+  private engine: RandomGenerator;
 
   constructor(seed: number) {
-    this.estado = seed >>> 0;
+    this.engine = xoroshiro128plus(seed);
   }
 
   random(): number {
-    this.estado += 0x6d2b79f5;
-    let valor = this.estado;
-    valor = Math.imul(valor ^ (valor >>> 15), valor | 1);
-    valor ^= valor + Math.imul(valor ^ (valor >>> 7), valor | 61);
-    return ((valor ^ (valor >>> 14)) >>> 0) / 4294967296;
+    return (this.engine.unsafeNext() >>> 0) / 4294967296;
   }
 
   randomInt(min: number, max: number): number {
     if (!Number.isInteger(min) || !Number.isInteger(max) || min > max) {
       throw new Error(`Intervalo inválido para randomInt: ${min.toString()}..${max.toString()}`);
     }
-    return Math.floor(this.random() * (max - min + 1)) + min;
+    return unsafeUniformIntDistribution(min, max, this.engine);
   }
 
   shuffle<T>(array: T[]): T[] {
