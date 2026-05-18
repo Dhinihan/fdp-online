@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { criarBaralho, distribuir, embaralhar } from '@/core/Baralho';
+import { RngComSeed } from '@/core/RngComSeed';
 
 describe('criarBaralho', () => {
   it('deve retornar 52 cartas', () => {
@@ -41,6 +42,15 @@ describe('embaralhar', () => {
     }
     const unicos = new Set(resultados);
     expect(unicos.size).toBeGreaterThan(1);
+  });
+
+  it('deve usar rng injetado para produzir ordem deterministica', () => {
+    const baralho = criarBaralho();
+    const primeiro = embaralhar(baralho, new RngComSeed(1337));
+    const segundo = embaralhar(baralho, new RngComSeed(1337));
+
+    expect(primeiro).toEqual(segundo);
+    expect(primeiro).not.toEqual(baralho);
   });
 });
 

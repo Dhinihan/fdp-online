@@ -19,6 +19,7 @@ import { aplicarPontuacao } from './pontuacao';
 import type { DecisorDeclaracao } from './portas/DecisorDeclaracao';
 import type { DecisorJogada } from './portas/DecisorJogada';
 import { calcularResultadoTurno } from './resultado-turno';
+import type { GeradorAleatorio } from './RngComSeed';
 import { criarSnapshotEstadoRodada } from './snapshot-estado-rodada';
 export class Rodada {
   private _estado: EstadoMutavel;
@@ -28,6 +29,7 @@ export class Rodada {
   private jogadores: Jogador[];
   private numeroRodada: number;
   private jogadorInicialIndice: number;
+  private rng?: GeradorAleatorio;
   constructor(jogadores: Jogador[], emissor: EmissorRodada, decisores: DecisoresRodada) {
     this.jogadores = jogadores;
     this.decisores = decisores.jogada;
@@ -35,6 +37,7 @@ export class Rodada {
     this.emissor = emissor;
     this.numeroRodada = decisores.numeroRodada ?? 1;
     this.jogadorInicialIndice = decisores.jogadorInicialIndice ?? 0;
+    this.rng = decisores.rng;
     this._estado = {
       fase: 'distribuindo',
       jogadorAtual: this.jogadorInicialIndice,
@@ -57,7 +60,7 @@ export class Rodada {
     this._estado = estado;
   }
   distribuir(numeroCartas: number, baralhoEntrada?: Carta[]): void {
-    const baralho = baralhoEntrada ?? embaralhar(criarBaralho());
+    const baralho = baralhoEntrada ?? embaralhar(criarBaralho(), this.rng);
     const precisaDistribuir = numeroCartas * this.jogadores.length;
     const cartaVirada = baralho.length > precisaDistribuir ? baralho[0] : null;
     const baralhoRestante = cartaVirada ? baralho.slice(1) : baralho;

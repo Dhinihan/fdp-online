@@ -3,6 +3,7 @@ import { DecisorDeclaracaoBot } from '@/adapters/bots/DecisorDeclaracaoBot';
 import { Partida } from '@/core/Partida';
 import type { DecisorDeclaracao } from '@/core/portas/DecisorDeclaracao';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
+import { RngComSeed } from '@/core/RngComSeed';
 import { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
 import type { Jogador } from '@/types/entidades';
@@ -37,7 +38,8 @@ export function fabricarRodada(
   const emissor = createEmissorEventos();
   subscreverEventos(emissor, callbacks);
   const decisores = criarDecisores(decisoresHumanos);
-  return new Rodada(jogadores, emissor, decisores);
+  const rng = new RngComSeed(Date.now());
+  return new Rodada(jogadores, emissor, { ...decisores, rng });
 }
 
 export function fabricarPartida(
@@ -48,5 +50,6 @@ export function fabricarPartida(
   const emissor = createEmissorEventos();
   subscreverEventos(emissor, callbacks);
   const decisores = criarDecisores(decisoresHumanos);
-  return new Partida(jogadores, emissor, decisores);
+  const rng = new RngComSeed(Date.now());
+  return new Partida(jogadores, emissor, { ...decisores, rng });
 }
