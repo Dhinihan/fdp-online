@@ -7,6 +7,9 @@ readonly TEMPO_LIMITE="${SANDCASTLE_TIMEOUT:-30m}"
 readonly BRANCH_BASE="${SANDCASTLE_BRANCH_BASE:-main}"
 readonly DESCRITOR_LOCK=9
 
+# Impede que o pnpm aborte por falta de TTY quando precisa reinstalar deps.
+export CI=true
+
 garantir_branch_base() {
   local branch_atual
 
