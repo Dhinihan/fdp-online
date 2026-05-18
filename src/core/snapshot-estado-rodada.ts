@@ -13,6 +13,7 @@ export function criarSnapshotEstadoRodada(estado: EstadoMutavel): EstadoRodada {
     cartaVirada: clonarCartaOuNula(estado.cartaVirada),
     maos: estado.maos.map(clonarMao),
     mesa: estado.mesa.map(clonarMesaItem),
+    cartasReveladas: estado.cartasReveladas.map(clonarCarta),
   };
 }
 
