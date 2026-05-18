@@ -77,6 +77,7 @@ function criarEstadoComMao(config: ConfigRodadaComMao): EstadoMutavel {
     pontos: config.pontos ?? pontosIniciais(config.jogadores),
     vazas: config.vazas ?? {},
     mesa: [],
+    cartasReveladas: [],
     cartaVirada: null,
   };
 }
