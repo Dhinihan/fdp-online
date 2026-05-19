@@ -5,7 +5,7 @@ import { RngComSeed, type GeradorAleatorio } from '@/core/RngComSeed';
 import type { EstadoRodada } from '@/types/estado-rodada';
 import { criarCarta, criarJogador } from '../core/rodada-fixtures';
 
-function criarEstado(mao: Carta[]): EstadoRodada {
+function criarEstado(mao: Carta[], cartasReveladas: Carta[] = []): EstadoRodada {
   const jogador = criarJogador('bot1', 'Bot 1');
   return {
     fase: 'aguardandoDeclaracao',
@@ -13,7 +13,7 @@ function criarEstado(mao: Carta[]): EstadoRodada {
     pontos: { bot1: 5, bot2: 5, bot3: 5, bot4: 5 },
     maos: [
       { jogador, cartas: mao, visivel: true },
-      { jogador: criarJogador('bot2', 'Bot 2'), cartas: [], visivel: true },
+      { jogador: criarJogador('humano', 'Humano'), cartas: cartasReveladas, visivel: true },
       { jogador: criarJogador('bot3', 'Bot 3'), cartas: [], visivel: true },
       { jogador: criarJogador('bot4', 'Bot 4'), cartas: [], visivel: true },
     ],
@@ -22,7 +22,7 @@ function criarEstado(mao: Carta[]): EstadoRodada {
     cartaVirada: null,
     declaracoes: {},
     mesa: [],
-    cartasReveladas: [],
+    cartasReveladas,
     vazas: {},
     turno: 0,
   };
@@ -61,6 +61,19 @@ describe('DecisorDeclaracaoBot', () => {
   });
 });
 
+describe('DecisorDeclaracaoBot com cartas reveladas', () => {
+  it('não deve usar cartas visíveis da mão humana para declarar', async () => {
+    const mao = [criarCarta('Q', '♣')];
+    const cartasHumanas = criarCartasHumanasVisiveis();
+    const decisorComCartasHumanas = new DecisorDeclaracaoBot(0, criarRng([0]));
+    const decisorSemCartasHumanas = new DecisorDeclaracaoBot(0, criarRng([0]));
+
+    await expect(decisorComCartasHumanas.declarar(criarEstado(mao, cartasHumanas), mao)).resolves.toBe(
+      await decisorSemCartasHumanas.declarar(criarEstado(mao), mao),
+    );
+  });
+});
+
 describe('DecisorDeclaracaoBot com limites', () => {
   it('deve somar um defensivo quando tem poucas baixas e declaração baixa', async () => {
     const mao = [criarCarta('3', '♣'), criarCarta('Q', '♣')];
@@ -83,3 +96,14 @@ describe('DecisorDeclaracaoBot com limites', () => {
     await expect(decisor.declarar(criarEstado(mao), mao)).resolves.toBe(0);
   });
 });
+
+function criarCartasHumanasVisiveis(): Carta[] {
+  return [
+    criarCarta('4', '♣'),
+    criarCarta('3', '♣'),
+    criarCarta('3', '♥'),
+    criarCarta('3', '♠'),
+    criarCarta('3', '♦'),
+    criarCarta('2', '♣'),
+  ];
+}

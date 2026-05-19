@@ -28,7 +28,7 @@ export class DecisorDeclaracaoBot implements DecisorDeclaracao {
   declarar(estado: EstadoRodada, mao: Carta[]): Promise<number> {
     if (estado.fase === 'distribuindo') return Promise.resolve(0);
 
-    const avaliadas = avaliarCartas(mao, estado.manilha, estado.cartasReveladas, estado.maos.length);
+    const avaliadas = avaliarCartas(mao, estado.manilha, cartasPublicas(estado), estado.maos.length);
     const contagemSegura = contarCategorias(
       avaliadas.map((avaliada) => avaliada.categoria),
       ['segura', 'garantida_agora'],
@@ -56,4 +56,15 @@ export class DecisorDeclaracaoBot implements DecisorDeclaracao {
 
 function contarCategorias(categorias: CategoriaCarta[], esperadas: CategoriaCarta[]): number {
   return categorias.filter((categoria) => esperadas.includes(categoria)).length;
+}
+
+function cartasPublicas(estado: EstadoRodada): Carta[] {
+  if (estado.fase === 'distribuindo') return [];
+
+  const cartasEmMaos = estado.maos.flatMap((mao) => mao.cartas);
+  return estado.cartasReveladas.filter((carta) => !cartasEmMaos.some((emMao) => cartasIguais(emMao, carta)));
+}
+
+function cartasIguais(a: Carta, b: Carta): boolean {
+  return a.valor === b.valor && a.naipe === b.naipe;
 }
