@@ -1,5 +1,5 @@
-import { BotDeterministico } from '@/adapters/bots/BotDeterministico';
 import { DecisorDeclaracaoBot } from '@/adapters/bots/DecisorDeclaracaoBot';
+import { DecisorJogadaLinhaFria } from '@/adapters/bots/DecisorJogadaLinhaFria';
 import { Partida } from '@/core/Partida';
 import type { DecisorDeclaracao } from '@/core/portas/DecisorDeclaracao';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
@@ -16,9 +16,9 @@ function criarDecisores(decisoresHumanos: { jogada: DecisorJogada; declaracao: D
 } {
   const jogada = new Map<string, DecisorJogada>([
     ['humano', decisoresHumanos.jogada],
-    ['bot1', new BotDeterministico()],
-    ['bot2', new BotDeterministico()],
-    ['bot3', new BotDeterministico()],
+    ['bot1', new DecisorJogadaLinhaFria()],
+    ['bot2', new DecisorJogadaLinhaFria()],
+    ['bot3', new DecisorJogadaLinhaFria()],
   ]);
   const declaracao = new Map<string, DecisorDeclaracao>([
     ['humano', decisoresHumanos.declaracao],
