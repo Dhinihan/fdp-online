@@ -4,7 +4,7 @@ import { DecisorJogadaLinhaQuente } from '@/adapters/bots/DecisorJogadaLinhaQuen
 import { Partida } from '@/core/Partida';
 import type { DecisorDeclaracao } from '@/core/portas/DecisorDeclaracao';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
-import { RngComSeed } from '@/core/RngComSeed';
+import { RngComSeed, type GeradorAleatorio } from '@/core/RngComSeed';
 import { createEmissorEventos } from '@/store/emissor-eventos';
 import type { Jogador } from '@/types/entidades';
 import { subscreverEventos, type CallbacksRodada } from './subscricao-eventos-rodada';
@@ -13,7 +13,7 @@ export type { CallbacksRodada } from './subscricao-eventos-rodada';
 
 function criarDecisores(
   decisoresHumanos: { jogada: DecisorJogada; declaracao: DecisorDeclaracao },
-  rng: RngComSeed,
+  rng: GeradorAleatorio,
 ): {
   jogada: Map<string, DecisorJogada>;
   declaracao: Map<string, DecisorDeclaracao>;
@@ -26,9 +26,9 @@ function criarDecisores(
   ]);
   const declaracao = new Map<string, DecisorDeclaracao>([
     ['humano', decisoresHumanos.declaracao],
-    ['bot1', new DecisorDeclaracaoBot()],
-    ['bot2', new DecisorDeclaracaoBot()],
-    ['bot3', new DecisorDeclaracaoBot()],
+    ['bot1', new DecisorDeclaracaoBot(0.2, rng)],
+    ['bot2', new DecisorDeclaracaoBot(0.5, rng)],
+    ['bot3', new DecisorDeclaracaoBot(0.8, rng)],
   ]);
   return { jogada, declaracao };
 }
