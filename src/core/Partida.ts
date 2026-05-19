@@ -4,6 +4,8 @@ import type { EventoDominio } from '@/types/eventos-dominio';
 import { criarEventoBase } from './eventos-rodada';
 import type { DecisorDeclaracao } from './portas/DecisorDeclaracao';
 import type { DecisorJogada } from './portas/DecisorJogada';
+import type { GeradorAleatorio } from './RngComSeed';
+import { RngComSeed } from './RngComSeed';
 import { Rodada } from './Rodada';
 
 interface EmissorPartida {
@@ -13,6 +15,7 @@ interface EmissorPartida {
 interface DecisoresPartida {
   jogada: Map<string, DecisorJogada>;
   declaracao: Map<string, DecisorDeclaracao>;
+  rng?: GeradorAleatorio;
 }
 
 export class Partida {
@@ -22,6 +25,7 @@ export class Partida {
   private numeroRodada = 0;
   private rodada?: Rodada;
   private embaralhadorIndice: number;
+  private rng: GeradorAleatorio;
   private jogoEncerrado = false;
   private eliminados: Jogador[] = [];
 
@@ -29,6 +33,7 @@ export class Partida {
     this.jogadores = jogadores;
     this.emissor = emissor;
     this.decisores = decisores;
+    this.rng = decisores.rng ?? new RngComSeed(Date.now());
     this.embaralhadorIndice = this.sortearEmbaralhadorIndice();
   }
 
@@ -57,6 +62,7 @@ export class Partida {
       ...this.decisores,
       numeroRodada: this.numeroRodada,
       jogadorInicialIndice: this.primeiroJogadorIndice(),
+      rng: this.rng,
     });
     const cartasPorRodada = Math.min(this.numeroRodada, 13);
     this.rodada.distribuir(cartasPorRodada);
@@ -153,7 +159,7 @@ export class Partida {
   }
 
   private sortearEmbaralhadorIndice(): number {
-    return Math.floor(Math.random() * this.jogadores.length);
+    return this.rng.randomInt(0, this.jogadores.length - 1);
   }
 
   private embaralhadorAtual(): Jogador {

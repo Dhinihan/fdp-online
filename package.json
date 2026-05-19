@@ -33,7 +33,8 @@
     ]
   },
   "dependencies": {
-    "phaser": "3.90.0"
+    "phaser": "3.90.0",
+    "pure-rand": "6.1.0"
   },
   "devDependencies": {
     "@ai-hero/sandcastle": "^0.5.10",

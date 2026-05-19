@@ -10,6 +10,9 @@ importers:
       phaser:
         specifier: 3.90.0
         version: 3.90.0
+      pure-rand:
+        specifier: 6.1.0
+        version: 6.1.0
     devDependencies:
       '@ai-hero/sandcastle':
         specifier: ^0.5.10
