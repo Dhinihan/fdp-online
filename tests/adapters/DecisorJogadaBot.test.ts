@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { decidirAbertura } from '@/adapters/bots/decidirAbertura';
 import { DecisorJogadaBot } from '@/adapters/bots/DecisorJogadaBot';
 import type { Carta } from '@/core/Carta';
 import type { Jogador } from '@/types/entidades';
@@ -13,6 +14,7 @@ describe('DecisorJogadaBot', () => {
   it('deve escolher a de menor score dentro da mesma categoria na abertura', abrirMenorScoreNaCategoria);
   it('deve jogar garantida quando só tem ela na abertura', abrirGarantidaInevitavel);
   it('deve lidar com folga negativa na abertura sem quebrar ou dar NaN/Infinity', abrirFolgaNegativa);
+  it('deve falhar se a mão estiver vazia na abertura', deveFalharMaoVaziaAbertura);
 });
 
 async function deveDelegarReacao(): Promise<void> {
@@ -109,6 +111,16 @@ async function abrirFolgaNegativa(): Promise<void> {
 
   // A urgência deve ser alta (quebra de cautela) e escolher a carta '2' de Espadas (alta)
   await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('2', '♠'));
+}
+
+function deveFalharMaoVaziaAbertura(): void {
+  const estado = criarEstado({
+    mesa: [],
+    declaracoes: { bot: 0 },
+    vazas: { bot: 0 },
+  });
+
+  expect(() => decidirAbertura([], estado, { temperatura: 0.5 })).toThrow('decidirAbertura: mão vazia');
 }
 
 function criarBot(temperatura: number, valorRng: number): DecisorJogadaBot {

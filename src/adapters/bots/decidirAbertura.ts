@@ -8,6 +8,7 @@ interface ParametrosAbertura {
 }
 
 export function decidirAbertura(mao: Carta[], estado: EstadoEmJogo, params: ParametrosAbertura): Carta {
+  if (mao.length === 0) throw new Error('decidirAbertura: mão vazia');
   const jogadorId = estado.maos[estado.jogadorAtual].jogador.id;
   const necessidade = (estado.declaracoes[jogadorId] ?? 0) - (estado.vazas[jogadorId] ?? 0);
   // Garante folga >= 0 para evitar denominadores negativos ou divisão por zero.
