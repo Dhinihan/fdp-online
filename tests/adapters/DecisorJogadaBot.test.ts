@@ -18,6 +18,7 @@ describe('DecisorJogadaBot', () => {
   it('deve abrir média e segurar garantida quando bot é quente e urgência é alta', abrirQuenteUrgenciaAlta);
   it('deve escolher a de menor score dentro da mesma categoria na abertura', abrirMenorScoreNaCategoria);
   it('deve jogar garantida quando só tem ela na abertura', abrirGarantidaInevitavel);
+  it('deve lidar com folga negativa na abertura sem quebrar ou dar NaN/Infinity', abrirFolgaNegativa);
 });
 
 async function escolheLinhaQuente(): Promise<void> {
@@ -200,4 +201,18 @@ async function abrirGarantidaInevitavel(): Promise<void> {
   const mao = [criarCarta('3', '♦')];
 
   await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('3', '♦'));
+}
+
+async function abrirFolgaNegativa(): Promise<void> {
+  const estado = criarEstado({
+    mesa: [],
+    declaracoes: { bot: 5 },
+    vazas: { bot: 0 },
+    cartasReveladas: [],
+  });
+  const bot = new DecisorJogadaBot({ temperatura: 0.5, rng: { random: () => 0 }, urgenciaAbrirForte: 0.5 });
+  const mao = [criarCarta('2', '♠'), criarCarta('8', '♦'), criarCarta('A', '♣')];
+
+  const decisao = await bot.decidirJogada(mao, estado);
+  expect(decisao).toBeDefined();
 }

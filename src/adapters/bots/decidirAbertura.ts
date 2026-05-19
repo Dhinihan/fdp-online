@@ -10,7 +10,7 @@ interface ParametrosAbertura {
 export function decidirAbertura(mao: Carta[], estado: EstadoEmJogo, params: ParametrosAbertura): Carta {
   const jogadorId = estado.maos[estado.jogadorAtual].jogador.id;
   const necessidade = (estado.declaracoes[jogadorId] ?? 0) - (estado.vazas[jogadorId] ?? 0);
-  const folga = mao.length - necessidade;
+  const folga = Math.max(0, mao.length - necessidade);
   const urgencia = necessidade / (folga + 1);
 
   const urgenciaAbrirForte = params.urgenciaAbrirForte ?? 0.5;
