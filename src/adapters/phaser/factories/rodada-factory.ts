@@ -4,7 +4,6 @@ import { Partida } from '@/core/Partida';
 import type { DecisorDeclaracao } from '@/core/portas/DecisorDeclaracao';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { RngComSeed } from '@/core/RngComSeed';
-import { Rodada } from '@/core/Rodada';
 import { createEmissorEventos } from '@/store/emissor-eventos';
 import type { Jogador } from '@/types/entidades';
 import { subscreverEventos, type CallbacksRodada } from './subscricao-eventos-rodada';
@@ -28,18 +27,6 @@ function criarDecisores(decisoresHumanos: { jogada: DecisorJogada; declaracao: D
     ['bot3', new DecisorDeclaracaoBot()],
   ]);
   return { jogada, declaracao };
-}
-
-export function fabricarRodada(
-  jogadores: Jogador[],
-  decisoresHumanos: { jogada: DecisorJogada; declaracao: DecisorDeclaracao },
-  callbacks: CallbacksRodada,
-): Rodada {
-  const emissor = createEmissorEventos();
-  subscreverEventos(emissor, callbacks);
-  const decisores = criarDecisores(decisoresHumanos);
-  const rng = new RngComSeed(Date.now());
-  return new Rodada(jogadores, emissor, { ...decisores, rng });
 }
 
 export function fabricarPartida(
