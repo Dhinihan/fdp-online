@@ -3,12 +3,17 @@ import type { Carta } from '@/core/Carta';
 import { calcularIndiceVencedor, cartaVence } from '@/core/comparador-carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { estadoEmJogo, type EstadoEmJogo, type MesaItem, type EstadoRodada } from '@/types/estado-rodada';
+import { decidirAbertura } from './decidirAbertura';
 
 export class DecisorJogadaLinhaFria implements DecisorJogada {
   decidirJogada(mao: Carta[], estado: EstadoRodada): Promise<Carta> {
     if (mao.length === 0) return Promise.reject(new Error('Mão vazia'));
 
     const estadoAtual = estadoEmJogo(estado);
+    if (estadoAtual.mesa.length === 0) {
+      return Promise.resolve(decidirAbertura(mao, estadoAtual, { temperatura: 0 }));
+    }
+
     const avaliadas = avaliarCartas(mao, estadoAtual.manilha, estadoAtual.cartasReveladas, estadoAtual.maos.length);
     const jogadorId = estadoAtual.maos[estadoAtual.jogadorAtual].jogador.id;
     const necessidade = calcularNecessidade(estadoAtual, jogadorId);

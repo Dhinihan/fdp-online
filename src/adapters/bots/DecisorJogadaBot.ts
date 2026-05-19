@@ -4,33 +4,44 @@ import { calcularIndiceVencedor, cartasEmpatam, cartaVence } from '@/core/compar
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import type { GeradorAleatorio } from '@/core/RngComSeed';
 import { estadoEmJogo, type EstadoEmJogo, type EstadoRodada, type MesaItem } from '@/types/estado-rodada';
+import { decidirAbertura } from './decidirAbertura';
 import { DecisorJogadaLinhaFria } from './DecisorJogadaLinhaFria';
 
-interface ConfigLinhaQuente {
+interface ConfigDecisorJogadaBot {
   temperatura: number;
   rng: Pick<GeradorAleatorio, 'random'>;
   liderBaixa?: number;
   liderAlta?: number;
+  urgenciaAbrirForte?: number;
 }
 
-export class DecisorJogadaLinhaQuente implements DecisorJogada {
+export class DecisorJogadaBot implements DecisorJogada {
   private readonly fria = new DecisorJogadaLinhaFria();
   private readonly temperatura: number;
   private readonly rng: Pick<GeradorAleatorio, 'random'>;
   private readonly liderBaixa: number;
   private readonly liderAlta: number;
+  private readonly urgenciaAbrirForte: number;
 
-  constructor(config: ConfigLinhaQuente) {
+  constructor(config: ConfigDecisorJogadaBot) {
     this.temperatura = config.temperatura;
     this.rng = config.rng;
     this.liderBaixa = config.liderBaixa ?? 8;
     this.liderAlta = config.liderAlta ?? 11;
+    this.urgenciaAbrirForte = config.urgenciaAbrirForte ?? 0.5;
   }
 
   async decidirJogada(mao: Carta[], estado: EstadoRodada): Promise<Carta> {
     if (mao.length === 0) return Promise.reject(new Error('Mão vazia'));
 
     const estadoAtual = estadoEmJogo(estado);
+    if (estadoAtual.mesa.length === 0) {
+      return decidirAbertura(mao, estadoAtual, {
+        temperatura: this.temperatura,
+        urgenciaAbrirForte: this.urgenciaAbrirForte,
+      });
+    }
+
     const contexto = criarContexto(estadoAtual, mao);
     const empate = escolherEmpate(estadoAtual, contexto, this.liderAlta);
     if (empate) return empate.carta;
