@@ -10,6 +10,9 @@ interface ParametrosAbertura {
 export function decidirAbertura(mao: Carta[], estado: EstadoEmJogo, params: ParametrosAbertura): Carta {
   const jogadorId = estado.maos[estado.jogadorAtual].jogador.id;
   const necessidade = (estado.declaracoes[jogadorId] ?? 0) - (estado.vazas[jogadorId] ?? 0);
+  // Garante folga >= 0 para evitar denominadores negativos ou divisão por zero.
+  // Em caso de déficit extremo (necessidade > tamanho da mão), a folga fica em 0,
+  // mantendo a urgência positiva alta para forçar o bot a jogar agressivamente.
   const folga = Math.max(0, mao.length - necessidade);
   const urgencia = necessidade / (folga + 1);
 
@@ -20,7 +23,7 @@ export function decidirAbertura(mao: Carta[], estado: EstadoEmJogo, params: Para
   const avaliadas = avaliarCartas(mao, estado.manilha, estado.cartasReveladas, estado.maos.length);
 
   const ordemCategorias = quebraCautela
-    ? (['alta', 'segura', 'média', 'baixa', 'garantida_agora'] as const)
+    ? (['alta', 'média', 'segura', 'baixa', 'garantida_agora'] as const)
     : (['baixa', 'média', 'alta', 'segura', 'garantida_agora'] as const);
 
   for (const cat of ordemCategorias) {
@@ -30,5 +33,6 @@ export function decidirAbertura(mao: Carta[], estado: EstadoEmJogo, params: Para
     }
   }
 
+  // Fallback defensivo caso nenhuma categoria seja encontrada (inalcançável teoricamente)
   return mao[0];
 }

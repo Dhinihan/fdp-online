@@ -17,14 +17,19 @@ describe('DecisorJogadaBot', () => {
 
 async function deveDelegarReacao(): Promise<void> {
   const estado = criarEstado({
-    mesa: [{ jogadorId: 'j1', carta: criarCarta('K', '♣') }],
-    declaracoes: { j1: 0, bot: 1 },
-    vazas: { j1: 0, bot: 0 },
+    mesa: [
+      { jogadorId: 'j1', carta: criarCarta('4', '♣') },
+      { jogadorId: 'j2', carta: criarCarta('4', '♥') },
+      { jogadorId: 'j3', carta: criarCarta('4', '♠') },
+    ],
+    declaracoes: { j1: 0, j2: 1, bot: 1 },
+    vazas: { j1: 0, j2: 0, bot: 0 },
+    cartasReveladas: cartasQueGarantemTresDeOuros(),
   });
-  const bot = criarBot(1, 0); // quente habilitado
-  const mao = [criarCarta('Q', '♠'), criarCarta('3', '♦')];
+  const bot = criarBot(1, 0);
+  const mao = [criarCarta('3', '♦'), criarCarta('4', '♦')];
 
-  await expect(bot.decidirJogada(mao, estado)).resolves.toBeDefined();
+  await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('4', '♦'));
 }
 
 async function abrirUrgenciaBaixa(): Promise<void> {
@@ -102,12 +107,12 @@ async function abrirFolgaNegativa(): Promise<void> {
   const bot = new DecisorJogadaBot({ temperatura: 0.5, rng: { random: () => 0 }, urgenciaAbrirForte: 0.5 });
   const mao = [criarCarta('2', '♠'), criarCarta('8', '♦'), criarCarta('A', '♣')];
 
-  const decisao = await bot.decidirJogada(mao, estado);
-  expect(decisao).toBeDefined();
+  // A urgência deve ser alta (quebra de cautela) e escolher a carta '2' de Espadas (alta)
+  await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('2', '♠'));
 }
 
 function criarBot(temperatura: number, valorRng: number): DecisorJogadaBot {
-  return new DecisorJogadaBot({ temperatura, rng: { random: () => valorRng }, liderBaixa: 20, liderAlta: 10 });
+  return new DecisorJogadaBot({ temperatura, rng: { random: () => valorRng }, liderBaixa: 8, liderAlta: 11 });
 }
 
 function criarEstado(config: Partial<EstadoEmJogo>): EstadoEmJogo {
