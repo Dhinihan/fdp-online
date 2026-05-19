@@ -15,7 +15,7 @@ export function criarBaralho(): Carta[] {
 }
 
 export function embaralhar(baralho: Carta[], rng?: GeradorAleatorio): Carta[] {
-  if (rng) return rng.shuffle(baralho);
+  if (rng) return rng.shuffle([...baralho]);
   return embaralharComRandomGlobal(baralho);
 }
 

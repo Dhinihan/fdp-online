@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { criarBaralho, distribuir, embaralhar } from '@/core/Baralho';
-import { RngComSeed } from '@/core/RngComSeed';
+import { RngComSeed, type GeradorAleatorio } from '@/core/RngComSeed';
 
 describe('criarBaralho', () => {
   it('deve retornar 52 cartas', () => {
@@ -51,6 +51,22 @@ describe('embaralhar', () => {
 
     expect(primeiro).toEqual(segundo);
     expect(primeiro).not.toEqual(baralho);
+  });
+});
+
+describe('embaralhar com rng injetado', () => {
+  it('deve preservar baralho original mesmo se rng alterar array recebido', () => {
+    const baralho = criarBaralho();
+    const ordemOriginal = [...baralho];
+    const rngMutavel: GeradorAleatorio = {
+      random: () => 0,
+      randomInt: () => 0,
+      shuffle: (cartas) => cartas.reverse(),
+    };
+
+    embaralhar(baralho, rngMutavel);
+
+    expect(baralho).toEqual(ordemOriginal);
   });
 });
 
