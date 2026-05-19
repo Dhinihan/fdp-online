@@ -1,5 +1,6 @@
 import { DecisorDeclaracaoBot } from '@/adapters/bots/DecisorDeclaracaoBot';
 import { DecisorJogadaLinhaFria } from '@/adapters/bots/DecisorJogadaLinhaFria';
+import { DecisorJogadaLinhaQuente } from '@/adapters/bots/DecisorJogadaLinhaQuente';
 import { Partida } from '@/core/Partida';
 import type { DecisorDeclaracao } from '@/core/portas/DecisorDeclaracao';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
@@ -20,8 +21,8 @@ function criarDecisores(
   const jogada = new Map<string, DecisorJogada>([
     ['humano', decisoresHumanos.jogada],
     ['bot1', new DecisorJogadaLinhaFria()],
-    ['bot2', new DecisorJogadaLinhaFria()],
-    ['bot3', new DecisorJogadaLinhaFria()],
+    ['bot2', new DecisorJogadaLinhaQuente({ temperatura: 0.55, rng })],
+    ['bot3', new DecisorJogadaLinhaQuente({ temperatura: 0.9, rng })],
   ]);
   const declaracao = new Map<string, DecisorDeclaracao>([
     ['humano', decisoresHumanos.declaracao],
