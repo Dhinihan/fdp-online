@@ -1,5 +1,6 @@
 import { DecisorDeclaracaoBot } from '@/adapters/bots/DecisorDeclaracaoBot';
 import { DecisorJogadaLinhaFria } from '@/adapters/bots/DecisorJogadaLinhaFria';
+import { DecisorJogadaLinhaQuente } from '@/adapters/bots/DecisorJogadaLinhaQuente';
 import { Partida } from '@/core/Partida';
 import type { DecisorDeclaracao } from '@/core/portas/DecisorDeclaracao';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
@@ -10,15 +11,18 @@ import { subscreverEventos, type CallbacksRodada } from './subscricao-eventos-ro
 
 export type { CallbacksRodada } from './subscricao-eventos-rodada';
 
-function criarDecisores(decisoresHumanos: { jogada: DecisorJogada; declaracao: DecisorDeclaracao }): {
+function criarDecisores(
+  decisoresHumanos: { jogada: DecisorJogada; declaracao: DecisorDeclaracao },
+  rng: RngComSeed,
+): {
   jogada: Map<string, DecisorJogada>;
   declaracao: Map<string, DecisorDeclaracao>;
 } {
   const jogada = new Map<string, DecisorJogada>([
     ['humano', decisoresHumanos.jogada],
     ['bot1', new DecisorJogadaLinhaFria()],
-    ['bot2', new DecisorJogadaLinhaFria()],
-    ['bot3', new DecisorJogadaLinhaFria()],
+    ['bot2', new DecisorJogadaLinhaQuente({ temperatura: 0.55, rng })],
+    ['bot3', new DecisorJogadaLinhaQuente({ temperatura: 0.9, rng })],
   ]);
   const declaracao = new Map<string, DecisorDeclaracao>([
     ['humano', decisoresHumanos.declaracao],
@@ -36,7 +40,7 @@ export function fabricarPartida(
 ): Partida {
   const emissor = createEmissorEventos();
   subscreverEventos(emissor, callbacks);
-  const decisores = criarDecisores(decisoresHumanos);
   const rng = new RngComSeed(Date.now());
+  const decisores = criarDecisores(decisoresHumanos, rng);
   return new Partida(jogadores, emissor, { ...decisores, rng });
 }
