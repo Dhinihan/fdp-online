@@ -23,6 +23,12 @@ describe('RngComSeed', () => {
       segundo.random(),
     ]);
   });
+
+  it('deve rejeitar seed nao finita ou decimal', () => {
+    expect(() => new RngComSeed(Number.NaN)).toThrow(TypeError);
+    expect(() => new RngComSeed(Number.POSITIVE_INFINITY)).toThrow(TypeError);
+    expect(() => new RngComSeed(13.37)).toThrow(TypeError);
+  });
 });
 
 describe('RngComSeed — utilitarios', () => {

@@ -10,6 +10,9 @@ export class RngComSeed implements GeradorAleatorio {
   private engine: RandomGenerator;
 
   constructor(seed: number) {
+    if (!Number.isFinite(seed) || !Number.isInteger(seed)) {
+      throw new TypeError(`Seed inválida para RngComSeed: ${seed.toString()}`);
+    }
     this.engine = xoroshiro128plus(seed);
   }
 
