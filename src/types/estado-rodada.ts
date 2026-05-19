@@ -36,6 +36,7 @@ interface EstadoComCartasBase {
   cartaVirada: Carta | null;
   declaracoes: Record<string, number>;
   mesa: MesaItem[];
+  cartasReveladas: Carta[];
   vazas: Record<string, number>;
   turno: number;
 }

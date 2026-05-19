@@ -4,6 +4,7 @@ import { criarBaralho, distribuir, embaralhar } from './Baralho';
 import { obterProximoValor, type Carta } from './Carta';
 import { criarMaosRodada } from './criar-maos-rodada';
 import type { DecisoresRodada } from './decisores-rodada';
+import { criarEstadoInicialRodada } from './estado-inicial-rodada';
 import {
   emitirCartaJogada,
   emitirDeclaracaoFeita,
@@ -18,6 +19,8 @@ import { validarTransicaoFase } from './maquina-fases';
 import { aplicarPontuacao } from './pontuacao';
 import type { DecisorDeclaracao } from './portas/DecisorDeclaracao';
 import type { DecisorJogada } from './portas/DecisorJogada';
+import { registrarCartasVisiveis } from './registrar-cartas-visiveis';
+import { RegistroCartasReveladas } from './RegistroCartasReveladas';
 import { calcularResultadoTurno } from './resultado-turno';
 import type { GeradorAleatorio } from './RngComSeed';
 import { criarSnapshotEstadoRodada } from './snapshot-estado-rodada';
@@ -30,6 +33,7 @@ export class Rodada {
   private numeroRodada: number;
   private jogadorInicialIndice: number;
   private rng?: GeradorAleatorio;
+  private registro = new RegistroCartasReveladas();
   constructor(jogadores: Jogador[], emissor: EmissorRodada, decisores: DecisoresRodada) {
     this.jogadores = jogadores;
     this.decisores = decisores.jogada;
@@ -38,19 +42,7 @@ export class Rodada {
     this.numeroRodada = decisores.numeroRodada ?? 1;
     this.jogadorInicialIndice = decisores.jogadorInicialIndice ?? 0;
     this.rng = decisores.rng;
-    this._estado = {
-      fase: 'distribuindo',
-      jogadorAtual: this.jogadorInicialIndice,
-      mesa: [],
-      maos: [],
-      vazas: {},
-      turno: 1,
-      cartasPorRodada: 0,
-      manilha: '3',
-      cartaVirada: null,
-      declaracoes: {},
-      pontos: Object.fromEntries(jogadores.map((jogador) => [jogador.id, jogador.pontos])),
-    };
+    this._estado = criarEstadoInicialRodada(jogadores, this.jogadorInicialIndice);
   }
   get estado(): EstadoRodada {
     return criarSnapshotEstadoRodada(this._estado);
@@ -109,12 +101,15 @@ export class Rodada {
     }
   }
   private atualizarEstadoDistribuido(config: DistribuicaoConfig): void {
+    this.registro.reiniciar();
     this._estado.maos = criarMaosRodada(this.jogadores, config.cartas, this.numeroRodada === 1);
+    registrarCartasVisiveis(this.registro, this._estado.maos);
     this._estado.cartasPorRodada = config.numeroCartas;
     this._estado.manilha = config.manilha;
     this._estado.cartaVirada = config.cartaVirada;
     this._estado.declaracoes = {};
     this._estado.mesa = [];
+    this.atualizarCartasReveladas();
     this._estado.vazas = {};
     this._estado.turno = 1;
     this._estado.jogadorAtual = this.jogadorInicialIndice;
@@ -142,8 +137,14 @@ export class Rodada {
     if (indiceCarta === -1) throw new Error(`Jogada inválida para jogador ${jogador.id}`);
     this._estado.maos[this._estado.jogadorAtual].cartas = [...mao.slice(0, indiceCarta), ...mao.slice(indiceCarta + 1)];
     this._estado.mesa.push({ jogadorId: jogador.id, carta });
+    this.registro.registrar(carta);
+    this.atualizarCartasReveladas();
     emitirCartaJogada(this.emissor, { jogadorId: jogador.id, carta, posicaoMesa: this._estado.mesa.length - 1 });
     this.avancarJogador();
+  }
+
+  private atualizarCartasReveladas(): void {
+    this._estado.cartasReveladas = this.registro.cartasReveladas();
   }
   private avancarJogador(): void {
     if (this._estado.mesa.length === this.jogadores.length) {
