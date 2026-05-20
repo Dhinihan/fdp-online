@@ -22,7 +22,7 @@ function criarDecisores(
   const jogada = new Map<string, DecisorJogada>([['humano', decisoresHumanos.jogada]]);
   const declaracao = new Map<string, DecisorDeclaracao>([['humano', decisoresHumanos.declaracao]]);
   jogadores.forEach((jogador) => {
-    if (jogador.temperatura === undefined) return;
+    if (!jogador.id.startsWith('bot') || jogador.temperatura === undefined) return;
     jogada.set(jogador.id, new DecisorJogadaBot({ temperatura: jogador.temperatura, rng }));
     declaracao.set(jogador.id, new DecisorDeclaracaoBot(jogador.temperatura, rng));
   });
