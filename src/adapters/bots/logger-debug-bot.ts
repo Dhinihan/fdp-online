@@ -121,7 +121,7 @@ function simNao(valor: boolean): string {
 }
 
 function formatarSorteio(sorteio: number | undefined, quente: boolean, temperatura: number): string {
-  if (sorteio === undefined) return `RNG sorteou: ${quente ? 'quente' : 'fria'}`;
+  if (sorteio === undefined) return `Decisão determinística: linha ${quente ? 'quente' : 'fria'}`;
   const linha = quente ? 'quente' : 'fria';
   const comparacao = sorteio < temperatura ? 'sim' : 'não';
   return `RNG sorteou: ${linha} (${sorteio.toFixed(2)} < T=${temperatura.toFixed(2)}? ${comparacao} → ${linha})`;

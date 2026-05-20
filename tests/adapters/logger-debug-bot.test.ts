@@ -73,3 +73,27 @@ describe('Logger debug dos bots', () => {
     expect(log).toHaveBeenCalledWith(expect.stringContaining('→ Declarou:'));
   });
 });
+
+describe('Logger debug das jogadas dos bots', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('deve registrar decisão determinística quando jogada não sorteia RNG', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'groupCollapsed').mockImplementation(() => undefined);
+    vi.spyOn(console, 'groupEnd').mockImplementation(() => undefined);
+    const logger = criarLoggerDebugBot('Brás', 0.35);
+
+    logger.registrarJogada({
+      estado: { ...estado(), fase: 'jogando' },
+      mao,
+      linhaFria: mao[0],
+      linhaQuente: mao[0],
+      carta: mao[0],
+      escolheuQuente: false,
+    });
+
+    expect(log).toHaveBeenCalledWith('Decisão determinística: linha fria');
+  });
+});
