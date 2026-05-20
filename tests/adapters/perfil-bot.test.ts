@@ -26,7 +26,7 @@ describe('Nomes dos bots', () => {
   it('deve manter o nome estavel por faixa de temperatura', () => {
     expect(nomePorTemperatura(0)).toBe('Brás');
     expect(nomePorTemperatura(0.049)).toBe('Brás');
-    expect(nomePorTemperatura(0.05)).toBe('Saci');
+    expect(nomePorTemperatura(0.05)).toBe('Severino');
     expect(nomePorTemperatura(0.999)).toBe('Iracema');
   });
 });
@@ -47,14 +47,14 @@ describe('Perfil dos bots', () => {
 
   it('deve aplicar nome e temperatura apenas nos bots', () => {
     const perfis = [
-      { id: 'bot1', nome: 'Saci', temperatura: 0.05 },
+      { id: 'bot1', nome: 'Severino', temperatura: 0.05 },
       { id: 'bot2', nome: 'Iara', temperatura: 0.1 },
       { id: 'bot3', nome: 'Bento', temperatura: 0.15 },
     ];
 
     expect(aplicarPerfisBots(jogadores(), perfis)).toEqual([
       { id: 'humano', nome: 'Humano', pontos: 5 },
-      { id: 'bot1', nome: 'Saci', pontos: 5, temperatura: 0.05 },
+      { id: 'bot1', nome: 'Severino', pontos: 5, temperatura: 0.05 },
       { id: 'bot2', nome: 'Iara', pontos: 5, temperatura: 0.1 },
       { id: 'bot3', nome: 'Bento', pontos: 5, temperatura: 0.15 },
     ]);

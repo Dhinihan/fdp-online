@@ -2,26 +2,26 @@ import type { GeradorAleatorio } from '@/core/RngComSeed';
 import type { Jogador } from '@/types/entidades';
 
 export const nomesBotsPorTemperatura = [
-  'Brás',
-  'Saci',
-  'Iara',
-  'Bento',
-  'Narizinho',
-  'Emília',
-  'Quincas',
-  'Capitu',
-  'Bentinho',
-  'Esaú',
-  'Jacó',
-  'Policarpo',
-  'Isaías',
-  'Clara',
-  'Jeca',
-  'Cuca',
-  'Curupira',
-  'Boitatá',
-  'Peri',
-  'Iracema',
+  'Brás', // Brás Cubas — Memórias Póstumas de Brás Cubas (Machado de Assis)
+  'Severino', // Morte e Vida Severina (João Cabral de Melo Neto)
+  'Iara', // Iara — lenda do folclore brasileiro
+  'Bento', // Bento Santiago — D. Casmurro (Machado de Assis)
+  'Ana', // Ana Terra — O Tempo e o Vento (Érico Veríssimo)
+  'Pedro', // Pedro Bala — Capitães da Areia (Jorge Amado)
+  'Vitória', // Sinhá Vitória — Vidas Secas (Graciliano Ramos)
+  'Augusto', // Augusto Matraga — Sagarana (Guimarães Rosa)
+  'Leonardo', // Leonardo — Memórias de um Sargento de Milícias (Manuel Antônio de Almeida)
+  'Fabiano', // Fabiano — Vidas Secas (Graciliano Ramos)
+  'Sofia', // Sofia — Quincas Borba (Machado de Assis)
+  'Luís', // Luís da Silva — Angústia (Graciliano Ramos)
+  'Aurélia', // Aurélia Camargo — Senhora (José de Alencar)
+  'Clara', // Clara dos Anjos — Clara dos Anjos (Lima Barreto)
+  'Rita', // Rita Baiana — O Cortiço (Aluísio Azevedo)
+  'Sérgio', // narrador de O Ateneu (Raul Pompeia)
+  'Paulo', // Paulo Honório — São Bernardo (Graciliano Ramos)
+  'Flor', // Dona Flor — Dona Flor e Seus Dois Maridos (Jorge Amado)
+  'Jerônimo', // Jerônimo — O Cortiço (Aluísio Azevedo)
+  'Iracema', // Iracema — Iracema (José de Alencar)
 ] as const;
 
 export interface PerfilBot {
