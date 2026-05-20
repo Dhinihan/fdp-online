@@ -38,6 +38,23 @@ function estado(): EstadoRodada {
   };
 }
 
+function estadoJogada(): EstadoRodada {
+  const rodada = estado();
+  if (rodada.fase !== 'aguardandoDeclaracao') return rodada;
+  return { ...rodada, fase: 'aguardandoJogada' };
+}
+
+function registrarJogadaDireta(): void {
+  criarLoggerDebugBot('Brás', 0.35).registrarJogada({
+    estado: estadoJogada(),
+    mao,
+    linhaFria: mao[0],
+    linhaQuente: mao[0],
+    carta: mao[0],
+    escolheuQuente: false,
+  });
+}
+
 describe('Logger debug dos bots', () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -83,17 +100,17 @@ describe('Logger debug das jogadas dos bots', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     vi.spyOn(console, 'groupCollapsed').mockImplementation(() => undefined);
     vi.spyOn(console, 'groupEnd').mockImplementation(() => undefined);
-    const logger = criarLoggerDebugBot('Brás', 0.35);
-
-    logger.registrarJogada({
-      estado: { ...estado(), fase: 'jogando' },
-      mao,
-      linhaFria: mao[0],
-      linhaQuente: mao[0],
-      carta: mao[0],
-      escolheuQuente: false,
-    });
+    registrarJogadaDireta();
 
     expect(log).toHaveBeenCalledWith('Decisão determinística: linha fria');
+  });
+
+  it('deve registrar bifurcação ausente em escolhas diretas', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'groupCollapsed').mockImplementation(() => undefined);
+    vi.spyOn(console, 'groupEnd').mockImplementation(() => undefined);
+    registrarJogadaDireta();
+
+    expect(log).toHaveBeenCalledWith('Bifurcação: não ocorreu');
   });
 });

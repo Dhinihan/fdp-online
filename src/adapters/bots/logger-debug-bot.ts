@@ -65,7 +65,7 @@ function registrarJogada(nome: string, temperatura: number, decisao: DecisaoJoga
   );
   console.log(`Mesa: [${formatarMesa(estado.mesa)}]`);
   console.log(`Classificação: [${formatarAvaliadas(avaliadas)}]`);
-  console.log('Bifurcação: segurança para cumprir depois ✓, pressão disponível ✓');
+  console.log(formatarBifurcacao(decisao.sorteio));
   console.log(formatarLinhas(decisao));
   console.log(formatarSorteio(decisao.sorteio, decisao.escolheuQuente, temperatura));
   console.log(`→ Jogou: ${formatarCarta(decisao.carta)}`);
@@ -91,6 +91,11 @@ function formatarContagens(decisao: DecisaoDeclaracaoDebug): string {
   return `Seguras: ${seguras} | Altas consideradas: ${altas} (sorteou: ${simNao(
     decisao.sorteouAlta,
   )}) | +1 defensivo: ${simNao(decisao.defensivo)}`;
+}
+
+function formatarBifurcacao(sorteio: number | undefined): string {
+  if (sorteio === undefined) return 'Bifurcação: não ocorreu';
+  return 'Bifurcação: segurança para cumprir depois ✓, pressão disponível ✓';
 }
 
 function formatarTituloJogada(titulo: TituloJogada): string {
