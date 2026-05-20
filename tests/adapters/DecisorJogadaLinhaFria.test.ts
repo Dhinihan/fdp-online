@@ -11,6 +11,7 @@ describe('DecisorJogadaLinhaFria', () => {
   it('deve fugir com a carta alta que ainda perde quando já cumpriu', deveFugirComCartaAlta);
   it('deve fazer sem desperdiçar carta garantida quando ainda não é o último', devePreservarGarantida);
   it('deve deixar outro jogador fazer quando a mesa está favorável', deveDeixarOutroFazer);
+  it('deve decidir abertura cautelosamente quando a mesa está vazia', deveDecidirAbertura);
 });
 
 async function deveFazerVazaNoFim(): Promise<void> {
@@ -110,4 +111,17 @@ function cartasQueGarantemTresDeOuros(): Carta[] {
     criarCarta('4', '♠'),
     criarCarta('4', '♦'),
   ];
+}
+
+async function deveDecidirAbertura(): Promise<void> {
+  const estado = criarEstado({
+    mesa: [],
+    declaracoes: { bot: 0 },
+    vazas: { bot: 0 },
+    cartasReveladas: cartasQueGarantemTresDeOuros(),
+  });
+  const bot = new DecisorJogadaLinhaFria();
+  const mao = [criarCarta('3', '♦'), criarCarta('8', '♦')];
+
+  await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('8', '♦'));
 }

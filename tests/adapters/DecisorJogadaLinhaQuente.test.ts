@@ -19,7 +19,7 @@ async function escolheLinhaQuente(): Promise<void> {
   const estado = criarEstado(cenarioBifurcacao());
   const bot = criarBot(1, 0);
 
-  await expect(bot.decidirJogada(maoBifurcacao(), estado)).resolves.toEqual(criarCarta('Q', '♠'));
+  await expect(bot.decidirJogada(maoBifurcacao(), estado)).resolves.toEqual(criarCarta('4', '♦'));
 }
 
 async function escolheLinhaFria(): Promise<void> {
@@ -65,7 +65,7 @@ async function repeteEscolhaDeterministica(): Promise<void> {
 }
 
 function criarBot(temperatura: number, valorRng: number): DecisorJogadaLinhaQuente {
-  return new DecisorJogadaLinhaQuente({ temperatura, rng: { random: () => valorRng }, liderBaixa: 20, liderAlta: 10 });
+  return new DecisorJogadaLinhaQuente({ temperatura, rng: { random: () => valorRng }, liderBaixa: 8, liderAlta: 11 });
 }
 
 function criarEstado(config: Partial<EstadoEmJogo>): EstadoEmJogo {
@@ -89,7 +89,7 @@ function criarEstado(config: Partial<EstadoEmJogo>): EstadoEmJogo {
 
 function cenarioBifurcacao(): Partial<EstadoEmJogo> {
   return {
-    mesa: mesaComK(),
+    mesa: mesaComQuatro(),
     declaracoes: { j1: 0, j2: 1, bot: 1 },
     vazas: { j1: 0, j2: 0, bot: 0 },
     cartasReveladas: cartasQueGarantemTresDeOuros(),
@@ -97,7 +97,7 @@ function cenarioBifurcacao(): Partial<EstadoEmJogo> {
 }
 
 function maoBifurcacao(): Carta[] {
-  return [criarCarta('Q', '♠'), criarCarta('3', '♦')];
+  return [criarCarta('3', '♦'), criarCarta('4', '♦')];
 }
 
 function criarJogadores(): Jogador[] {
@@ -117,6 +117,14 @@ function mesaComK(): MesaItem[] {
     { jogadorId: 'j1', carta: criarCarta('K', '♣') },
     { jogadorId: 'j2', carta: criarCarta('7', '♥') },
     { jogadorId: 'j3', carta: criarCarta('8', '♠') },
+  ];
+}
+
+function mesaComQuatro(): MesaItem[] {
+  return [
+    { jogadorId: 'j1', carta: criarCarta('4', '♣') },
+    { jogadorId: 'j2', carta: criarCarta('4', '♥') },
+    { jogadorId: 'j3', carta: criarCarta('4', '♠') },
   ];
 }
 
