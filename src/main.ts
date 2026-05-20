@@ -10,6 +10,11 @@ function obterDpr(): number {
   return window.devicePixelRatio || 1;
 }
 
+function obterModoDebug(): boolean {
+  const debug = new URLSearchParams(window.location.search).get('debug');
+  return debug === 'true' || debug === '1';
+}
+
 function criarConfiguracaoJogo(containerId?: string): Phaser.Types.Core.GameConfig {
   const dpr = obterDpr();
   return {
@@ -27,6 +32,7 @@ function criarConfiguracaoJogo(containerId?: string): Phaser.Types.Core.GameConf
 
 export function inicializarJogo(containerId?: string): Game {
   jogo = new Game(criarConfiguracaoJogo(containerId));
+  jogo.registry.set('modoDebug', obterModoDebug());
 
   aoRedimensionar = (): void => {
     if (!jogo) return;

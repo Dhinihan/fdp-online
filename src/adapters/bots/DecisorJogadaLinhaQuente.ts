@@ -5,12 +5,15 @@ import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import type { GeradorAleatorio } from '@/core/RngComSeed';
 import { estadoEmJogo, type EstadoEmJogo, type EstadoRodada, type MesaItem } from '@/types/estado-rodada';
 import { DecisorJogadaLinhaFria } from './DecisorJogadaLinhaFria';
+import type { LoggerDebugBot } from './logger-debug-bot';
+import { registrarBifurcacao, registrarEscolhaDireta } from './registrar-decisao-jogada-bot';
 
 interface ConfigLinhaQuente {
   temperatura: number;
   rng: Pick<GeradorAleatorio, 'random'>;
   liderBaixa?: number;
   liderAlta?: number;
+  logger?: LoggerDebugBot;
 }
 
 export class DecisorJogadaLinhaQuente implements DecisorJogada {
@@ -19,12 +22,14 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
   private readonly rng: Pick<GeradorAleatorio, 'random'>;
   private readonly liderBaixa: number;
   private readonly liderAlta: number;
+  private readonly logger?: LoggerDebugBot;
 
   constructor(config: ConfigLinhaQuente) {
     this.temperatura = config.temperatura;
     this.rng = config.rng;
     this.liderBaixa = config.liderBaixa ?? 8;
     this.liderAlta = config.liderAlta ?? 11;
+    this.logger = config.logger;
   }
 
   async decidirJogada(mao: Carta[], estado: EstadoRodada): Promise<Carta> {
@@ -33,14 +38,31 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
     const estadoAtual = estadoEmJogo(estado);
     const contexto = criarContexto(estadoAtual, mao);
     const empate = escolherEmpate(estadoAtual, contexto, this.liderAlta);
-    if (empate) return empate.carta;
+    if (empate) {
+      return registrarEscolhaDireta({ logger: this.logger, mao, estado, carta: empate.carta, escolheuQuente: true });
+    }
 
     const travessia = escolherTravessia(estadoAtual, contexto);
-    if (travessia) return travessia.carta;
+    if (travessia) {
+      return registrarEscolhaDireta({ logger: this.logger, mao, estado, carta: travessia.carta, escolheuQuente: true });
+    }
 
-    if (!podeBifurcar(estadoAtual, contexto, this.liderBaixa)) return this.fria.decidirJogada(mao, estado);
-    if (this.rng.random() >= this.temperatura) return this.fria.decidirJogada(mao, estado);
-    return escolherPressao(contexto).carta;
+    const fria = await this.fria.decidirJogada(mao, estado);
+    if (!podeBifurcar(estadoAtual, contexto, this.liderBaixa)) {
+      return registrarEscolhaDireta({ logger: this.logger, mao, estado, carta: fria, escolheuQuente: false });
+    }
+
+    const quente = escolherPressao(contexto).carta;
+    const sorteio = this.rng.random();
+    return registrarBifurcacao({
+      logger: this.logger,
+      temperatura: this.temperatura,
+      mao,
+      estado,
+      fria,
+      quente,
+      sorteio,
+    });
   }
 }
 
