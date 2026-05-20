@@ -24,6 +24,7 @@ export interface DependenciasCena {
   objetosDeclaracao: Phaser.GameObjects.GameObject[];
   getLabels: () => Phaser.GameObjects.Text[];
   getDirecoesLabels: () => ('horizontal' | 'vertical')[];
+  modoDebug: boolean;
 }
 
 export class JogoController {
@@ -66,6 +67,7 @@ export class JogoController {
           this.deps.desativarResize();
           this.deps.mostrarFimJogo(classificacao);
         },
+        modoDebug: this.deps.modoDebug,
       },
     );
   }

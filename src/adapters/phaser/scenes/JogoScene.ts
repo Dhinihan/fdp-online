@@ -64,6 +64,7 @@ export class JogoScene extends Scene {
       objetosDeclaracao: this.objetosDeclaracao,
       getLabels: () => this.labels,
       getDirecoesLabels: () => this.direcoesLabels,
+      modoDebug: Boolean(this.game.registry.get('modoDebug')),
     };
   }
 

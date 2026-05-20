@@ -3,10 +3,12 @@ import type { Carta } from '@/core/Carta';
 import type { DecisorDeclaracao } from '@/core/portas/DecisorDeclaracao';
 import type { GeradorAleatorio } from '@/core/RngComSeed';
 import type { EstadoRodada } from '@/types/estado-rodada';
+import type { LoggerDebugBot } from './logger-debug-bot';
 
 export interface ParametrosDeclaracaoBot {
   poucasBaixas: number;
   declaracaoBaixa: number;
+  logger?: LoggerDebugBot;
 }
 
 export const parametrosDeclaracaoBotPadrao: ParametrosDeclaracaoBot = {
@@ -18,11 +20,13 @@ export class DecisorDeclaracaoBot implements DecisorDeclaracao {
   private readonly temperatura: number;
   private readonly rng: GeradorAleatorio;
   private readonly parametros: ParametrosDeclaracaoBot;
+  private readonly logger?: LoggerDebugBot;
 
   constructor(temperatura: number, rng: GeradorAleatorio, parametros = parametrosDeclaracaoBotPadrao) {
     this.temperatura = temperatura;
     this.rng = rng;
     this.parametros = parametros;
+    this.logger = parametros.logger;
   }
 
   declarar(estado: EstadoRodada, mao: Carta[]): Promise<number> {
@@ -33,15 +37,27 @@ export class DecisorDeclaracaoBot implements DecisorDeclaracao {
       avaliadas.map((avaliada) => avaliada.categoria),
       ['segura', 'garantida_agora'],
     );
-    const contagemAltas = avaliadas.filter((avaliada) => avaliada.categoria === 'alta' && this.deveContar()).length;
-    const contagemDefensiva = this.deveDeclararDefensivo(
+    const altasSorteadas = avaliadas
+      .filter((avaliada) => avaliada.categoria === 'alta')
+      .map(() => this.sortearContagem());
+    const contagemAltas = altasSorteadas.filter((sorteio) => sorteio.conta).length;
+    const defensivo = this.deveDeclararDefensivo(
       avaliadas.map((avaliada) => avaliada.categoria),
       contagemSegura + contagemAltas,
-    )
-      ? 1
-      : 0;
+    );
+    const contagemDefensiva = defensivo ? 1 : 0;
+    const declaracao = Math.min(mao.length, Math.max(0, contagemSegura + contagemAltas + contagemDefensiva));
 
-    return Promise.resolve(Math.min(mao.length, Math.max(0, contagemSegura + contagemAltas + contagemDefensiva)));
+    this.logger?.registrarDeclaracao({
+      mao: avaliadas,
+      seguras: contagemSegura,
+      altas: contagemAltas,
+      sorteouAlta: altasSorteadas.some((sorteio) => sorteio.conta),
+      defensivo,
+      declaracao,
+    });
+
+    return Promise.resolve(declaracao);
   }
 
   private deveDeclararDefensivo(categorias: CategoriaCarta[], declaracao: number): boolean {
@@ -51,6 +67,10 @@ export class DecisorDeclaracaoBot implements DecisorDeclaracao {
 
   private deveContar(): boolean {
     return this.rng.random() < 1 - this.temperatura;
+  }
+
+  private sortearContagem(): { conta: boolean } {
+    return { conta: this.deveContar() };
   }
 }
 
