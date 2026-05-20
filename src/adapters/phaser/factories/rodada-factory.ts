@@ -1,6 +1,6 @@
 import { DecisorDeclaracaoBot } from '@/adapters/bots/DecisorDeclaracaoBot';
 import { DecisorJogadaBot } from '@/adapters/bots/DecisorJogadaBot';
-import { DecisorJogadaLinhaFria } from '@/adapters/bots/DecisorJogadaLinhaFria';
+import { aplicarPerfisBots, sortearPerfisBots } from '@/adapters/bots/perfil-bot';
 import { Partida } from '@/core/Partida';
 import type { DecisorDeclaracao } from '@/core/portas/DecisorDeclaracao';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
@@ -13,23 +13,19 @@ export type { CallbacksRodada } from './subscricao-eventos-rodada';
 
 function criarDecisores(
   decisoresHumanos: { jogada: DecisorJogada; declaracao: DecisorDeclaracao },
+  jogadores: Jogador[],
   rng: GeradorAleatorio,
 ): {
   jogada: Map<string, DecisorJogada>;
   declaracao: Map<string, DecisorDeclaracao>;
 } {
-  const jogada = new Map<string, DecisorJogada>([
-    ['humano', decisoresHumanos.jogada],
-    ['bot1', new DecisorJogadaLinhaFria()],
-    ['bot2', new DecisorJogadaBot({ temperatura: 0.55, rng })],
-    ['bot3', new DecisorJogadaBot({ temperatura: 0.9, rng })],
-  ]);
-  const declaracao = new Map<string, DecisorDeclaracao>([
-    ['humano', decisoresHumanos.declaracao],
-    ['bot1', new DecisorDeclaracaoBot(0.2, rng)],
-    ['bot2', new DecisorDeclaracaoBot(0.5, rng)],
-    ['bot3', new DecisorDeclaracaoBot(0.8, rng)],
-  ]);
+  const jogada = new Map<string, DecisorJogada>([['humano', decisoresHumanos.jogada]]);
+  const declaracao = new Map<string, DecisorDeclaracao>([['humano', decisoresHumanos.declaracao]]);
+  jogadores.forEach((jogador) => {
+    if (!jogador.id.startsWith('bot') || jogador.temperatura === undefined) return;
+    jogada.set(jogador.id, new DecisorJogadaBot({ temperatura: jogador.temperatura, rng }));
+    declaracao.set(jogador.id, new DecisorDeclaracaoBot(jogador.temperatura, rng));
+  });
   return { jogada, declaracao };
 }
 
@@ -41,6 +37,7 @@ export function fabricarPartida(
   const emissor = createEmissorEventos();
   subscreverEventos(emissor, callbacks);
   const rng = new RngComSeed(Date.now());
-  const decisores = criarDecisores(decisoresHumanos, rng);
-  return new Partida(jogadores, emissor, { ...decisores, rng });
+  const jogadoresComBots = aplicarPerfisBots(jogadores, sortearPerfisBots(jogadores, rng));
+  const decisores = criarDecisores(decisoresHumanos, jogadoresComBots, rng);
+  return new Partida(jogadoresComBots, emissor, { ...decisores, rng });
 }

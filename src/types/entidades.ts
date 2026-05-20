@@ -4,6 +4,7 @@ export interface Jogador {
   id: string;
   nome: string;
   pontos: number;
+  temperatura?: number;
   avatar?: string;
 }
 
