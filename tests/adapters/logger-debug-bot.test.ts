@@ -70,6 +70,12 @@ describe('Logger debug dos bots', () => {
     expect(group).not.toHaveBeenCalled();
     expect(log).not.toHaveBeenCalled();
   });
+});
+
+describe('Logger debug da declaração dos bots', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
   it('deve formatar decisão com groupCollapsed quando modo debug está ativo', async () => {
     const group = vi.spyOn(console, 'groupCollapsed').mockImplementation(() => undefined);
@@ -86,7 +92,9 @@ describe('Logger debug dos bots', () => {
 
     expect(group).toHaveBeenCalledWith('🟡 Brás (T=0.35) — DECLARAÇÃO');
     expect(log).toHaveBeenCalledWith(expect.stringContaining('Mão: ['));
-    expect(log).toHaveBeenCalledWith(expect.stringContaining('Seguras:'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('Seguras contadas:'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('Altas candidatas:'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('Sorteios de altas:'));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('→ Declarou:'));
   });
 });
