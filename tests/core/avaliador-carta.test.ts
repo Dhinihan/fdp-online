@@ -49,7 +49,39 @@ describe('avaliador-carta com seguras em rodadas pequenas', () => {
 });
 
 describe('avaliador-carta com ajustes', () => {
-  it('deve subir categoria quando cartas superiores foram reveladas', () => {
+  it('deve manter 6 como baixa mesmo com superiores reveladas', () => {
+    const carta = criarCarta('6', '♣');
+    const reveladas = [
+      criarCarta('3', '♣'),
+      criarCarta('3', '♥'),
+      criarCarta('2', '♠'),
+      criarCarta('A', '♦'),
+      criarCarta('K', '♣'),
+    ];
+
+    const [avaliada] = avaliarCartas([carta], '4', reveladas, 4);
+
+    expect(avaliada.categoria).toBe('baixa');
+  });
+});
+
+describe('avaliador-carta sem inflação por reveladas', () => {
+  it('deve manter 10 abaixo de segura mesmo com superiores reveladas', () => {
+    const carta = criarCarta('10', '♣');
+    const reveladas = [
+      criarCarta('3', '♣'),
+      criarCarta('3', '♥'),
+      criarCarta('3', '♠'),
+      criarCarta('2', '♦'),
+      criarCarta('A', '♣'),
+    ];
+
+    const [avaliada] = avaliarCartas([carta], '4', reveladas, 4);
+
+    expect(avaliada.categoria).not.toBe('segura');
+  });
+
+  it('não deve subir categoria quando cartas superiores foram reveladas', () => {
     const carta = criarCarta('K', '♥');
     const semReveladas = avaliarCartas([carta], '4', [], 4);
     const comReveladas = avaliarCartas(
@@ -60,7 +92,7 @@ describe('avaliador-carta com ajustes', () => {
     );
 
     expect(semReveladas[0].categoria).toBe('média');
-    expect(comReveladas[0].categoria).toBe('segura');
+    expect(comReveladas[0].categoria).toBe('média');
   });
 });
 
