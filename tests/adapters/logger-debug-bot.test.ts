@@ -52,6 +52,7 @@ function registrarJogadaDireta(): void {
     linhaQuente: mao[0],
     carta: mao[0],
     escolheuQuente: false,
+    motivoSemBifurcacao: 'sem bifurcação: fuga impossível',
   });
 }
 
@@ -104,21 +105,45 @@ describe('Logger debug das jogadas dos bots', () => {
     vi.restoreAllMocks();
   });
 
-  it('deve registrar decisão determinística quando jogada não sorteia RNG', () => {
+  it('deve registrar sem sorteio quando as linhas escolhem a mesma carta', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     vi.spyOn(console, 'groupCollapsed').mockImplementation(() => undefined);
     vi.spyOn(console, 'groupEnd').mockImplementation(() => undefined);
     registrarJogadaDireta();
 
-    expect(log).toHaveBeenCalledWith('Decisão determinística: linha fria');
+    expect(log).toHaveBeenCalledWith('Sorteio por temperatura: não ocorreu');
   });
 
-  it('deve registrar bifurcação ausente em escolhas diretas', () => {
+  it('deve registrar bifurcação ausente com motivo em escolhas diretas', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     vi.spyOn(console, 'groupCollapsed').mockImplementation(() => undefined);
     vi.spyOn(console, 'groupEnd').mockImplementation(() => undefined);
     registrarJogadaDireta();
 
-    expect(log).toHaveBeenCalledWith('Bifurcação: não ocorreu');
+    expect(log).toHaveBeenCalledWith('Bifurcação: não ocorreu | sem bifurcação: fuga impossível');
+  });
+
+  it('deve registrar sorteio por temperatura sem chamar de determinístico', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'groupCollapsed').mockImplementation(() => undefined);
+    vi.spyOn(console, 'groupEnd').mockImplementation(() => undefined);
+
+    registrarJogadaComBifurcacao();
+
+    expect(log).toHaveBeenCalledWith('Bifurcação: ocorreu | fria 4♦ | quente 3♣');
+    expect(log).toHaveBeenCalledWith('Sorteio por temperatura: linha quente (0.10 < T=0.35? sim → linha quente)');
+    expect(log).not.toHaveBeenCalledWith(expect.stringContaining('determinística'));
   });
 });
+
+function registrarJogadaComBifurcacao(): void {
+  criarLoggerDebugBot('Brás', 0.35).registrarJogada({
+    estado: estadoJogada(),
+    mao,
+    linhaFria: mao[0],
+    linhaQuente: mao[1],
+    carta: mao[1],
+    escolheuQuente: true,
+    sorteio: 0.1,
+  });
+}

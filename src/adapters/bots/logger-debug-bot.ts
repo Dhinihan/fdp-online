@@ -34,6 +34,9 @@ export interface DecisaoJogadaDebug {
   mao: Carta[];
   linhaFria: Carta;
   linhaQuente: Carta;
+  motivoLinhaFria?: string;
+  motivoLinhaQuente?: string;
+  motivoSemBifurcacao?: string;
   carta: Carta;
   sorteio?: number;
   escolheuQuente: boolean;
@@ -80,7 +83,7 @@ function registrarJogada(nome: string, temperatura: number, decisao: DecisaoJoga
   );
   console.log(`Mesa: [${formatarMesa(estado.mesa)}]`);
   console.log(`Classificação: [${formatarAvaliadas(avaliadas)}]`);
-  console.log(formatarBifurcacao(decisao.sorteio));
+  console.log(formatarBifurcacao(decisao));
   console.log(formatarLinhas(decisao));
   console.log(formatarSorteio(decisao.sorteio, decisao.escolheuQuente, temperatura));
   console.log(`→ Jogou: ${formatarCarta(decisao.carta)}`);
@@ -122,9 +125,14 @@ function formatarDefensivo(defensivo: DefensivoDebug): string {
   return `bloqueado (base=${defensivo.base.toString()}, teto=floor(${defensivo.cartasPorRodada.toString()}/2)=${defensivo.teto.toString()}, aplicar +1 resultaria em ${defensivo.resultado.toString()})`;
 }
 
-function formatarBifurcacao(sorteio: number | undefined): string {
-  if (sorteio === undefined) return 'Bifurcação: não ocorreu';
-  return 'Bifurcação: segurança para cumprir depois ✓, pressão disponível ✓';
+function formatarBifurcacao(decisao: DecisaoJogadaDebug): string {
+  if (decisao.sorteio !== undefined) {
+    return `Bifurcação: ocorreu | fria ${formatarCarta(decisao.linhaFria)} | quente ${formatarCarta(
+      decisao.linhaQuente,
+    )}`;
+  }
+  const motivo = decisao.motivoSemBifurcacao ? ` | ${decisao.motivoSemBifurcacao}` : '';
+  return `Bifurcação: não ocorreu${motivo}`;
 }
 
 function formatarTituloJogada(titulo: TituloJogada): string {
@@ -141,9 +149,14 @@ interface TituloJogada {
 }
 
 function formatarLinhas(decisao: DecisaoJogadaDebug): string {
-  return `Linha fria: jogar ${formatarCarta(decisao.linhaFria)} | Linha quente: jogar ${formatarCarta(
-    decisao.linhaQuente,
-  )}`;
+  const fria = formatarLinha('Linha fria', decisao.linhaFria, decisao.motivoLinhaFria);
+  const quente = formatarLinha('Linha quente', decisao.linhaQuente, decisao.motivoLinhaQuente);
+  return `${fria} | ${quente}`;
+}
+
+function formatarLinha(nome: string, carta: Carta, motivo: string | undefined): string {
+  const sufixo = motivo ? ` porque ${motivo}` : '';
+  return `${nome}: jogar ${formatarCarta(carta)}${sufixo}`;
 }
 
 function formatarCarta(carta: Carta): string {
@@ -155,8 +168,10 @@ function simNao(valor: boolean): string {
 }
 
 function formatarSorteio(sorteio: number | undefined, quente: boolean, temperatura: number): string {
-  if (sorteio === undefined) return `Decisão determinística: linha ${quente ? 'quente' : 'fria'}`;
+  if (sorteio === undefined) return 'Sorteio por temperatura: não ocorreu';
   const linha = quente ? 'quente' : 'fria';
   const comparacao = sorteio < temperatura ? 'sim' : 'não';
-  return `RNG sorteou: ${linha} (${sorteio.toFixed(2)} < T=${temperatura.toFixed(2)}? ${comparacao} → ${linha})`;
+  return `Sorteio por temperatura: linha ${linha} (${sorteio.toFixed(2)} < T=${temperatura.toFixed(
+    2,
+  )}? ${comparacao} → linha ${linha})`;
 }
