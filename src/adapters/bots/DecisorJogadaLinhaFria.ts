@@ -1,6 +1,6 @@
 import { avaliarCartas, type CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
-import { calcularIndiceVencedor, cartaVence } from '@/core/comparador-carta';
+import { calcularIndiceVencedor, cartaVence, compararForcaReal } from '@/core/comparador-carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { estadoEmJogo, type EstadoEmJogo, type MesaItem, type EstadoRodada } from '@/types/estado-rodada';
 import { decidirAbertura } from './decidirAbertura';
@@ -19,22 +19,22 @@ export class DecisorJogadaLinhaFria implements DecisorJogada {
     const necessidade = calcularNecessidade(estadoAtual, jogadorId);
 
     if (necessidade <= 0) return Promise.resolve(this.fugir(estadoAtual, avaliadas));
-    return Promise.resolve(this.buscarVaza(estadoAtual, avaliadas));
+    return Promise.resolve(this.buscarVaza(estadoAtual, avaliadas, necessidade));
   }
 
   private fugir(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): Carta {
     const perdedoras = cartasQuePerdem(estado, avaliadas);
+    if (ehUltimoDaMesa(estado)) return fugirNoFimDaMesa(estado, perdedoras, avaliadas);
     if (perdedoras.length === 0) return cartaMaisBarata(avaliadas).carta;
-    if (ehUltimoDaMesa(estado) && liderPrecisaFazer(estado)) return cartaMaisBarata(perdedoras).carta;
     return cartaMaisCara(perdedoras).carta;
   }
 
-  private buscarVaza(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): Carta {
+  private buscarVaza(estado: EstadoEmJogo, avaliadas: CartaAvaliada[], necessidade: number): Carta {
     const vencedoras = cartasQueVencem(estado, avaliadas);
-    if (vencedoras.length > 0) return escolherVencedoraFria(vencedoras).carta;
+    if (vencedoras.length > 0) return escolherGanhadora(vencedoras, estado.manilha, necessidade).carta;
 
     const perdedoras = cartasQuePerdem(estado, avaliadas);
-    if (perdedoras.length > 0) return cartaMaisCara(perdedoras).carta;
+    if (perdedoras.length > 0) return escolherPerdedora(perdedoras, estado.manilha, necessidade).carta;
     return cartaMaisBarata(avaliadas).carta;
   }
 }
@@ -60,9 +60,30 @@ function melhorCartaMesa(mesa: MesaItem[], manilha: Carta['valor']): Carta | nul
   return mesa[calcularIndiceVencedor(mesa, manilha)].carta;
 }
 
-function escolherVencedoraFria(avaliadas: CartaAvaliada[]): CartaAvaliada {
-  const naoGarantidas = avaliadas.filter((avaliada) => avaliada.categoria !== 'garantida_agora');
-  return cartaMaisBarata(naoGarantidas.length > 0 ? naoGarantidas : avaliadas);
+function escolherGanhadora(avaliadas: CartaAvaliada[], manilha: Carta['valor'], necessidade: number): CartaAvaliada {
+  const ordenadas = ordenarPorForcaReal(avaliadas, manilha);
+  const indice = ordenadas.length >= necessidade ? ordenadas.length - necessidade : 0;
+  return ordenadas[indice];
+}
+
+function escolherPerdedora(avaliadas: CartaAvaliada[], manilha: Carta['valor'], necessidade: number): CartaAvaliada {
+  const ordenadas = ordenarPorForcaReal(avaliadas, manilha);
+  const indice = ordenadas.length > necessidade ? ordenadas.length - necessidade : 0;
+  return ordenadas[indice];
+}
+
+function ordenarPorForcaReal(avaliadas: CartaAvaliada[], manilha: Carta['valor']): CartaAvaliada[] {
+  return [...avaliadas].sort((a, b) => compararForcaReal(a.carta, b.carta, manilha));
+}
+
+function fugirNoFimDaMesa(estado: EstadoEmJogo, perdedoras: CartaAvaliada[], avaliadas: CartaAvaliada[]): Carta {
+  if (perdedoras.length > 0) return cartaMaisForte(perdedoras, estado.manilha).carta;
+  return cartaMaisForte(avaliadas, estado.manilha).carta;
+}
+
+function cartaMaisForte(avaliadas: CartaAvaliada[], manilha: Carta['valor']): CartaAvaliada {
+  const ordenadas = ordenarPorForcaReal(avaliadas, manilha);
+  return ordenadas[ordenadas.length - 1];
 }
 
 function cartaMaisBarata(avaliadas: CartaAvaliada[]): CartaAvaliada {
@@ -75,9 +96,4 @@ function cartaMaisCara(avaliadas: CartaAvaliada[]): CartaAvaliada {
 
 function ehUltimoDaMesa(estado: EstadoEmJogo): boolean {
   return estado.mesa.length === estado.maos.length - 1;
-}
-
-function liderPrecisaFazer(estado: EstadoEmJogo): boolean {
-  const indice = calcularIndiceVencedor(estado.mesa, estado.manilha);
-  return calcularNecessidade(estado, estado.mesa[indice].jogadorId) > 0;
 }

@@ -1,35 +1,9 @@
-import { avaliarCartas, type CartaAvaliada } from '@/core/avaliador-carta';
+import type { CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
-import { calcularIndiceVencedor, cartasEmpatam, cartaVence } from '@/core/comparador-carta';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
+import { calcularNecessidade, liderQuerVaza, type ContextoJogadaQuente } from './contextoLinhaQuente';
 
-export interface ContextoJogada {
-  jogadorId: string;
-  necessidade: number;
-  folga: number;
-  avaliadas: CartaAvaliada[];
-  vencedoras: CartaAvaliada[];
-  perdedoras: CartaAvaliada[];
-  lider: CartaAvaliada | null;
-}
-
-export function criarContexto(estado: EstadoEmJogo, mao: Carta[]): ContextoJogada {
-  const jogadorId = estado.maos[estado.jogadorAtual].jogador.id;
-  const necessidade = calcularNecessidade(estado, jogadorId);
-  const avaliadas = avaliarCartas(mao, estado.manilha, estado.cartasReveladas, estado.maos.length);
-  const lider = avaliarLider(estado);
-  return {
-    jogadorId,
-    necessidade,
-    folga: mao.length - necessidade,
-    avaliadas,
-    vencedoras: lider ? avaliadas.filter((a) => cartaVence(a.carta, lider.carta, estado.manilha)) : [...avaliadas],
-    perdedoras: lider ? avaliadas.filter((a) => !cartaVence(a.carta, lider.carta, estado.manilha)) : [],
-    lider,
-  };
-}
-
-export function podeBifurcar(estado: EstadoEmJogo, contexto: ContextoJogada, liderBaixa: number): boolean {
+export function podeBifurcar(estado: EstadoEmJogo, contexto: ContextoJogadaQuente, liderBaixa: number): boolean {
   return (
     contexto.necessidade > 0 &&
     contexto.vencedoras.length > 0 &&
@@ -40,7 +14,7 @@ export function podeBifurcar(estado: EstadoEmJogo, contexto: ContextoJogada, lid
   );
 }
 
-export function motivoSemBifurcacao(contexto: ContextoJogada): string {
+export function motivoSemBifurcacao(contexto: ContextoJogadaQuente): string {
   const urgencia = contexto.necessidade / contexto.avaliadas.length;
   if (contexto.necessidade > 0 && urgencia >= 0.66) return 'sem bifurcação: ambas fazem porque urgência >= 0.66';
   if (contexto.necessidade <= 0 && contexto.perdedoras.length === 0) return 'sem bifurcação: fuga impossível';
@@ -51,13 +25,13 @@ export function cartasIguais(a: Carta, b: Carta): boolean {
   return a.valor === b.valor && a.naipe === b.naipe;
 }
 
-export function escolherPressao(contexto: ContextoJogada): CartaAvaliada {
+export function escolherPressao(contexto: ContextoJogadaQuente): CartaAvaliada {
   const fuga = cartasDeFuga(contexto);
   if (fuga.length > 0) return cartaMaisCara(fuga);
   return cartaMaisBarata(vencedorasBaratasSemGarantida(contexto));
 }
 
-export function escolherTravessia(estado: EstadoEmJogo, contexto: ContextoJogada): CartaAvaliada | null {
+export function escolherTravessia(estado: EstadoEmJogo, contexto: ContextoJogadaQuente): CartaAvaliada | null {
   if (
     contexto.necessidade <= 0 ||
     contexto.folga > 1 ||
@@ -70,20 +44,14 @@ export function escolherTravessia(estado: EstadoEmJogo, contexto: ContextoJogada
   return candidatas.length > 0 ? cartaMaisBarata(candidatas) : null;
 }
 
-export function escolherEmpate(
-  estado: EstadoEmJogo,
-  contexto: ContextoJogada,
-  liderAlta: number,
-): CartaAvaliada | null {
+export function escolherEmpate(contexto: ContextoJogadaQuente, liderAlta: number): CartaAvaliada | null {
   const lider = contexto.lider;
-  if (!lider || lider.score <= liderAlta) return null;
-  const empates = contexto.avaliadas.filter((avaliada) => cartasEmpatam(avaliada.carta, lider.carta, estado.manilha));
-  if (empates.length === 0) return null;
-  if (contexto.necessidade <= 0 || contexto.folga >= 2) return cartaMaisCara(empates);
+  if (!lider || lider.score <= liderAlta || contexto.empates.length === 0) return null;
+  if (contexto.necessidade <= 0 || contexto.folga >= 2) return cartaMaisCara(contexto.empates);
   return null;
 }
 
-function mesaPodePunir(estado: EstadoEmJogo, contexto: ContextoJogada, liderBaixa: number): boolean {
+function mesaPodePunir(estado: EstadoEmJogo, contexto: ContextoJogadaQuente, liderBaixa: number): boolean {
   return Boolean(
     contexto.lider &&
     contexto.lider.score <= liderBaixa &&
@@ -91,40 +59,23 @@ function mesaPodePunir(estado: EstadoEmJogo, contexto: ContextoJogada, liderBaix
   );
 }
 
-function temSegurancaParaDepois(contexto: ContextoJogada): boolean {
+function temSegurancaParaDepois(contexto: ContextoJogadaQuente): boolean {
   return contexto.necessidade <= 1 && contexto.folga >= 1 && contexto.avaliadas.some(ehSeguraOuGarantida);
 }
 
-function temPressaoAgora(contexto: ContextoJogada): boolean {
+function temPressaoAgora(contexto: ContextoJogadaQuente): boolean {
   return cartasDeFuga(contexto).length > 0 || vencedorasBaratasSemGarantida(contexto).length > 0;
 }
 
-function cartasDeFuga(contexto: ContextoJogada): CartaAvaliada[] {
-  return contexto.perdedoras.filter((avaliada) => !ehSeguraOuGarantida(avaliada));
+function cartasDeFuga(contexto: ContextoJogadaQuente): CartaAvaliada[] {
+  return [...contexto.perdedoras, ...contexto.empates].filter((avaliada) => !ehSeguraOuGarantida(avaliada));
 }
 
-function vencedorasBaratasSemGarantida(contexto: ContextoJogada): CartaAvaliada[] {
+function vencedorasBaratasSemGarantida(contexto: ContextoJogadaQuente): CartaAvaliada[] {
   const candidatas = contexto.vencedoras.filter((avaliada) => !ehGarantida(avaliada));
   return candidatas.filter((carta) =>
     contexto.avaliadas.some((avaliada) => avaliada !== carta && ehGarantida(avaliada)),
   );
-}
-
-function avaliarLider(estado: EstadoEmJogo): CartaAvaliada | null {
-  const carta = melhorCartaMesa(estado.mesa, estado.manilha);
-  if (!carta) return null;
-  return avaliarCartas([carta], estado.manilha, estado.cartasReveladas, estado.maos.length)[0];
-}
-
-function melhorCartaMesa(mesa: MesaItem[], manilha: Carta['valor']): Carta | null {
-  if (mesa.length === 0) return null;
-  return mesa[calcularIndiceVencedor(mesa, manilha)].carta;
-}
-
-function liderQuerVaza(estado: EstadoEmJogo): boolean {
-  if (estado.mesa.length === 0) return false;
-  const lider = estado.mesa[calcularIndiceVencedor(estado.mesa, estado.manilha)];
-  return calcularNecessidade(estado, lider.jogadorId) > 0;
 }
 
 function temAlvo(estado: EstadoEmJogo, jogadorId: string): boolean {
@@ -133,10 +84,6 @@ function temAlvo(estado: EstadoEmJogo, jogadorId: string): boolean {
 
 function jogadorNaoQuerVaza(estado: EstadoEmJogo, item: MesaItem): boolean {
   return calcularNecessidade(estado, item.jogadorId) <= 0;
-}
-
-function calcularNecessidade(estado: EstadoEmJogo, jogadorId: string): number {
-  return (estado.declaracoes[jogadorId] ?? 0) - (estado.vazas[jogadorId] ?? 0);
 }
 
 function ehSeguraOuGarantida(avaliada: CartaAvaliada): boolean {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cartaVence, calcularIndiceVencedor, cartasEmpatam } from '@/core/comparador-carta';
+import { cartaVence, calcularIndiceVencedor, cartasEmpatam, compararForcaReal } from '@/core/comparador-carta';
 import { criarCarta } from './rodada-fixtures';
 
 describe('comparador-carta', () => {
@@ -44,5 +44,15 @@ describe('cartasEmpatam', () => {
 
   it('deve rejeitar empate entre cartas de valores diferentes', () => {
     expect(cartasEmpatam(criarCarta('3', '♣'), criarCarta('2', '♦'), '4')).toBe(false);
+  });
+});
+
+describe('compararForcaReal', () => {
+  it('deve ordenar manilha acima de não-manilha', () => {
+    expect(compararForcaReal(criarCarta('4', '♦'), criarCarta('3', '♣'), '4')).toBeGreaterThan(0);
+  });
+
+  it('deve desempatar cartas de mesmo valor pelo naipe', () => {
+    expect(compararForcaReal(criarCarta('K', '♣'), criarCarta('K', '♦'), '4')).toBeGreaterThan(0);
   });
 });
