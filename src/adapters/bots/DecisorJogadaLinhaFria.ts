@@ -82,7 +82,8 @@ function fugirNoFimDaMesa(estado: EstadoEmJogo, perdedoras: CartaAvaliada[], ava
 }
 
 function cartaMaisForte(avaliadas: CartaAvaliada[], manilha: Carta['valor']): CartaAvaliada {
-  return ordenarPorForcaReal(avaliadas, manilha).at(-1) ?? avaliadas[0];
+  const ordenadas = ordenarPorForcaReal(avaliadas, manilha);
+  return ordenadas[ordenadas.length - 1];
 }
 
 function cartaMaisBarata(avaliadas: CartaAvaliada[]): CartaAvaliada {
