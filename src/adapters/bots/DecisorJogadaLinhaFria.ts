@@ -24,8 +24,8 @@ export class DecisorJogadaLinhaFria implements DecisorJogada {
 
   private fugir(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): Carta {
     const perdedoras = cartasQuePerdem(estado, avaliadas);
+    if (ehUltimoDaMesa(estado)) return fugirNoFimDaMesa(estado, perdedoras, avaliadas);
     if (perdedoras.length === 0) return cartaMaisBarata(avaliadas).carta;
-    if (ehUltimoDaMesa(estado) && liderPrecisaFazer(estado)) return cartaMaisBarata(perdedoras).carta;
     return cartaMaisCara(perdedoras).carta;
   }
 
@@ -76,6 +76,16 @@ function ordenarPorForcaReal(avaliadas: CartaAvaliada[], manilha: Carta['valor']
   return [...avaliadas].sort((a, b) => compararForcaReal(a.carta, b.carta, manilha));
 }
 
+function fugirNoFimDaMesa(estado: EstadoEmJogo, perdedoras: CartaAvaliada[], avaliadas: CartaAvaliada[]): Carta {
+  if (perdedoras.length > 0) return cartaMaisForte(perdedoras, estado.manilha).carta;
+  return cartaMaisForte(avaliadas, estado.manilha).carta;
+}
+
+function cartaMaisForte(avaliadas: CartaAvaliada[], manilha: Carta['valor']): CartaAvaliada {
+  const ordenadas = ordenarPorForcaReal(avaliadas, manilha);
+  return ordenadas[ordenadas.length - 1];
+}
+
 function cartaMaisBarata(avaliadas: CartaAvaliada[]): CartaAvaliada {
   return [...avaliadas].sort((a, b) => a.score - b.score)[0];
 }
@@ -86,9 +96,4 @@ function cartaMaisCara(avaliadas: CartaAvaliada[]): CartaAvaliada {
 
 function ehUltimoDaMesa(estado: EstadoEmJogo): boolean {
   return estado.mesa.length === estado.maos.length - 1;
-}
-
-function liderPrecisaFazer(estado: EstadoEmJogo): boolean {
-  const indice = calcularIndiceVencedor(estado.mesa, estado.manilha);
-  return calcularNecessidade(estado, estado.mesa[indice].jogadorId) > 0;
 }

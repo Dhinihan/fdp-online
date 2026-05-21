@@ -15,8 +15,10 @@ describe('DecisorJogadaLinhaFria', () => {
   it('deve ordenar ganhadoras por força real com manilha e desempate por naipe', deveOrdenarPorForcaReal);
   it('deve jogar o menor prejuízo quando é o último, precisa fazer e não tem carta que ganha', deveJogarMenorPrejuizo);
   it('deve fugir com a carta alta que ainda perde quando já cumpriu', deveFugirComCartaAlta);
+  it('deve contar empate como fuga quando é o último e não quer fazer', deveFugirComEmpateNoFim);
+  it('deve jogar a mais forte quando fuga é impossível no fim', deveDescartarMaisForteSemFuga);
   it('deve fazer sem desperdiçar carta garantida quando ainda não é o último', devePreservarGarantida);
-  it('deve deixar outro jogador fazer quando a mesa está favorável', deveDeixarOutroFazer);
+  it('deve seguir fuga do fim sem considerar necessidade do líder', deveIgnorarNecessidadeDoLiderNoFim);
   it('deve decidir abertura cautelosamente quando a mesa está vazia', deveDecidirAbertura);
 });
 
@@ -106,6 +108,24 @@ async function deveFugirComCartaAlta(): Promise<void> {
   );
 }
 
+async function deveFugirComEmpateNoFim(): Promise<void> {
+  const estado = criarEstado({ mesa: mesaComK(), declaracoes: { bot: 1 }, vazas: { bot: 1 }, manilha: '5' });
+  const bot = new DecisorJogadaLinhaFria();
+
+  await expect(bot.decidirJogada([criarCarta('Q', '♦'), criarCarta('K', '♦')], estado)).resolves.toEqual(
+    criarCarta('K', '♦'),
+  );
+}
+
+async function deveDescartarMaisForteSemFuga(): Promise<void> {
+  const estado = criarEstado({ mesa: mesaComQuatro(), declaracoes: { bot: 1 }, vazas: { bot: 1 }, manilha: '6' });
+  const bot = new DecisorJogadaLinhaFria();
+
+  await expect(
+    bot.decidirJogada([criarCarta('5', '♦'), criarCarta('8', '♦'), criarCarta('K', '♦')], estado),
+  ).resolves.toEqual(criarCarta('K', '♦'));
+}
+
 async function devePreservarGarantida(): Promise<void> {
   const estado = criarEstado(cenarioGarantida());
   const bot = new DecisorJogadaLinhaFria();
@@ -115,12 +135,12 @@ async function devePreservarGarantida(): Promise<void> {
   );
 }
 
-async function deveDeixarOutroFazer(): Promise<void> {
+async function deveIgnorarNecessidadeDoLiderNoFim(): Promise<void> {
   const estado = criarEstado({ mesa: mesaComK(), declaracoes: { j1: 1, bot: 0 }, vazas: { j1: 0, bot: 0 } });
   const bot = new DecisorJogadaLinhaFria();
 
   await expect(bot.decidirJogada([criarCarta('4', '♦'), criarCarta('Q', '♠')], estado)).resolves.toEqual(
-    criarCarta('4', '♦'),
+    criarCarta('Q', '♠'),
   );
 }
 
