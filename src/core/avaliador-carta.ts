@@ -71,20 +71,16 @@ interface ContextoAvaliacao {
 }
 
 function avaliarCarta(contexto: ContextoAvaliacao): CartaAvaliada {
-  const { carta, manilha, cartasReveladas } = contexto;
-  const score = calcularScore(carta, manilha, cartasReveladas);
+  const { carta, manilha } = contexto;
+  const score = calcularScore(carta, manilha);
   const categoria = obterCategoria({ ...contexto, score });
   return { carta, score, categoria };
 }
 
-function calcularScore(carta: Carta, manilha: Valor, cartasReveladas: Carta[]): number {
+function calcularScore(carta: Carta, manilha: Valor): number {
   if (ehManilha(carta, manilha)) return parametrosAvaliacaoPadrao.baseManilha + offsetManilha[carta.naipe];
 
-  return hierarquiaValores[carta.valor] + contarSuperioresReveladas(carta, manilha, cartasReveladas);
-}
-
-function contarSuperioresReveladas(carta: Carta, manilha: Valor, cartasReveladas: Carta[]): number {
-  return cartasReveladas.filter((revelada) => cartaVence(revelada, carta, manilha)).length;
+  return hierarquiaValores[carta.valor];
 }
 
 interface ContextoCategoria {
