@@ -16,9 +16,12 @@ export function podeBifurcar(estado: EstadoEmJogo, contexto: ContextoJogadaQuent
 
 export function motivoSemBifurcacao(contexto: ContextoJogadaQuente): string {
   const urgencia = contexto.necessidade / contexto.avaliadas.length;
+  if (contexto.necessidade > 0 && contexto.vencedoras.length === 1) {
+    return 'sem bifurcação: ambas fazem porque precisam cumprir a declaração';
+  }
   if (contexto.necessidade > 0 && urgencia >= 0.66) return 'sem bifurcação: ambas fazem porque urgência >= 0.66';
   if (contexto.necessidade <= 0 && contexto.perdedoras.length === 0) return 'sem bifurcação: fuga impossível';
-  return 'sem bifurcação: ambas não querem fazer e escolheram a mesma carta';
+  return 'sem bifurcação: linha fria e linha quente convergiram na mesma carta';
 }
 
 export function cartasIguais(a: Carta, b: Carta): boolean {
