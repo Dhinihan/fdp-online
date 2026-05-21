@@ -22,6 +22,8 @@ interface Bifurcacao {
   estado: EstadoRodada;
   fria: Carta;
   quente: Carta;
+  motivoLinhaFria?: string;
+  motivoLinhaQuente?: string;
   sorteio: number;
 }
 
@@ -48,6 +50,8 @@ export function registrarBifurcacao(config: Bifurcacao): Carta {
     estado: config.estado,
     linhaFria: config.fria,
     linhaQuente: config.quente,
+    motivoLinhaFria: config.motivoLinhaFria,
+    motivoLinhaQuente: config.motivoLinhaQuente,
     carta,
     escolheuQuente,
     sorteio: config.sorteio,

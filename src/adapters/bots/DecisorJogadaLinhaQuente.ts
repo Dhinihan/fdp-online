@@ -12,7 +12,9 @@ import {
   escolherEmpate,
   escolherPressao,
   escolherTravessia,
-  motivoSemBifurcacao,
+  MOTIVO_SEM_BIFURCACAO_CARTAS_IGUAIS,
+  MOTIVO_SEM_BIFURCACAO_NAO_PODE,
+  MOTIVO_SEM_BIFURCACAO_ULTIMO,
   podeBifurcar,
 } from './regras-linha-quente';
 
@@ -54,7 +56,7 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
 
   private decidirUltimaJogada(base: BaseJogada): Carta {
     const carta = decidirUltimoLinhaQuente(base.estadoAtual, base.contexto);
-    return this.registrarSemBifurcacao(base, carta);
+    return this.registrarSemBifurcacao(base, carta, MOTIVO_SEM_BIFURCACAO_ULTIMO);
   }
 
   private decidirAntesDoFim(base: BaseJogada): Carta {
@@ -62,11 +64,13 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
     if (direta) return direta;
 
     if (!podeBifurcar(base.estadoAtual, base.contexto, this.liderBaixa)) {
-      return this.registrarSemBifurcacao(base, base.fria);
+      return this.registrarSemBifurcacao(base, base.fria, MOTIVO_SEM_BIFURCACAO_NAO_PODE);
     }
 
     const quente = escolherPressao(base.contexto).carta;
-    if (cartasIguais(base.fria, quente)) return this.registrarSemBifurcacao(base, quente);
+    if (cartasIguais(base.fria, quente)) {
+      return this.registrarSemBifurcacao(base, quente, MOTIVO_SEM_BIFURCACAO_CARTAS_IGUAIS);
+    }
 
     const sorteio = this.rng.random();
     return registrarBifurcacao({
@@ -111,7 +115,7 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
     });
   }
 
-  private registrarSemBifurcacao(base: BaseJogada, linhaQuente: Carta): Carta {
+  private registrarSemBifurcacao(base: BaseJogada, linhaQuente: Carta, motivo: string): Carta {
     return registrarEscolhaDireta({
       logger: this.logger,
       mao: base.mao,
@@ -119,7 +123,7 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
       carta: linhaQuente,
       linhaFria: base.fria,
       linhaQuente,
-      motivoSemBifurcacao: motivoSemBifurcacao(base.contexto),
+      motivoSemBifurcacao: motivo,
       escolheuQuente: false,
     });
   }
