@@ -61,7 +61,7 @@ export class DecisorDeclaracaoBot implements DecisorDeclaracao {
   private declararPrimeiraRodada(estado: EstadoRodada): number {
     const emJogo = estadoEmJogo(estado);
     const visiveis = cartasVisiveisDosOutros(emJogo);
-    const avaliadas = avaliarCartas(visiveis, emJogo.manilha, [], emJogo.maos.length);
+    const avaliadas = visiveis.flatMap((carta) => avaliarCartas([carta], emJogo.manilha, [], emJogo.maos.length));
     const temAltaVisivel = avaliadas.some((avaliada) => ehCategoriaForte(avaliada.categoria));
     const declaracao = temAltaVisivel ? 0 : 1;
 

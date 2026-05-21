@@ -84,6 +84,14 @@ describe('DecisorDeclaracaoBot na primeira rodada', () => {
 
     await expect(decisor.declarar(criarEstado(mao, visiveis, 1), mao)).resolves.toBe(1);
   });
+
+  it('deve avaliar cada carta visível como N=1', async () => {
+    const mao = [criarCarta('5', '♦')];
+    const visiveis = [criarCarta('3', '♦'), criarCarta('6', '♦'), criarCarta('7', '♦')];
+    const decisor = new DecisorDeclaracaoBot(1, criarRng([0]));
+
+    await expect(decisor.declarar(criarEstado(mao, visiveis, 1), mao)).resolves.toBe(0);
+  });
 });
 
 describe('DecisorDeclaracaoBot com cartas reveladas', () => {
