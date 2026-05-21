@@ -70,7 +70,14 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
 
   private async decidirJogadaDeterministica(config: ConfigJogadaDeterministica): Promise<Carta | null> {
     if (!ehUltimoDaMesa(config.estadoAtual) || config.contexto.necessidade <= 0) return null;
-    return this.fria.decidirJogada(config.mao, config.estado);
+    const carta = await this.fria.decidirJogada(config.mao, config.estado);
+    return registrarEscolhaDireta({
+      logger: this.logger,
+      mao: config.mao,
+      estado: config.estado,
+      carta,
+      escolheuQuente: false,
+    });
   }
 }
 
