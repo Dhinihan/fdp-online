@@ -7,6 +7,11 @@ interface EscolhaDireta {
   mao: Carta[];
   estado: EstadoRodada;
   carta: Carta;
+  linhaFria?: Carta;
+  linhaQuente?: Carta;
+  motivoLinhaFria?: string;
+  motivoLinhaQuente?: string;
+  motivoSemBifurcacao?: string;
   escolheuQuente: boolean;
 }
 
@@ -24,8 +29,11 @@ export function registrarEscolhaDireta(config: EscolhaDireta): Carta {
   config.logger?.registrarJogada({
     mao: config.mao,
     estado: config.estado,
-    linhaFria: config.carta,
-    linhaQuente: config.carta,
+    linhaFria: config.linhaFria ?? config.carta,
+    linhaQuente: config.linhaQuente ?? config.carta,
+    motivoLinhaFria: config.motivoLinhaFria,
+    motivoLinhaQuente: config.motivoLinhaQuente,
+    motivoSemBifurcacao: config.motivoSemBifurcacao,
     carta: config.carta,
     escolheuQuente: config.escolheuQuente,
   });

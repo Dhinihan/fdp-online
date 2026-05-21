@@ -1,20 +1,20 @@
-import type { CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
-import { cartasEmpatam } from '@/core/comparador-carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import type { GeradorAleatorio } from '@/core/RngComSeed';
-import { estadoEmJogo, type EstadoEmJogo, type EstadoRodada, type MesaItem } from '@/types/estado-rodada';
-import {
-  calcularNecessidade,
-  criarContextoLinhaQuente,
-  ehUltimoDaMesa,
-  liderQuerVaza,
-  type ContextoJogadaQuente,
-} from './contextoLinhaQuente';
+import { estadoEmJogo, type EstadoEmJogo, type EstadoRodada } from '@/types/estado-rodada';
+import { criarContextoLinhaQuente, ehUltimoDaMesa, type ContextoJogadaQuente } from './contextoLinhaQuente';
 import { decidirUltimoLinhaQuente } from './decidirUltimoLinhaQuente';
 import { DecisorJogadaLinhaFria } from './DecisorJogadaLinhaFria';
 import type { LoggerDebugBot } from './logger-debug-bot';
 import { registrarBifurcacao, registrarEscolhaDireta } from './registrar-decisao-jogada-bot';
+import {
+  cartasIguais,
+  escolherEmpate,
+  escolherPressao,
+  escolherTravessia,
+  motivoSemBifurcacao,
+  podeBifurcar,
+} from './regras-linha-quente';
 
 interface ConfigLinhaQuente {
   temperatura: number;
@@ -45,143 +45,90 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
 
     const estadoAtual = estadoEmJogo(estado);
     const contexto = criarContextoLinhaQuente(estadoAtual, mao);
-    const deterministica = this.decidirJogadaDeterministica({ mao, estado, estadoAtual, contexto });
-    if (deterministica) return deterministica;
-
-    const empate = escolherEmpate(estadoAtual, contexto, this.liderAlta);
-    if (empate) {
-      return registrarEscolhaDireta({ logger: this.logger, mao, estado, carta: empate.carta, escolheuQuente: true });
-    }
-
-    const travessia = escolherTravessia(estadoAtual, contexto);
-    if (travessia) {
-      return registrarEscolhaDireta({ logger: this.logger, mao, estado, carta: travessia.carta, escolheuQuente: true });
-    }
-
     const fria = await this.fria.decidirJogada(mao, estado);
-    if (!podeBifurcar(estadoAtual, contexto, this.liderBaixa)) {
-      return registrarEscolhaDireta({ logger: this.logger, mao, estado, carta: fria, escolheuQuente: false });
+    const base = { mao, estado, estadoAtual, contexto, fria };
+
+    if (ehUltimoDaMesa(estadoAtual)) return this.decidirUltimaJogada(base);
+    return this.decidirAntesDoFim(base);
+  }
+
+  private decidirUltimaJogada(base: BaseJogada): Carta {
+    const carta = decidirUltimoLinhaQuente(base.estadoAtual, base.contexto);
+    return this.registrarSemBifurcacao(base, carta);
+  }
+
+  private decidirAntesDoFim(base: BaseJogada): Carta {
+    const direta = this.escolherQuenteDireta(base);
+    if (direta) return direta;
+
+    if (!podeBifurcar(base.estadoAtual, base.contexto, this.liderBaixa)) {
+      return this.registrarSemBifurcacao(base, base.fria);
     }
 
-    const quente = escolherPressao(contexto).carta;
+    const quente = escolherPressao(base.contexto).carta;
+    if (cartasIguais(base.fria, quente)) return this.registrarSemBifurcacao(base, quente);
+
     const sorteio = this.rng.random();
     return registrarBifurcacao({
       logger: this.logger,
       temperatura: this.temperatura,
-      mao,
-      estado,
-      fria,
+      mao: base.mao,
+      estado: base.estado,
+      fria: base.fria,
       quente,
       sorteio,
     });
   }
 
-  private decidirJogadaDeterministica(config: ConfigJogadaDeterministica): Carta | null {
-    if (!ehUltimoDaMesa(config.estadoAtual)) return null;
-    const carta = decidirUltimoLinhaQuente(config.estadoAtual, config.contexto);
+  private escolherQuenteDireta(base: BaseJogada): Carta | null {
+    const empate = escolherEmpate(base.contexto, this.liderAlta);
+    if (empate)
+      return this.registrarQuente(
+        base,
+        empate.carta,
+        'linha quente empatou: líder precisa fazer e carta do líder é alta+',
+      );
+
+    const travessia = escolherTravessia(base.estadoAtual, base.contexto);
+    if (!travessia) return null;
+    return this.registrarQuente(
+      base,
+      travessia.carta,
+      'linha quente atravessou: líder precisa fazer e carta do líder é alta+',
+    );
+  }
+
+  private registrarQuente(base: BaseJogada, carta: Carta, motivoLinhaQuente: string): Carta {
     return registrarEscolhaDireta({
       logger: this.logger,
-      mao: config.mao,
-      estado: config.estado,
+      mao: base.mao,
+      estado: base.estado,
       carta,
+      linhaFria: base.fria,
+      linhaQuente: carta,
+      motivoLinhaQuente,
+      escolheuQuente: true,
+    });
+  }
+
+  private registrarSemBifurcacao(base: BaseJogada, linhaQuente: Carta): Carta {
+    return registrarEscolhaDireta({
+      logger: this.logger,
+      mao: base.mao,
+      estado: base.estado,
+      carta: linhaQuente,
+      linhaFria: base.fria,
+      linhaQuente,
+      motivoSemBifurcacao: motivoSemBifurcacao(base.contexto),
       escolheuQuente: false,
     });
   }
 }
 
-interface ConfigJogadaDeterministica {
+interface BaseJogada {
   mao: Carta[];
   estado: EstadoRodada;
   estadoAtual: EstadoEmJogo;
   contexto: ContextoJogadaQuente;
-}
-
-function podeBifurcar(estado: EstadoEmJogo, contexto: ContextoJogadaQuente, liderBaixa: number): boolean {
-  return (
-    contexto.necessidade > 0 &&
-    contexto.vencedoras.length > 0 &&
-    mesaPodePunir(estado, contexto, liderBaixa) &&
-    temSegurancaParaDepois(contexto) &&
-    temPressaoAgora(contexto) &&
-    temAlvo(estado, contexto.jogadorId)
-  );
-}
-
-function mesaPodePunir(estado: EstadoEmJogo, contexto: ContextoJogadaQuente, liderBaixa: number): boolean {
-  return Boolean(
-    contexto.lider &&
-    contexto.lider.score <= liderBaixa &&
-    estado.mesa.some((item) => jogadorNaoQuerVaza(estado, item)),
-  );
-}
-
-function temSegurancaParaDepois(contexto: ContextoJogadaQuente): boolean {
-  return contexto.necessidade <= 1 && contexto.folga >= 1 && contexto.avaliadas.some(ehSeguraOuGarantida);
-}
-
-function temPressaoAgora(contexto: ContextoJogadaQuente): boolean {
-  return cartasDeFuga(contexto).length > 0 || vencedorasBaratasSemGarantida(contexto).length > 0;
-}
-
-function escolherPressao(contexto: ContextoJogadaQuente): CartaAvaliada {
-  const fuga = cartasDeFuga(contexto);
-  if (fuga.length > 0) return cartaMaisCara(fuga);
-  return cartaMaisBarata(vencedorasBaratasSemGarantida(contexto));
-}
-
-function escolherTravessia(estado: EstadoEmJogo, contexto: ContextoJogadaQuente): CartaAvaliada | null {
-  if (
-    contexto.necessidade <= 0 ||
-    contexto.folga > 1 ||
-    !liderQuerVaza(estado) ||
-    !temAlvo(estado, contexto.jogadorId)
-  ) {
-    return null;
-  }
-  const candidatas = contexto.vencedoras.filter((avaliada) => !ehGarantida(avaliada));
-  return candidatas.length > 0 ? cartaMaisBarata(candidatas) : null;
-}
-
-function escolherEmpate(estado: EstadoEmJogo, contexto: ContextoJogadaQuente, liderAlta: number): CartaAvaliada | null {
-  const lider = contexto.lider;
-  if (!lider || lider.score <= liderAlta) return null;
-  const empates = contexto.avaliadas.filter((avaliada) => cartasEmpatam(avaliada.carta, lider.carta, estado.manilha));
-  if (empates.length === 0) return null;
-  if (contexto.necessidade <= 0 || contexto.folga >= 2) return cartaMaisCara(empates);
-  return null;
-}
-
-function cartasDeFuga(contexto: ContextoJogadaQuente): CartaAvaliada[] {
-  return [...contexto.perdedoras, ...contexto.empates].filter((avaliada) => !ehSeguraOuGarantida(avaliada));
-}
-
-function vencedorasBaratasSemGarantida(contexto: ContextoJogadaQuente): CartaAvaliada[] {
-  const candidatas = contexto.vencedoras.filter((avaliada) => !ehGarantida(avaliada));
-  return candidatas.filter((carta) =>
-    contexto.avaliadas.some((avaliada) => avaliada !== carta && ehGarantida(avaliada)),
-  );
-}
-
-function temAlvo(estado: EstadoEmJogo, jogadorId: string): boolean {
-  return Object.keys(estado.declaracoes).some((id) => id !== jogadorId && calcularNecessidade(estado, id) > 0);
-}
-
-function jogadorNaoQuerVaza(estado: EstadoEmJogo, item: MesaItem): boolean {
-  return calcularNecessidade(estado, item.jogadorId) <= 0;
-}
-
-function ehSeguraOuGarantida(avaliada: CartaAvaliada): boolean {
-  return avaliada.categoria === 'segura' || avaliada.categoria === 'garantida_agora';
-}
-
-function ehGarantida(avaliada: CartaAvaliada): boolean {
-  return avaliada.categoria === 'garantida_agora';
-}
-
-function cartaMaisBarata(avaliadas: CartaAvaliada[]): CartaAvaliada {
-  return [...avaliadas].sort((a, b) => a.score - b.score)[0];
-}
-
-function cartaMaisCara(avaliadas: CartaAvaliada[]): CartaAvaliada {
-  return [...avaliadas].sort((a, b) => b.score - a.score)[0];
+  fria: Carta;
 }

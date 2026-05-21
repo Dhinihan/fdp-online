@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { DecisorJogadaLinhaFria } from '@/adapters/bots/DecisorJogadaLinhaFria';
 import { DecisorJogadaLinhaQuente } from '@/adapters/bots/DecisorJogadaLinhaQuente';
 import type { DecisaoJogadaDebug, LoggerDebugBot } from '@/adapters/bots/logger-debug-bot';
@@ -15,6 +15,7 @@ describe('DecisorJogadaLinhaQuente', () => {
   it('deve empatar quando já cumpriu, líder precisa e carta líder é alta', empataAltaCumprido);
   it('deve atravessar com carta barata quando precisa e tem folga baixa', atravessaComCartaBarata);
   it('deve convergir para linha fria quando não existe pressão agora', convergeSemPressao);
+  it('não deve sortear temperatura quando não há bifurcação', naoSorteiaSemBifurcacao);
   it('deve repetir a escolha com RNG determinístico', repeteEscolhaDeterministica);
 });
 
@@ -85,6 +86,16 @@ async function convergeSemPressao(): Promise<void> {
   const fria = new DecisorJogadaLinhaFria();
 
   await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(await fria.decidirJogada(mao, estado));
+}
+
+async function naoSorteiaSemBifurcacao(): Promise<void> {
+  const estado = criarEstado({ mesa: mesaComBaixa(), declaracoes: { j2: 1, bot: 1 }, vazas: { j2: 0, bot: 0 } });
+  const random = vi.fn(() => 0);
+  const bot = new DecisorJogadaLinhaQuente({ temperatura: 1, rng: { random }, liderBaixa: 8, liderAlta: 11 });
+
+  await bot.decidirJogada([criarCarta('A', '♦'), criarCarta('3', '♦')], estado);
+
+  expect(random).not.toHaveBeenCalled();
 }
 
 async function repeteEscolhaDeterministica(): Promise<void> {
