@@ -21,7 +21,7 @@ export interface ParametrosAvaliacaoCarta {
 export const parametrosAvaliacaoPadrao: ParametrosAvaliacaoCarta = {
   limiarBaixa: 5.6,
   limiarAlta: 11,
-  limiarSegura: 20,
+  limiarSegura: 12,
   pesoDensidade: 3,
   baseManilha: 14,
 };

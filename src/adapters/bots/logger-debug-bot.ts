@@ -10,12 +10,24 @@ export interface LoggerDebugBot {
 
 export interface DecisaoDeclaracaoDebug {
   mao: CartaAvaliada[];
-  seguras: number;
-  altas: number;
-  sorteouAlta: boolean;
-  defensivo: boolean;
+  segurasContadas: CartaAvaliada[];
+  altasCandidatas: CartaAvaliada[];
+  sorteiosAltas: SorteioAltaDebug[];
+  defensivo: DefensivoDebug;
   declaracao: number;
+  regraEspecialPrimeiraRodada: boolean;
 }
+
+export interface SorteioAltaDebug {
+  carta: CartaAvaliada;
+  conta: boolean;
+}
+
+export type DefensivoDebug =
+  | { estado: 'não elegível' }
+  | { estado: 'sorteou'; aplicaria: boolean }
+  | { estado: 'bloqueado'; base: number; teto: number; resultado: number; cartasPorRodada: number }
+  | { estado: 'aplicado' };
 
 export interface DecisaoJogadaDebug {
   estado: EstadoRodada;
@@ -41,6 +53,9 @@ export function criarLoggerDebugBot(nome: string, temperatura: number): LoggerDe
 function registrarDeclaracao(nome: string, temperatura: number, decisao: DecisaoDeclaracaoDebug): void {
   const prefixo = criarPrefixo(nome, temperatura);
   console.groupCollapsed(`${prefixo} — DECLARAÇÃO`);
+  if (decisao.regraEspecialPrimeiraRodada) {
+    console.log('Regra especial N=1: própria carta oculta não entrou no cálculo');
+  }
   console.log(`Mão: [${formatarAvaliadas(decisao.mao)}]`);
   console.log(formatarContagens(decisao));
   console.log(`→ Declarou: ${decisao.declaracao.toString()}`);
@@ -86,11 +101,25 @@ function formatarMesa(mesa: MesaItem[]): string {
 }
 
 function formatarContagens(decisao: DecisaoDeclaracaoDebug): string {
-  const seguras = decisao.seguras.toString();
-  const altas = decisao.altas.toString();
-  return `Seguras: ${seguras} | Altas consideradas: ${altas} (sorteou: ${simNao(
-    decisao.sorteouAlta,
-  )}) | +1 defensivo: ${simNao(decisao.defensivo)}`;
+  return [
+    `Seguras contadas: [${formatarAvaliadas(decisao.segurasContadas)}] (${decisao.segurasContadas.length.toString()})`,
+    `Altas candidatas: [${formatarAvaliadas(decisao.altasCandidatas)}] (${decisao.altasCandidatas.length.toString()})`,
+    formatarAltasSorteadas(decisao.sorteiosAltas),
+    `+1 defensivo: ${formatarDefensivo(decisao.defensivo)}`,
+  ].join(' | ');
+}
+
+function formatarAltasSorteadas(sorteios: SorteioAltaDebug[]): string {
+  const consideradas = sorteios.filter((sorteio) => sorteio.conta).map((sorteio) => sorteio.carta);
+  const porCarta = sorteios.map((sorteio) => `${formatarCarta(sorteio.carta.carta)} ${simNao(sorteio.conta)}`);
+  return `Altas consideradas: [${formatarAvaliadas(consideradas)}] (${consideradas.length.toString()}/${sorteios.length.toString()}) | Sorteios de altas: ${porCarta.join(', ')}`;
+}
+
+function formatarDefensivo(defensivo: DefensivoDebug): string {
+  if (defensivo.estado === 'não elegível') return defensivo.estado;
+  if (defensivo.estado === 'sorteou') return `sorteou: ${simNao(defensivo.aplicaria)}`;
+  if (defensivo.estado === 'aplicado') return defensivo.estado;
+  return `bloqueado (base=${defensivo.base.toString()}, teto=floor(${defensivo.cartasPorRodada.toString()}/2)=${defensivo.teto.toString()}, aplicar +1 resultaria em ${defensivo.resultado.toString()})`;
 }
 
 function formatarBifurcacao(sorteio: number | undefined): string {

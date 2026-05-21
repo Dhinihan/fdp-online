@@ -8,23 +8,43 @@ describe('avaliador-carta', () => {
 
     expect(avaliada.categoria).toBe('baixa');
   });
+});
 
-  it('deve classificar 3 de paus não-manilha como alta', () => {
-    const [avaliada] = avaliarCartas([criarCarta('3', '♣')], '4', [], 4);
+describe('avaliador-carta com seguras em rodadas pequenas', () => {
+  it('deve classificar 3 de paus não-manilha como segura em N=3 com 4 jogadores', () => {
+    const mao = [criarCarta('3', '♣'), criarCarta('K', '♦'), criarCarta('Q', '♦')];
 
-    expect(avaliada.categoria).toBe('alta');
-  });
-
-  it('deve classificar manilha de paus como segura', () => {
-    const [avaliada] = avaliarCartas([criarCarta('4', '♣')], '4', [], 4);
+    const [avaliada] = avaliarCartas(mao, '4', [], 4);
 
     expect(avaliada.categoria).toBe('segura');
   });
 
-  it('deve classificar manilha de ouros como alta', () => {
-    const [avaliada] = avaliarCartas([criarCarta('4', '♦')], '4', [], 4);
+  it('deve classificar 3 de paus não-manilha abaixo de segura em N=5 com 4 jogadores', () => {
+    const mao = [
+      criarCarta('3', '♣'),
+      criarCarta('K', '♦'),
+      criarCarta('Q', '♦'),
+      criarCarta('J', '♦'),
+      criarCarta('10', '♦'),
+    ];
+
+    const [avaliada] = avaliarCartas(mao, '4', [], 4);
 
     expect(avaliada.categoria).toBe('alta');
+  });
+
+  it('deve classificar 3 de paus não-manilha como segura em N=1', () => {
+    const [avaliada] = avaliarCartas([criarCarta('3', '♣')], '4', [], 4);
+
+    expect(avaliada.categoria).toBe('segura');
+  });
+
+  it('deve classificar todas as manilhas como seguras em N=3 com 4 jogadores', () => {
+    const mao = [criarCarta('4', '♣'), criarCarta('4', '♥'), criarCarta('4', '♠'), criarCarta('4', '♦')];
+
+    const avaliadas = avaliarCartas(mao, '4', [], 4);
+
+    expect(avaliadas.map((avaliada) => avaliada.categoria)).toEqual(['segura', 'segura', 'segura', 'segura']);
   });
 });
 
@@ -40,7 +60,7 @@ describe('avaliador-carta com ajustes', () => {
     );
 
     expect(semReveladas[0].categoria).toBe('média');
-    expect(comReveladas[0].categoria).toBe('alta');
+    expect(comReveladas[0].categoria).toBe('segura');
   });
 });
 
@@ -90,6 +110,10 @@ describe('avaliador-carta contextual', () => {
 });
 
 describe('parametrosAvaliacaoPadrao', () => {
+  it('deve usar limiar seguro base 12', () => {
+    expect(parametrosAvaliacaoPadrao.limiarSegura).toBe(12);
+  });
+
   it('deve exportar parâmetros padrão editáveis separadamente', () => {
     expect(typeof parametrosAvaliacaoPadrao.baseManilha).toBe('number');
     expect(typeof parametrosAvaliacaoPadrao.limiarAlta).toBe('number');

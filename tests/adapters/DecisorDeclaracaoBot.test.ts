@@ -5,7 +5,7 @@ import { RngComSeed, type GeradorAleatorio } from '@/core/RngComSeed';
 import type { EstadoRodada } from '@/types/estado-rodada';
 import { criarCarta, criarJogador } from '../core/rodada-fixtures';
 
-function criarEstado(mao: Carta[], cartasReveladas: Carta[] = []): EstadoRodada {
+function criarEstado(mao: Carta[], cartasReveladas: Carta[] = [], cartasPorRodada = mao.length): EstadoRodada {
   const jogador = criarJogador('bot1', 'Bot 1');
   return {
     fase: 'aguardandoDeclaracao',
@@ -17,7 +17,7 @@ function criarEstado(mao: Carta[], cartasReveladas: Carta[] = []): EstadoRodada 
       { jogador: criarJogador('bot3', 'Bot 3'), cartas: [], visivel: true },
       { jogador: criarJogador('bot4', 'Bot 4'), cartas: [], visivel: true },
     ],
-    cartasPorRodada: mao.length,
+    cartasPorRodada,
     manilha: '4',
     cartaVirada: null,
     declaracoes: {},
@@ -49,7 +49,7 @@ describe('DecisorDeclaracaoBot', () => {
   it('deve declarar apenas seguras para bot quente', async () => {
     const decisor = new DecisorDeclaracaoBot(1, criarRng([0, 0]));
 
-    await expect(decisor.declarar(criarEstado(maoForte), maoForte)).resolves.toBe(2);
+    await expect(decisor.declarar(criarEstado(maoForte), maoForte)).resolves.toBe(3);
   });
 
   it('deve produzir resultado determinístico com seed fixa', async () => {
@@ -61,6 +61,31 @@ describe('DecisorDeclaracaoBot', () => {
   });
 });
 
+describe('DecisorDeclaracaoBot na primeira rodada', () => {
+  it('deve ignorar carta própria forte oculta e declarar 1 sem altas visíveis', async () => {
+    const mao = [criarCarta('4', '♣')];
+    const decisor = new DecisorDeclaracaoBot(0, criarRng([0]));
+
+    await expect(decisor.declarar(criarEstado(mao, [], 1), mao)).resolves.toBe(1);
+  });
+
+  it('deve declarar 0 quando vê carta alta de outro jogador', async () => {
+    const mao = [criarCarta('5', '♦')];
+    const visiveis = [criarCarta('3', '♣')];
+    const decisor = new DecisorDeclaracaoBot(1, criarRng([0]));
+
+    await expect(decisor.declarar(criarEstado(mao, visiveis, 1), mao)).resolves.toBe(0);
+  });
+
+  it('deve declarar 1 quando não vê cartas altas de outros jogadores', async () => {
+    const mao = [criarCarta('5', '♦')];
+    const visiveis = [criarCarta('6', '♦')];
+    const decisor = new DecisorDeclaracaoBot(1, criarRng([0]));
+
+    await expect(decisor.declarar(criarEstado(mao, visiveis, 1), mao)).resolves.toBe(1);
+  });
+});
+
 describe('DecisorDeclaracaoBot com cartas reveladas', () => {
   it('não deve usar cartas visíveis da mão humana para declarar', async () => {
     const mao = [criarCarta('Q', '♣')];
@@ -68,18 +93,33 @@ describe('DecisorDeclaracaoBot com cartas reveladas', () => {
     const decisorComCartasHumanas = new DecisorDeclaracaoBot(0, criarRng([0]));
     const decisorSemCartasHumanas = new DecisorDeclaracaoBot(0, criarRng([0]));
 
-    await expect(decisorComCartasHumanas.declarar(criarEstado(mao, cartasHumanas), mao)).resolves.toBe(
-      await decisorSemCartasHumanas.declarar(criarEstado(mao), mao),
+    await expect(decisorComCartasHumanas.declarar(criarEstado(mao, cartasHumanas, 2), mao)).resolves.toBe(
+      await decisorSemCartasHumanas.declarar(criarEstado(mao, [], 2), mao),
     );
   });
 });
 
+describe('DecisorDeclaracaoBot com altas candidatas', () => {
+  it('deve sortear cada carta alta individualmente e respeitar o parcial', async () => {
+    const mao = [
+      criarCarta('3', '♣'),
+      criarCarta('3', '♥'),
+      criarCarta('3', '♠'),
+      criarCarta('3', '♦'),
+      criarCarta('6', '♦'),
+    ];
+    const decisor = new DecisorDeclaracaoBot(0.5, criarRng([0.1, 0.9, 0.2, 0.8, 0.9]));
+
+    await expect(decisor.declarar(criarEstado(mao), mao)).resolves.toBe(2);
+  });
+});
+
 describe('DecisorDeclaracaoBot com limites', () => {
-  it('deve somar um defensivo quando tem poucas baixas e declaração baixa', async () => {
+  it('deve bloquear defensivo quando N=2 passaria do teto', async () => {
     const mao = [criarCarta('3', '♣'), criarCarta('Q', '♣')];
     const decisor = new DecisorDeclaracaoBot(0, criarRng([0, 0]));
 
-    await expect(decisor.declarar(criarEstado(mao), mao)).resolves.toBe(2);
+    await expect(decisor.declarar(criarEstado(mao), mao)).resolves.toBe(1);
   });
 
   it('não deve exceder o número de cartas da rodada', async () => {
@@ -94,6 +134,36 @@ describe('DecisorDeclaracaoBot com limites', () => {
     const decisor = new DecisorDeclaracaoBot(1, criarRng([0]));
 
     await expect(decisor.declarar(criarEstado(mao), mao)).resolves.toBe(0);
+  });
+});
+
+describe('DecisorDeclaracaoBot com teto defensivo', () => {
+  it('não deve aplicar defensivo em N=1', async () => {
+    const mao = [criarCarta('6', '♦')];
+    const decisor = new DecisorDeclaracaoBot(0, criarRng([0]));
+
+    await expect(decisor.declarar(criarEstado(mao, [], 1), mao)).resolves.toBe(1);
+  });
+
+  it('deve bloquear defensivo em N=2 quando passaria do teto', async () => {
+    const mao = [criarCarta('3', '♣'), criarCarta('6', '♦')];
+    const decisor = new DecisorDeclaracaoBot(0, criarRng([0]));
+
+    await expect(decisor.declarar(criarEstado(mao), mao)).resolves.toBe(1);
+  });
+
+  it('deve bloquear defensivo em N=3 quando passaria do teto', async () => {
+    const mao = [criarCarta('3', '♣'), criarCarta('6', '♦'), criarCarta('7', '♦')];
+    const decisor = new DecisorDeclaracaoBot(0, criarRng([0]));
+
+    await expect(decisor.declarar(criarEstado(mao), mao)).resolves.toBe(1);
+  });
+
+  it('deve permitir defensivo em N=4 quando respeita o teto', async () => {
+    const mao = [criarCarta('3', '♣'), criarCarta('K', '♦'), criarCarta('Q', '♦'), criarCarta('J', '♦')];
+    const decisor = new DecisorDeclaracaoBot(0, criarRng([0]));
+
+    await expect(decisor.declarar(criarEstado(mao), mao)).resolves.toBe(2);
   });
 });
 
