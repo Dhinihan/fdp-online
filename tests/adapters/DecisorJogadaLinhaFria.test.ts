@@ -7,6 +7,12 @@ import { criarCarta, criarJogador } from '../core/rodada-fixtures';
 
 describe('DecisorJogadaLinhaFria', () => {
   it('deve fazer a vaza quando é o último, precisa fazer e tem carta que ganha', deveFazerVazaNoFim);
+  it('deve escolher G[N-X] quando precisa fazer e tem ganhadoras suficientes', deveEscolherGanhadoraPorNecessidade);
+  it('deve escolher a ganhadora mais fraca quando ganhadoras são escassas', deveEscolherGanhadoraEscassa);
+  it('deve escolher P[N-X] quando precisa fazer mas não consegue agora', deveEscolherPerdedoraPorNecessidade);
+  it('deve escolher a perdedora mais fraca quando todas são candidatas futuras', deveEscolherPerdedoraEscassa);
+  it('não deve tratar empate como carta que faz a vaza', deveRejeitarEmpateComoVitoria);
+  it('deve ordenar ganhadoras por força real com manilha e desempate por naipe', deveOrdenarPorForcaReal);
   it('deve jogar o menor prejuízo quando é o último, precisa fazer e não tem carta que ganha', deveJogarMenorPrejuizo);
   it('deve fugir com a carta alta que ainda perde quando já cumpriu', deveFugirComCartaAlta);
   it('deve fazer sem desperdiçar carta garantida quando ainda não é o último', devePreservarGarantida);
@@ -20,6 +26,65 @@ async function deveFazerVazaNoFim(): Promise<void> {
 
   await expect(bot.decidirJogada([criarCarta('4', '♦'), criarCarta('3', '♦')], estado)).resolves.toEqual(
     criarCarta('3', '♦'),
+  );
+}
+
+async function deveEscolherGanhadoraPorNecessidade(): Promise<void> {
+  const estado = criarEstado({ mesa: mesaComQuatro(), declaracoes: { bot: 2 }, vazas: { bot: 0 }, manilha: '6' });
+  const bot = new DecisorJogadaLinhaFria();
+
+  await expect(
+    bot.decidirJogada([criarCarta('5', '♦'), criarCarta('8', '♦'), criarCarta('K', '♦')], estado),
+  ).resolves.toEqual(criarCarta('8', '♦'));
+}
+
+async function deveEscolherGanhadoraEscassa(): Promise<void> {
+  const estado = criarEstado({ mesa: mesaComQuatro(), declaracoes: { bot: 4 }, vazas: { bot: 0 }, manilha: '6' });
+  const bot = new DecisorJogadaLinhaFria();
+
+  await expect(
+    bot.decidirJogada([criarCarta('5', '♦'), criarCarta('8', '♦'), criarCarta('K', '♦')], estado),
+  ).resolves.toEqual(criarCarta('5', '♦'));
+}
+
+async function deveEscolherPerdedoraPorNecessidade(): Promise<void> {
+  const estado = criarEstado({ mesa: mesaComK(), declaracoes: { bot: 2 }, vazas: { bot: 0 }, manilha: '5' });
+  const bot = new DecisorJogadaLinhaFria();
+
+  await expect(
+    bot.decidirJogada([criarCarta('4', '♦'), criarCarta('6', '♦'), criarCarta('9', '♦'), criarCarta('Q', '♦')], estado),
+  ).resolves.toEqual(criarCarta('9', '♦'));
+}
+
+async function deveEscolherPerdedoraEscassa(): Promise<void> {
+  const estado = criarEstado({ mesa: mesaComK(), declaracoes: { bot: 2 }, vazas: { bot: 0 }, manilha: '5' });
+  const bot = new DecisorJogadaLinhaFria();
+
+  await expect(bot.decidirJogada([criarCarta('4', '♦'), criarCarta('6', '♦')], estado)).resolves.toEqual(
+    criarCarta('4', '♦'),
+  );
+}
+
+async function deveRejeitarEmpateComoVitoria(): Promise<void> {
+  const estado = criarEstado({
+    mesa: [{ jogadorId: 'j1', carta: criarCarta('K', '♣') }],
+    declaracoes: { bot: 1 },
+    vazas: { bot: 0 },
+    manilha: '5',
+  });
+  const bot = new DecisorJogadaLinhaFria();
+
+  await expect(bot.decidirJogada([criarCarta('K', '♦'), criarCarta('A', '♦')], estado)).resolves.toEqual(
+    criarCarta('A', '♦'),
+  );
+}
+
+async function deveOrdenarPorForcaReal(): Promise<void> {
+  const estado = criarEstado({ mesa: mesaComK(), declaracoes: { bot: 1 }, vazas: { bot: 0 }, manilha: '5' });
+  const bot = new DecisorJogadaLinhaFria();
+
+  await expect(bot.decidirJogada([criarCarta('5', '♦'), criarCarta('5', '♣')], estado)).resolves.toEqual(
+    criarCarta('5', '♣'),
   );
 }
 
@@ -87,6 +152,14 @@ function mesaComK(): MesaItem[] {
     { jogadorId: 'j1', carta: criarCarta('K', '♣') },
     { jogadorId: 'j2', carta: criarCarta('7', '♥') },
     { jogadorId: 'j3', carta: criarCarta('8', '♠') },
+  ];
+}
+
+function mesaComQuatro(): MesaItem[] {
+  return [
+    { jogadorId: 'j1', carta: criarCarta('4', '♣') },
+    { jogadorId: 'j2', carta: criarCarta('4', '♥') },
+    { jogadorId: 'j3', carta: criarCarta('4', '♠') },
   ];
 }
 

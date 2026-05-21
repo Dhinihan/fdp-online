@@ -37,6 +37,9 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
 
     const estadoAtual = estadoEmJogo(estado);
     const contexto = criarContexto(estadoAtual, mao);
+    const deterministica = await this.decidirJogadaDeterministica({ mao, estado, estadoAtual, contexto });
+    if (deterministica) return deterministica;
+
     const empate = escolherEmpate(estadoAtual, contexto, this.liderAlta);
     if (empate) {
       return registrarEscolhaDireta({ logger: this.logger, mao, estado, carta: empate.carta, escolheuQuente: true });
@@ -64,6 +67,18 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
       sorteio,
     });
   }
+
+  private async decidirJogadaDeterministica(config: ConfigJogadaDeterministica): Promise<Carta | null> {
+    if (!ehUltimoDaMesa(config.estadoAtual) || config.contexto.necessidade <= 0) return null;
+    return this.fria.decidirJogada(config.mao, config.estado);
+  }
+}
+
+interface ConfigJogadaDeterministica {
+  mao: Carta[];
+  estado: EstadoRodada;
+  estadoAtual: EstadoEmJogo;
+  contexto: ContextoJogada;
 }
 
 interface ContextoJogada {
@@ -181,6 +196,10 @@ function temAlvo(estado: EstadoEmJogo, jogadorId: string): boolean {
 
 function jogadorNaoQuerVaza(estado: EstadoEmJogo, item: MesaItem): boolean {
   return calcularNecessidade(estado, item.jogadorId) <= 0;
+}
+
+function ehUltimoDaMesa(estado: EstadoEmJogo): boolean {
+  return estado.mesa.length === estado.maos.length - 1;
 }
 
 function calcularNecessidade(estado: EstadoEmJogo, jogadorId: string): number {

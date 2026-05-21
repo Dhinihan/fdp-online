@@ -22,7 +22,6 @@ async function deveDelegarReacao(): Promise<void> {
     mesa: [
       { jogadorId: 'j1', carta: criarCarta('4', '♣') },
       { jogadorId: 'j2', carta: criarCarta('4', '♥') },
-      { jogadorId: 'j3', carta: criarCarta('4', '♠') },
     ],
     declaracoes: { j1: 0, j2: 1, bot: 1 },
     vazas: { j1: 0, j2: 0, bot: 0 },
