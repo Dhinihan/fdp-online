@@ -77,6 +77,13 @@ describe('DecisorDeclaracaoBot na primeira rodada', () => {
     await expect(decisor.declarar(criarEstado(mao, visiveis, 1), mao)).resolves.toBe(0);
   });
 
+  it('deve considerar carta forte do humano mesmo quando a UI oculta sua mão', async () => {
+    const mao = [criarCarta('5', '♦')];
+    const decisor = new DecisorDeclaracaoBot(1, criarRng([0]));
+
+    await expect(decisor.declarar(criarEstadoComHumanoOculto(mao, [criarCarta('3', '♣')]), mao)).resolves.toBe(0);
+  });
+
   it('deve declarar 1 quando não vê cartas altas de outros jogadores', async () => {
     const mao = [criarCarta('5', '♦')];
     const visiveis = [criarCarta('6', '♦')];
@@ -184,4 +191,27 @@ function criarCartasHumanasVisiveis(): Carta[] {
     criarCarta('3', '♦'),
     criarCarta('2', '♣'),
   ];
+}
+
+function criarEstadoComHumanoOculto(mao: Carta[], cartasHumanas: Carta[]): EstadoRodada {
+  const jogador = criarJogador('bot1', 'Bot 1');
+  return {
+    fase: 'aguardandoDeclaracao',
+    jogadorAtual: 0,
+    pontos: { bot1: 5, humano: 5, bot3: 5, bot4: 5 },
+    maos: [
+      { jogador, cartas: mao, visivel: true },
+      { jogador: criarJogador('humano', 'Humano'), cartas: cartasHumanas, visivel: false },
+      { jogador: criarJogador('bot3', 'Bot 3'), cartas: [], visivel: true },
+      { jogador: criarJogador('bot4', 'Bot 4'), cartas: [], visivel: true },
+    ],
+    cartasPorRodada: 1,
+    manilha: '4',
+    cartaVirada: null,
+    declaracoes: {},
+    mesa: [],
+    cartasReveladas: [],
+    vazas: {},
+    turno: 0,
+  };
 }

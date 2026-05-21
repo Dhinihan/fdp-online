@@ -114,9 +114,7 @@ function ehCategoriaForte(categoria: CategoriaCarta): boolean {
 }
 
 function cartasVisiveisDosOutros(estado: EstadoEmJogo): Carta[] {
-  return estado.maos
-    .filter((mao, indice) => indice !== estado.jogadorAtual && mao.visivel)
-    .flatMap((mao) => mao.cartas);
+  return estado.maos.filter((_, indice) => indice !== estado.jogadorAtual).flatMap((mao) => mao.cartas);
 }
 
 function cartasPublicas(estado: EstadoRodada): Carta[] {
