@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { DecisorJogadaLinhaQuente } from '@/adapters/bots/DecisorJogadaLinhaQuente';
+import type { DecisaoJogadaDebug } from '@/adapters/bots/logger-debug-bot';
 import type { Carta } from '@/core/Carta';
 import type { Jogador } from '@/types/entidades';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
@@ -15,6 +16,8 @@ describe('DecisorJogadaLinhaQuente no fim da mesa', () => {
   it('deve fugir com a maior perdedora quando líder não precisa', fogeComMaiorPerdedora);
   it('deve empatar quando líder não precisa e só há empate como fuga', empataQuandoSoHaEmpate);
   it('deve jogar a carta mais forte quando todas fazem', jogaMaisForteSemFuga);
+  it('deve sortear por temperatura quando linha fria difere da quente', sorteiaQuandoLinhasDiferem);
+  it('deve registrar sem bifurcação quando linhas convergem', registraSemBifurcacaoQuandoConverge);
 });
 
 async function atravessaLiderAlta(): Promise<void> {
@@ -70,6 +73,43 @@ async function jogaMaisForteSemFuga(): Promise<void> {
   );
 }
 
+async function sorteiaQuandoLinhasDiferem(): Promise<void> {
+  const estado = criarEstado({ mesa: mesaComK(), declaracoes: { j1: 0, bot: 1 }, vazas: { j1: 0, bot: 0 } });
+  const random = vi.fn(() => 0);
+  const decisor = new DecisorJogadaLinhaQuente({ temperatura: 1, rng: { random }, liderBaixa: 8, liderAlta: 11 });
+
+  await expect(decisor.decidirJogada([criarCarta('Q', '♦'), criarCarta('A', '♦')], estado)).resolves.toEqual(
+    criarCarta('Q', '♦'),
+  );
+  expect(random).toHaveBeenCalledOnce();
+}
+
+async function registraSemBifurcacaoQuandoConverge(): Promise<void> {
+  const estado = criarEstado({ mesa: mesaComQuatro(), declaracoes: { j1: 1, bot: 2 }, vazas: { j1: 0, bot: 0 } });
+  const random = vi.fn(() => 0);
+  const jogadas: DecisaoJogadaDebug[] = [];
+  const decisor = new DecisorJogadaLinhaQuente({
+    temperatura: 1,
+    rng: { random },
+    liderBaixa: 8,
+    liderAlta: 11,
+    logger: {
+      registrarDeclaracao: () => undefined,
+      registrarJogada: (jogada) => jogadas.push(jogada),
+    },
+  });
+
+  await decisor.decidirJogada([criarCarta('6', '♦'), criarCarta('8', '♦'), criarCarta('K', '♦')], estado);
+
+  expect(random).not.toHaveBeenCalled();
+  expect(jogadas[0]).toMatchObject({
+    carta: criarCarta('8', '♦'),
+    linhaFria: criarCarta('8', '♦'),
+    linhaQuente: criarCarta('8', '♦'),
+    motivoSemBifurcacao: 'sem bifurcação: linhas fria e quente escolheram a mesma carta',
+  });
+}
+
 function jogarContraNove(estado: EstadoEmJogo): Promise<Carta> {
   const mao = [criarCarta('6', '♦'), criarCarta('Q', '♦'), criarCarta('A', '♦')];
   return bot().decidirJogada(mao, estado);
@@ -107,6 +147,14 @@ function mesaComDois(): MesaItem[] {
     { jogadorId: 'j1', carta: criarCarta('2', '♣') },
     { jogadorId: 'j2', carta: criarCarta('7', '♥') },
     { jogadorId: 'j3', carta: criarCarta('8', '♠') },
+  ];
+}
+
+function mesaComQuatro(): MesaItem[] {
+  return [
+    { jogadorId: 'j1', carta: criarCarta('4', '♣') },
+    { jogadorId: 'j2', carta: criarCarta('4', '♥') },
+    { jogadorId: 'j3', carta: criarCarta('4', '♠') },
   ];
 }
 

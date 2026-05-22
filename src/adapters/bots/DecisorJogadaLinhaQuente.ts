@@ -13,8 +13,8 @@ import {
   escolherPressao,
   escolherTravessia,
   MOTIVO_SEM_BIFURCACAO_CARTAS_IGUAIS,
+  MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS,
   MOTIVO_SEM_BIFURCACAO_NAO_PODE,
-  MOTIVO_SEM_BIFURCACAO_ULTIMO,
   podeBifurcar,
 } from './regras-linha-quente';
 
@@ -55,8 +55,8 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
   }
 
   private decidirUltimaJogada(base: BaseJogada): Carta {
-    const carta = decidirUltimoLinhaQuente(base.estadoAtual, base.contexto);
-    return this.registrarSemBifurcacao(base, carta, MOTIVO_SEM_BIFURCACAO_ULTIMO);
+    const quente = decidirUltimoLinhaQuente(base.estadoAtual, base.contexto);
+    return this.resolverBifurcacao(base, quente, MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS);
   }
 
   private decidirAntesDoFim(base: BaseJogada): Carta {
@@ -68,8 +68,12 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
     }
 
     const quente = escolherPressao(base.contexto).carta;
+    return this.resolverBifurcacao(base, quente, MOTIVO_SEM_BIFURCACAO_CARTAS_IGUAIS);
+  }
+
+  private resolverBifurcacao(base: BaseJogada, quente: Carta, motivoSemBifurcacao: string): Carta {
     if (cartasIguais(base.fria, quente)) {
-      return this.registrarSemBifurcacao(base, quente, MOTIVO_SEM_BIFURCACAO_CARTAS_IGUAIS);
+      return this.registrarSemBifurcacao(base, quente, motivoSemBifurcacao);
     }
 
     const sorteio = this.rng.random();
