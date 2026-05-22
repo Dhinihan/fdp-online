@@ -13,8 +13,8 @@ import {
   escolherPressao,
   escolherTravessia,
   MOTIVO_SEM_BIFURCACAO_CARTAS_IGUAIS,
+  MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS,
   MOTIVO_SEM_BIFURCACAO_NAO_PODE,
-  MOTIVO_SEM_BIFURCACAO_ULTIMO,
   podeBifurcar,
 } from './regras-linha-quente';
 
@@ -55,8 +55,21 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
   }
 
   private decidirUltimaJogada(base: BaseJogada): Carta {
-    const carta = decidirUltimoLinhaQuente(base.estadoAtual, base.contexto);
-    return this.registrarSemBifurcacao(base, carta, MOTIVO_SEM_BIFURCACAO_ULTIMO);
+    const quente = decidirUltimoLinhaQuente(base.estadoAtual, base.contexto);
+    if (cartasIguais(base.fria, quente)) {
+      return this.registrarSemBifurcacao(base, quente, MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS);
+    }
+
+    const sorteio = this.rng.random();
+    return registrarBifurcacao({
+      logger: this.logger,
+      temperatura: this.temperatura,
+      mao: base.mao,
+      estado: base.estado,
+      fria: base.fria,
+      quente,
+      sorteio,
+    });
   }
 
   private decidirAntesDoFim(base: BaseJogada): Carta {

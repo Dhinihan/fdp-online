@@ -17,8 +17,8 @@ export function podeBifurcar(estado: EstadoEmJogo, contexto: ContextoJogadaQuent
 export const MOTIVO_SEM_BIFURCACAO_URGENCIA = 'sem bifurcação: ambas fazem porque urgência >= 0.66';
 export const MOTIVO_SEM_BIFURCACAO_FUGA_IMPOSSIVEL = 'sem bifurcação: fuga impossível';
 export const MOTIVO_SEM_BIFURCACAO_CARTAS_IGUAIS = 'sem bifurcação: ambas não querem fazer e escolheram a mesma carta';
+export const MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS = 'sem bifurcação: linhas fria e quente escolheram a mesma carta';
 export const MOTIVO_SEM_BIFURCACAO_NAO_PODE = 'sem bifurcação: não há condições para bifurcar';
-export const MOTIVO_SEM_BIFURCACAO_ULTIMO = 'sem bifurcação: último da mesa';
 
 export function cartasIguais(a: Carta, b: Carta): boolean {
   return a.valor === b.valor && a.naipe === b.naipe;
