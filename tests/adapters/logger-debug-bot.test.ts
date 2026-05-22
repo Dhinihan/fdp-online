@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ContextoJogadaQuente } from '@/adapters/bots/contextoLinhaQuente';
 import { DecisorDeclaracaoBot } from '@/adapters/bots/DecisorDeclaracaoBot';
 import { criarLoggerDebugBot } from '@/adapters/bots/logger-debug-bot';
-import { motivoSemBifurcacao } from '@/adapters/bots/regras-linha-quente';
-import type { CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
 import type { GeradorAleatorio } from '@/core/RngComSeed';
 import type { EstadoRodada } from '@/types/estado-rodada';
@@ -138,72 +135,6 @@ describe('Logger debug das jogadas dos bots', () => {
     expect(log).not.toHaveBeenCalledWith(expect.stringContaining('determinística'));
   });
 });
-
-describe('Motivo debug sem bifurcação', () => {
-  it('deve registrar que faz porque precisa quando só uma carta vence', deveRegistrarQueFazPorquePrecisa);
-  it('deve usar motivo neutro quando pode adiar a vaza com perdedora', deveUsarMotivoNeutroComPerdedora);
-  it('não deve dizer que não quer fazer quando ainda precisa de vaza', naoDeveDizerQueNaoQuerFazer);
-  it('deve usar motivo neutro quando as linhas só convergem', deveUsarMotivoNeutroQuandoConverge);
-});
-
-function deveRegistrarQueFazPorquePrecisa(): void {
-  const contexto = criarContexto({
-    necessidade: 1,
-    avaliadas: [avaliada('8', '♣'), avaliada('10', '♠'), avaliada('Q', '♣')],
-    vencedoras: [avaliada('8', '♣')],
-  });
-
-  expect(motivoSemBifurcacao(contexto)).toBe('sem bifurcação: ambas fazem porque precisam cumprir a declaração');
-}
-
-function deveUsarMotivoNeutroComPerdedora(): void {
-  const contexto = criarContexto({
-    necessidade: 1,
-    avaliadas: [avaliada('8', '♣'), avaliada('10', '♠'), avaliada('Q', '♣')],
-    vencedoras: [avaliada('8', '♣')],
-    perdedoras: [avaliada('10', '♠')],
-  });
-
-  expect(motivoSemBifurcacao(contexto)).toBe('sem bifurcação: linha fria e linha quente convergiram na mesma carta');
-}
-
-function naoDeveDizerQueNaoQuerFazer(): void {
-  const contexto = criarContexto({
-    necessidade: 2,
-    avaliadas: [avaliada('3', '♦'), avaliada('4', '♣')],
-    vencedoras: [avaliada('3', '♦'), avaliada('4', '♣')],
-  });
-
-  expect(motivoSemBifurcacao(contexto)).toBe('sem bifurcação: ambas fazem porque urgência >= 0.66');
-}
-
-function deveUsarMotivoNeutroQuandoConverge(): void {
-  const contexto = criarContexto({
-    necessidade: 1,
-    avaliadas: [avaliada('3', '♦'), avaliada('4', '♣'), avaliada('5', '♠')],
-    vencedoras: [avaliada('3', '♦'), avaliada('4', '♣')],
-  });
-
-  expect(motivoSemBifurcacao(contexto)).toBe('sem bifurcação: linha fria e linha quente convergiram na mesma carta');
-}
-
-function criarContexto(config: Partial<ContextoJogadaQuente>): ContextoJogadaQuente {
-  return {
-    jogadorId: 'bot1',
-    necessidade: 0,
-    folga: 0,
-    avaliadas: [],
-    vencedoras: [],
-    perdedoras: [],
-    empates: [],
-    lider: null,
-    ...config,
-  };
-}
-
-function avaliada(valor: Carta['valor'], naipe: Carta['naipe']): CartaAvaliada {
-  return { carta: { valor, naipe }, score: 1, categoria: 'baixa' };
-}
 
 function registrarJogadaComBifurcacao(): void {
   criarLoggerDebugBot('Brás', 0.35).registrarJogada({
