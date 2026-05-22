@@ -30,7 +30,6 @@ export class DecisorJogadaLinhaFria implements DecisorJogada {
 
   private fugir(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): Carta {
     const perdedoras = cartasQuePerdem(estado, avaliadas);
-    if (ehUltimoDaMesa(estado)) return fugirNoFimDaMesa(estado, perdedoras, avaliadas);
     if (perdedoras.length === 0) return cartaMaisBarata(avaliadas).carta;
     return cartaMaisCara(perdedoras).carta;
   }
@@ -121,11 +120,6 @@ function escolherPerdedora(avaliadas: CartaAvaliada[], manilha: Carta['valor'], 
 
 function ordenarPorForcaReal(avaliadas: CartaAvaliada[], manilha: Carta['valor']): CartaAvaliada[] {
   return [...avaliadas].sort((a, b) => compararForcaReal(a.carta, b.carta, manilha));
-}
-
-function fugirNoFimDaMesa(estado: EstadoEmJogo, perdedoras: CartaAvaliada[], avaliadas: CartaAvaliada[]): Carta {
-  if (perdedoras.length > 0) return cartaMaisForte(perdedoras, estado.manilha).carta;
-  return cartaMaisForte(avaliadas, estado.manilha).carta;
 }
 
 function cartaMaisForte(avaliadas: CartaAvaliada[], manilha: Carta['valor']): CartaAvaliada {
