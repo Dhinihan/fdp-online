@@ -29,17 +29,17 @@ export class DecisorJogadaLinhaFria implements DecisorJogada {
   }
 
   private fugir(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): Carta {
-    const perdedoras = cartasQuePerdem(estado, avaliadas);
-    if (perdedoras.length === 0) return cartaMaisBarata(avaliadas).carta;
-    return cartaMaisCara(perdedoras).carta;
+    const naoFazem = cartasQueNaoFazem(estado, avaliadas);
+    if (naoFazem.length === 0) return cartaMaisBarata(avaliadas).carta;
+    return cartaMaisCara(naoFazem).carta;
   }
 
   private buscarVaza(estado: EstadoEmJogo, avaliadas: CartaAvaliada[], necessidade: number): Carta {
     const vencedoras = cartasQueVencem(estado, avaliadas);
     if (vencedoras.length > 0) return escolherGanhadora(vencedoras, estado.manilha, necessidade).carta;
 
-    const perdedoras = cartasQuePerdem(estado, avaliadas);
-    if (perdedoras.length > 0) return escolherPerdedora(perdedoras, estado.manilha, necessidade).carta;
+    const naoFazem = cartasQueNaoFazem(estado, avaliadas);
+    if (naoFazem.length > 0) return escolherPerdedora(naoFazem, estado.manilha, necessidade).carta;
     return cartaMaisBarata(avaliadas).carta;
   }
 }
@@ -91,14 +91,10 @@ function cartasQueVencem(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): Cart
   return avaliadas.filter((avaliada) => cartaVence(avaliada.carta, melhor, estado.manilha));
 }
 
-function cartasQuePerdem(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): CartaAvaliada[] {
+function cartasQueNaoFazem(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): CartaAvaliada[] {
   const melhor = melhorCartaMesa(estado.mesa, estado.manilha);
   if (!melhor) return [];
   return avaliadas.filter((avaliada) => !cartaVence(avaliada.carta, melhor, estado.manilha));
-}
-
-function cartasQueNaoFazem(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): CartaAvaliada[] {
-  return cartasQuePerdem(estado, avaliadas);
 }
 
 function melhorCartaMesa(mesa: MesaItem[], manilha: Carta['valor']): Carta | null {
