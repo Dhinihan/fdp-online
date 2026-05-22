@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DecisorDeclaracaoBot } from '@/adapters/bots/DecisorDeclaracaoBot';
 import { criarLoggerDebugBot } from '@/adapters/bots/logger-debug-bot';
+
 import type { Carta } from '@/core/Carta';
 import type { GeradorAleatorio } from '@/core/RngComSeed';
 import type { EstadoRodada } from '@/types/estado-rodada';
@@ -135,6 +136,8 @@ describe('Logger debug das jogadas dos bots', () => {
     expect(log).not.toHaveBeenCalledWith(expect.stringContaining('determinística'));
   });
 });
+
+
 
 function registrarJogadaComBifurcacao(): void {
   criarLoggerDebugBot('Brás', 0.35).registrarJogada({
