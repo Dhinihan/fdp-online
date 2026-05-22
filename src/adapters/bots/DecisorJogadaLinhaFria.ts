@@ -5,6 +5,11 @@ import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { estadoEmJogo, type EstadoEmJogo, type MesaItem, type EstadoRodada } from '@/types/estado-rodada';
 import { decidirAbertura } from './decidirAbertura';
 
+export interface DecisaoLinhaFria {
+  carta: Carta;
+  motivo: string;
+}
+
 export class DecisorJogadaLinhaFria implements DecisorJogada {
   decidirJogada(mao: Carta[], estado: EstadoRodada): Promise<Carta> {
     if (mao.length === 0) return Promise.reject(new Error('Mão vazia'));
@@ -18,6 +23,7 @@ export class DecisorJogadaLinhaFria implements DecisorJogada {
     const jogadorId = estadoAtual.maos[estadoAtual.jogadorAtual].jogador.id;
     const necessidade = calcularNecessidade(estadoAtual, jogadorId);
 
+    if (ehUltimoDaMesa(estadoAtual)) return Promise.resolve(decidirUltimoLinhaFria(mao, estadoAtual).carta);
     if (necessidade <= 0) return Promise.resolve(this.fugir(estadoAtual, avaliadas));
     return Promise.resolve(this.buscarVaza(estadoAtual, avaliadas, necessidade));
   }
@@ -39,6 +45,43 @@ export class DecisorJogadaLinhaFria implements DecisorJogada {
   }
 }
 
+export function decidirUltimoLinhaFria(mao: Carta[], estado: EstadoEmJogo): DecisaoLinhaFria {
+  const avaliadas = avaliarCartas(mao, estado.manilha, estado.cartasReveladas, estado.maos.length);
+  const jogadorId = estado.maos[estado.jogadorAtual].jogador.id;
+  const necessidade = calcularNecessidade(estado, jogadorId);
+
+  if (necessidade > 0) return decidirUltimoQuandoPrecisaFazer(estado, avaliadas, necessidade);
+  return decidirUltimoQuandoJaCumpriu(estado, avaliadas);
+}
+
+function decidirUltimoQuandoPrecisaFazer(
+  estado: EstadoEmJogo,
+  avaliadas: CartaAvaliada[],
+  necessidade: number,
+): DecisaoLinhaFria {
+  const vencedoras = cartasQueVencem(estado, avaliadas);
+  if (vencedoras.length > 0) {
+    return {
+      carta: escolherGanhadora(vencedoras, estado.manilha, necessidade).carta,
+      motivo: 'precisa fazer; regra G[N-X]',
+    };
+  }
+
+  return {
+    carta: escolherPerdedora(cartasQueNaoFazem(estado, avaliadas), estado.manilha, necessidade).carta,
+    motivo: 'precisa fazer sem carta que vence; regra P[N-X]',
+  };
+}
+
+function decidirUltimoQuandoJaCumpriu(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): DecisaoLinhaFria {
+  const naoFazem = cartasQueNaoFazem(estado, avaliadas);
+  if (naoFazem.length > 0) {
+    return { carta: cartaMaisForte(naoFazem, estado.manilha).carta, motivo: 'já cumpriu; carta mais alta que não faz' };
+  }
+
+  return { carta: cartaMaisForte(avaliadas, estado.manilha).carta, motivo: 'já cumpriu; fuga impossível' };
+}
+
 function calcularNecessidade(estado: EstadoEmJogo, jogadorId: string): number {
   return (estado.declaracoes[jogadorId] ?? 0) - (estado.vazas[jogadorId] ?? 0);
 }
@@ -53,6 +96,10 @@ function cartasQuePerdem(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): Cart
   const melhor = melhorCartaMesa(estado.mesa, estado.manilha);
   if (!melhor) return [];
   return avaliadas.filter((avaliada) => !cartaVence(avaliada.carta, melhor, estado.manilha));
+}
+
+function cartasQueNaoFazem(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): CartaAvaliada[] {
+  return cartasQuePerdem(estado, avaliadas);
 }
 
 function melhorCartaMesa(mesa: MesaItem[], manilha: Carta['valor']): Carta | null {
