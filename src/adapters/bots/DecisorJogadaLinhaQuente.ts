@@ -56,20 +56,7 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
 
   private decidirUltimaJogada(base: BaseJogada): Carta {
     const quente = decidirUltimoLinhaQuente(base.estadoAtual, base.contexto);
-    if (cartasIguais(base.fria, quente)) {
-      return this.registrarSemBifurcacao(base, quente, MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS);
-    }
-
-    const sorteio = this.rng.random();
-    return registrarBifurcacao({
-      logger: this.logger,
-      temperatura: this.temperatura,
-      mao: base.mao,
-      estado: base.estado,
-      fria: base.fria,
-      quente,
-      sorteio,
-    });
+    return this.resolverBifurcacao(base, quente, MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS);
   }
 
   private decidirAntesDoFim(base: BaseJogada): Carta {
@@ -81,8 +68,12 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
     }
 
     const quente = escolherPressao(base.contexto).carta;
+    return this.resolverBifurcacao(base, quente, MOTIVO_SEM_BIFURCACAO_CARTAS_IGUAIS);
+  }
+
+  private resolverBifurcacao(base: BaseJogada, quente: Carta, motivoSemBifurcacao: string): Carta {
     if (cartasIguais(base.fria, quente)) {
-      return this.registrarSemBifurcacao(base, quente, MOTIVO_SEM_BIFURCACAO_CARTAS_IGUAIS);
+      return this.registrarSemBifurcacao(base, quente, motivoSemBifurcacao);
     }
 
     const sorteio = this.rng.random();
