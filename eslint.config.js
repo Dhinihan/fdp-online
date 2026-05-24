@@ -6,32 +6,23 @@ import * as ts from 'typescript-eslint';
 
 export default defineConfig(
   {
-    ignores: ['dist/**', 'node_modules/**', 'public/**', 'coverage/**', '.pi/**', '.sandcastle/worktrees/**'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'public/**',
+      'coverage/**',
+      '.pi/**',
+      '.sandcastle/worktrees/**',
+      'eslint.config.js',
+      'playwright.config.js',
+    ],
   },
   ts.configs.strictTypeChecked,
-  {
-    files: ['eslint.config.js'],
-    rules: {
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-deprecated': 'off',
-    },
-  },
   {
     languageOptions: {
       globals: { ...globals.browser },
       parserOptions: {
-        projectService: {
-          allowDefaultProject: [
-            '*.config.js',
-            'tests/*.test.ts',
-            'tests/core/*.test.ts',
-            'tests/core/*.ts',
-            'tests/adapters/*.test.ts',
-            'tests/e2e/*.spec.ts',
-          ],
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 32,
-          noWarnOnMultipleProjects: true,
-        },
+        project: ['./tsconfig.json', './tsconfig.tests.json', './.sandcastle/tsconfig.json'],
         tsconfigRootDir: import.meta.dirname,
       },
     },
