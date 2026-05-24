@@ -12,7 +12,6 @@ export default defineConfig({
   webServer: {
     command: 'pnpm dev',
     url: 'http://localhost:5173',
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     reuseExistingServer: !process.env.CI,
   },
   expect: {
