@@ -1,0 +1,295 @@
+# Arvores de Decisao dos Bots
+
+> Documento canonico da estrategia explicavel de jogada dos bots.
+> Este documento descreve a arvore pretendida para **Jogada**. Declaracao aparece apenas como contrato auxiliar de debug.
+
+## Objetivo
+
+Definir uma arvore de decisao legivel para os bots do FDP, de modo que cada jogada possa ser explicada por um caminho claro no debug.
+
+A estrategia de Jogada tem duas linhas:
+
+- **Linha fria:** estrategia conservadora e deterministica.
+- **Linha quente:** estrategia mais agressiva, que pode preservar forca, atravessar adversarios ou pressionar a mesa.
+
+Quando as linhas escolhem cartas diferentes, a **temperatura** decide apenas a chance de usar a Linha quente. A temperatura nao muda a arvore base.
+
+## Conceitos
+
+- **Necessidade:** `declarado - feito`. Se for `<= 0`, o bot ja cumpriu a declaracao e nao quer fazer a vaza.
+- **Folga:** `cartasNaMao - necessidade`.
+- **Urgencia:** `necessidade / cartasNaMao`.
+- **Urgencia alta:** `urgencia >= 0.66`.
+- **Lider:** jogador que esta vencendo a mesa no momento.
+- **Jogadores por agir:** jogadores que ainda jogarao carta depois do bot no turno atual.
+- **Vencedoras:** cartas da mao que vencem a carta lider atual.
+- **Perdedoras:** cartas da mao que perdem para a carta lider atual.
+- **Empates:** cartas da mao que empatam com a carta lider atual. Empate nao conta como fazer a vaza.
+- **Escolha de vencedora por necessidade:** entre as vencedoras, ordenadas da mais fraca para a mais forte, escolher a carta que preserva forca proporcionalmente ao quanto ainda falta fazer.
+- **Descarte por necessidade:** entre as cartas que nao fazem a vaza, ordenadas da mais fraca para a mais forte, descartar preservando forca proporcionalmente ao quanto ainda falta fazer.
+
+## Regras Globais de Jogada
+
+A primeira bifurcacao da Jogada e sempre a posicao na mesa:
+
+```text
+se mesa esta vazia:
+  seguir arvore "abre a mesa"
+senao se jogadoresPorAgir == 0:
+  seguir arvore "fecha a mesa"
+senao:
+  seguir arvore "joga no meio"
+```
+
+A resolucao final entre Linha fria e Linha quente e:
+
+```text
+fria = decidirLinhaFria(...)
+quente = decidirLinhaQuente(...)
+
+se fria.carta == quente.carta:
+  jogar fria.carta
+  registrar que nao houve sorteio por temperatura
+senao:
+  sorteio = rng.random()
+  se sorteio < temperatura:
+    jogar quente.carta
+  senao:
+    jogar fria.carta
+```
+
+As funcoes de escolha por necessidade usam a ordenacao real da carta, considerando manilha e desempate por naipe.
+
+```text
+escolherVencedoraPorNecessidade(vencedoras, necessidade):
+  ordenadas = vencedoras da mais fraca para a mais forte
+  indice = se ordenadas.length >= necessidade:
+    ordenadas.length - necessidade
+  senao:
+    0
+  retornar ordenadas[indice]
+
+descartePorNecessidade(candidatas, necessidade):
+  ordenadas = candidatas da mais fraca para a mais forte
+  indice = se ordenadas.length > necessidade:
+    ordenadas.length - necessidade
+  senao:
+    0
+  retornar ordenadas[indice]
+```
+
+## Arvore: Abre a Mesa
+
+Ao abrir a mesa nao existe carta lider. A decisao e feita pela classificacao da mao.
+
+```text
+se necessidade <= 0:
+  escolher a carta mais barata na primeira categoria disponivel:
+    baixa, media, alta, segura, garantida_agora
+
+senao se urgencia alta:
+  escolher a carta mais barata na primeira categoria disponivel:
+    alta, media, segura, baixa, garantida_agora
+
+senao:
+  escolher a carta mais barata na primeira categoria disponivel:
+    baixa, media, alta, segura, garantida_agora
+```
+
+Linha quente, na abertura, nao cria um ramo diferente por si so. Se uma futura regra de abertura quente existir, ela ainda deve passar pela resolucao por temperatura quando divergir da Linha fria.
+
+## Arvore: Joga no Meio
+
+Esta arvore vale quando ja existe carta na mesa e ainda ha pelo menos um jogador por agir depois do bot.
+
+### Guarda de Posicao
+
+Antes de tentar fazer a vaza, a estrategia avalia o risco posicional.
+
+```text
+se jogadoresPorAgir == 1:
+  se o jogador por agir ainda precisa fazer:
+    Linha fria so pode tentar fazer se:
+      existe vencedora garantida_agora
+      ou urgencia alta
+    Linha quente pode tentar fazer se:
+      urgencia alta
+      ou pode atravessar lider que quer fazer e jogou carta alta+
+  senao:
+    pode tentar fazer normalmente
+
+se jogadoresPorAgir >= 2:
+  se todos os jogadores por agir ja cumpriram:
+    pode tentar fazer normalmente
+  senao:
+    so pode tentar fazer se urgencia alta
+```
+
+### Linha Fria no Meio
+
+```text
+se necessidade <= 0:
+  candidatas = cartas que nao fazem a vaza
+  se candidatas nao esta vazio:
+    jogar a carta mais alta entre candidatas
+  senao:
+    jogar a carta mais barata da mao
+
+senao:
+  se guarda de posicao nao permite tentar fazer:
+    candidatas = cartas que nao fazem a vaza
+    se candidatas nao esta vazio:
+      jogar descartePorNecessidade(candidatas, necessidade)
+    senao:
+      jogar a carta mais barata da mao
+
+  senao se vencedoras nao esta vazio:
+    jogar escolherVencedoraPorNecessidade(vencedoras, necessidade)
+
+  senao:
+    candidatas = cartas que nao fazem a vaza
+    se candidatas nao esta vazio:
+      jogar descartePorNecessidade(candidatas, necessidade)
+    senao:
+      jogar a carta mais barata da mao
+```
+
+### Linha Quente no Meio
+
+A Linha quente parte da mesma leitura de necessidade e posicao, mas pode recomendar uma carta diferente quando existe valor estrategico em pressionar, atravessar ou preservar forca.
+
+```text
+se necessidade <= 0:
+  se lider e alta+ e existe empate:
+    recomendar o empate mais caro
+  senao:
+    seguir Linha fria
+
+senao se pode atravessar:
+  recomendar a vencedora mais barata que nao seja garantida_agora
+
+senao se pode pressionar e esperar:
+  se existe carta de fuga que nao e segura nem garantida_agora:
+    recomendar a fuga mais cara
+  senao:
+    recomendar a vencedora mais barata que nao seja garantida_agora,
+    preservando uma garantida_agora para depois
+
+senao:
+  seguir Linha fria
+```
+
+`pode atravessar` significa:
+
+```text
+necessidade > 0
+e folga <= 1
+e lider ainda precisa fazer
+e lider jogou carta alta+
+e existe alvo na mesa ou por agir que ainda precisa fazer
+e existe vencedora que nao seja garantida_agora
+```
+
+`pode pressionar e esperar` significa:
+
+```text
+necessidade > 0
+e existe vencedora
+e a mesa pode punir
+e existe seguranca para depois
+e existe pressao agora
+e existe alvo que ainda precisa fazer
+```
+
+`mesa pode punir` considera jogadores que ja jogaram e jogadores por agir. Um jogador pode punir quando ainda precisa fazer.
+
+`existe seguranca para depois` significa que a necessidade e baixa o bastante para adiar a tentativa e ainda ha carta segura ou garantida na mao para sustentar os turnos seguintes.
+
+## Arvore: Fecha a Mesa
+
+Esta arvore vale quando `jogadoresPorAgir == 0`. Como ninguem joga depois do bot, a decisao e mais deterministica.
+
+### Linha Fria Fechando
+
+```text
+se necessidade > 0:
+  se vencedoras nao esta vazio:
+    jogar escolherVencedoraPorNecessidade(vencedoras, necessidade)
+  senao:
+    jogar descartePorNecessidade(perdedoras + empates, necessidade)
+
+senao:
+  candidatas = perdedoras + empates
+  se candidatas nao esta vazio:
+    jogar a carta mais forte entre candidatas
+  senao:
+    jogar a carta mais forte da mao
+```
+
+### Linha Quente Fechando
+
+```text
+se necessidade > 0:
+  se vencedoras esta vazio:
+    jogar descartePorNecessidade(perdedoras + empates, necessidade)
+
+  senao se deve fazer agora:
+    jogar escolherVencedoraPorNecessidade(vencedoras, necessidade)
+
+  senao se perdedoras nao esta vazio:
+    jogar descartePorNecessidade(perdedoras, necessidade)
+
+  senao:
+    jogar escolherVencedoraPorNecessidade(vencedoras, necessidade)
+
+senao:
+  se lider ainda precisa fazer e lider e alta+ e empates nao esta vazio:
+    jogar o empate mais forte
+  senao se perdedoras nao esta vazio:
+    jogar a perdedora mais forte
+  senao se empates nao esta vazio:
+    jogar o empate mais forte
+  senao:
+    jogar a carta mais forte da mao
+```
+
+`deve fazer agora` significa:
+
+```text
+nao existe lider
+ou lider ainda precisa fazer e lider e alta+
+ou urgencia alta
+```
+
+## Contrato de Debug
+
+O debug de Jogada deve permitir reconstruir o caminho percorrido olhando apenas o log.
+
+Campos minimos:
+
+- Posicao na mesa: abre, meio ou fecha.
+- Necessidade: quanto ainda precisa fazer.
+- Urgencia: valor calculado e se e alta (`>= 0.66`).
+- Jogadores por agir: quantidade e status resumido.
+- Linha fria: caminho percorrido, motivo estrategico e carta escolhida.
+- Linha quente: caminho percorrido, motivo estrategico e carta escolhida.
+- Sorteio por temperatura: valor e comparacao quando ocorreu, ou "nao ocorreu".
+
+Nao e obrigatorio registrar todas as perguntas possiveis da arvore. O log deve mostrar o caminho percorrido.
+
+Para Declaracao, o debug deve mostrar:
+
+- base deterministica;
+- sorteios aplicaveis;
+- sorteios nao aplicaveis;
+- defensivo;
+- resultado final.
+
+## Fora de Escopo
+
+- Transformar este documento em PRD.
+- Criar issues no GitHub.
+- Redesenhar a estrutura da Declaracao.
+- Alterar o papel da temperatura na Declaracao.
+- Reescrever o algoritmo de avaliacao de cartas.
+- Definir testes de implementacao para cada ramo.
