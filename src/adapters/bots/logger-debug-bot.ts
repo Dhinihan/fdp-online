@@ -154,9 +154,11 @@ function formatarLinhas(decisao: DecisaoJogadaDebug): string {
   return `${fria} | ${quente}`;
 }
 
+const MOTIVO_NAO_REGISTRADO = 'motivo não registrado';
+
 function formatarLinha(nome: string, carta: Carta, motivo: string | undefined): string {
-  const sufixo = motivo ? ` porque ${motivo}` : '';
-  return `${nome}: jogar ${formatarCarta(carta)}${sufixo}`;
+  const textoMotivo = motivo ?? MOTIVO_NAO_REGISTRADO;
+  return `${nome}: jogar ${formatarCarta(carta)} (${textoMotivo})`;
 }
 
 function formatarCarta(carta: Carta): string {

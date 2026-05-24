@@ -136,6 +136,30 @@ describe('Logger debug das jogadas dos bots', () => {
   });
 });
 
+describe('Logger debug motivo ausente na jogada', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('deve exibir motivo não registrado quando linha chega sem motivo', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'groupCollapsed').mockImplementation(() => undefined);
+    vi.spyOn(console, 'groupEnd').mockImplementation(() => undefined);
+
+    criarLoggerDebugBot('Brás', 0.35).registrarJogada({
+      estado: estadoJogada(),
+      mao,
+      linhaFria: mao[0],
+      linhaQuente: mao[1],
+      carta: mao[0],
+      escolheuQuente: false,
+    });
+
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('Linha fria: jogar 4♦ (motivo não registrado)'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('Linha quente: jogar 3♣ (motivo não registrado)'));
+  });
+});
+
 function registrarJogadaComBifurcacao(): void {
   criarLoggerDebugBot('Brás', 0.35).registrarJogada({
     estado: estadoJogada(),
