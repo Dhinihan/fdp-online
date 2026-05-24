@@ -6,23 +6,14 @@ import * as ts from 'typescript-eslint';
 
 export default defineConfig(
   {
-    ignores: [
-      'dist/**',
-      'node_modules/**',
-      'public/**',
-      'coverage/**',
-      '.pi/**',
-      '.sandcastle/worktrees/**',
-      'eslint.config.js',
-      'playwright.config.js',
-    ],
+    ignores: ['dist/**', 'node_modules/**', 'public/**', 'coverage/**', '.pi/**', '.sandcastle/worktrees/**'],
   },
   ts.configs.strictTypeChecked,
   {
     languageOptions: {
       globals: { ...globals.browser },
       parserOptions: {
-        project: ['./tsconfig.json', './tsconfig.tests.json', './.sandcastle/tsconfig.json'],
+        project: ['./tsconfig.eslint.json'],
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -39,7 +30,7 @@ export default defineConfig(
     settings: {
       'import/resolver': {
         typescript: {
-          project: ['./tsconfig.json', './tsconfig.tests.json', './.sandcastle/tsconfig.json'],
+          project: ['./tsconfig.eslint.json'],
         },
       },
     },

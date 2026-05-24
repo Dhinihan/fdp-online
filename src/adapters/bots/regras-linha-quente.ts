@@ -9,7 +9,7 @@ export interface ResultadoPodeBifurcar {
 }
 
 export interface DecisaoCartaQuente {
-  carta: CartaAvaliada;
+  carta: Carta;
   motivo: string;
 }
 
@@ -43,9 +43,9 @@ export function cartasIguais(a: Carta, b: Carta): boolean {
 
 export function escolherPressao(contexto: ContextoJogadaQuente): DecisaoCartaQuente {
   const fuga = cartasDeFuga(contexto);
-  if (fuga.length > 0) return { carta: cartaMaisCara(fuga), motivo: 'pressão: fuga mais cara' };
+  if (fuga.length > 0) return { carta: cartaMaisCara(fuga).carta, motivo: 'pressão: fuga mais cara' };
   return {
-    carta: cartaMaisBarata(vencedorasBaratasSemGarantida(contexto)),
+    carta: cartaMaisBarata(vencedorasBaratasSemGarantida(contexto)).carta,
     motivo: 'pressão: vencedora barata sem garantida',
   };
 }
@@ -61,14 +61,14 @@ export function escolherTravessia(estado: EstadoEmJogo, contexto: ContextoJogada
   }
   const candidatas = contexto.vencedoras.filter((avaliada) => !ehGarantida(avaliada));
   if (candidatas.length === 0) return null;
-  return { carta: cartaMaisBarata(candidatas), motivo: 'travessia: líder alta+ e urgência baixa' };
+  return { carta: cartaMaisBarata(candidatas).carta, motivo: 'travessia: líder alta+ e urgência baixa' };
 }
 
 export function escolherEmpate(contexto: ContextoJogadaQuente, liderAlta: number): DecisaoCartaQuente | null {
   const lider = contexto.lider;
   if (!lider || lider.score <= liderAlta || contexto.empates.length === 0) return null;
   if (contexto.necessidade <= 0 || contexto.folga >= 2) {
-    return { carta: cartaMaisCara(contexto.empates), motivo: 'empate com líder alta+' };
+    return { carta: cartaMaisCara(contexto.empates).carta, motivo: 'empate com líder alta+' };
   }
   return null;
 }

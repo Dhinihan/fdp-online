@@ -38,7 +38,7 @@ describe('escolherEmpate', () => {
     const contexto = criarContextoLinhaQuente(estado, [criarCarta('2', '♦'), criarCarta('4', '♦')]);
 
     const decisao = escolherEmpate(contexto, 11);
-    expect(decisao?.carta.carta).toEqual(criarCarta('2', '♦'));
+    expect(decisao?.carta).toEqual(criarCarta('2', '♦'));
     expect(decisao?.motivo).toBe('empate com líder alta+');
   });
 });
@@ -53,7 +53,7 @@ describe('escolherTravessia', () => {
     const contexto = criarContextoLinhaQuente(estado, [criarCarta('A', '♦'), criarCarta('3', '♦')]);
 
     const decisao = escolherTravessia(estado, contexto);
-    expect(decisao?.carta.carta).toEqual(criarCarta('A', '♦'));
+    expect(decisao?.carta).toEqual(criarCarta('A', '♦'));
     expect(decisao?.motivo).toBe('travessia: líder alta+ e urgência baixa');
   });
 });

@@ -13,7 +13,6 @@ import {
   escolherPressao,
   escolherTravessia,
   formatarMotivoRecusaBifurcacao,
-  type DecisaoCartaQuente,
   MOTIVO_SEM_BIFURCACAO_CARTAS_IGUAIS,
   MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS,
   podeBifurcar,
@@ -61,11 +60,7 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
 
   private decidirUltimaJogada(base: BaseJogada): Carta {
     const quente = decidirUltimoLinhaQuente(base.estadoAtual, base.contexto);
-    return this.resolverBifurcacaoUltimo({
-      base,
-      quente,
-      motivoSemBifurcacao: MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS,
-    });
+    return this.resolverBifurcacao(base, quente, MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS);
   }
 
   private decidirAntesDoFim(base: BaseJogada): Carta {
@@ -77,17 +72,16 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
       const motivo = bifurcacao.motivoRecusa
         ? formatarMotivoRecusaBifurcacao(bifurcacao.motivoRecusa)
         : MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS;
-      return this.registrarSemBifurcacao(base, base.fria, motivo);
+      return this.registrarSemBifurcacao(base, { carta: base.fria, motivo }, motivo);
     }
 
     const quente = escolherPressao(base.contexto);
     return this.resolverBifurcacao(base, quente, MOTIVO_SEM_BIFURCACAO_CARTAS_IGUAIS);
   }
 
-  private resolverBifurcacao(base: BaseJogada, quente: DecisaoCartaQuente, motivoSemBifurcacao: string): Carta {
-    const cartaQuente = quente.carta.carta;
-    if (cartasIguais(base.fria, cartaQuente)) {
-      return this.registrarSemBifurcacao(base, cartaQuente, motivoSemBifurcacao);
+  private resolverBifurcacao(base: BaseJogada, quente: DecisaoQuente, motivoSemBifurcacao: string): Carta {
+    if (cartasIguais(base.fria, quente.carta)) {
+      return this.registrarSemBifurcacao(base, quente, motivoSemBifurcacao);
     }
 
     const sorteio = this.rng.random();
@@ -97,39 +91,20 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
       mao: base.mao,
       estado: base.estado,
       fria: base.fria,
-      quente: cartaQuente,
+      quente: quente.carta,
       motivoLinhaFria: base.motivoLinhaFria,
       motivoLinhaQuente: quente.motivo,
       sorteio,
     });
   }
 
-  private resolverBifurcacaoUltimo(config: ResolucaoUltimo): Carta {
-    if (cartasIguais(config.base.fria, config.quente.carta)) {
-      return this.registrarSemBifurcacaoUltimo(config);
-    }
-
-    const sorteio = this.rng.random();
-    return registrarBifurcacao({
-      logger: this.logger,
-      temperatura: this.temperatura,
-      mao: config.base.mao,
-      estado: config.base.estado,
-      fria: config.base.fria,
-      quente: config.quente.carta,
-      motivoLinhaFria: config.base.motivoLinhaFria,
-      motivoLinhaQuente: config.quente.motivo,
-      sorteio,
-    });
-  }
-
   private escolherQuenteDireta(base: BaseJogada): Carta | null {
     const empate = escolherEmpate(base.contexto, this.liderAlta);
-    if (empate) return this.registrarQuente(base, empate.carta.carta, `linha quente empatou: ${empate.motivo}`);
+    if (empate) return this.registrarQuente(base, empate.carta, `linha quente empatou: ${empate.motivo}`);
 
     const travessia = escolherTravessia(base.estadoAtual, base.contexto);
     if (!travessia) return null;
-    return this.registrarQuente(base, travessia.carta.carta, `linha quente atravessou: ${travessia.motivo}`);
+    return this.registrarQuente(base, travessia.carta, `linha quente atravessou: ${travessia.motivo}`);
   }
 
   private registrarQuente(base: BaseJogada, carta: Carta, motivoLinhaQuente: string): Carta {
@@ -146,40 +121,25 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
     });
   }
 
-  private registrarSemBifurcacao(base: BaseJogada, linhaQuente: Carta, motivo: string): Carta {
+  private registrarSemBifurcacao(base: BaseJogada, quente: DecisaoQuente, motivo: string): Carta {
     return registrarEscolhaDireta({
       logger: this.logger,
       mao: base.mao,
       estado: base.estado,
-      carta: linhaQuente,
+      carta: quente.carta,
       linhaFria: base.fria,
-      linhaQuente,
+      linhaQuente: quente.carta,
       motivoLinhaFria: base.motivoLinhaFria,
+      motivoLinhaQuente: quente.motivo,
       motivoSemBifurcacao: motivo,
-      escolheuQuente: false,
-    });
-  }
-
-  private registrarSemBifurcacaoUltimo(config: ResolucaoUltimo): Carta {
-    return registrarEscolhaDireta({
-      logger: this.logger,
-      mao: config.base.mao,
-      estado: config.base.estado,
-      carta: config.quente.carta,
-      linhaFria: config.base.fria,
-      linhaQuente: config.quente.carta,
-      motivoLinhaFria: config.base.motivoLinhaFria,
-      motivoLinhaQuente: config.quente.motivo,
-      motivoSemBifurcacao: config.motivoSemBifurcacao,
       escolheuQuente: false,
     });
   }
 }
 
-interface ResolucaoUltimo {
-  base: BaseJogada;
-  quente: { carta: Carta; motivo: string };
-  motivoSemBifurcacao: string;
+interface DecisaoQuente {
+  carta: Carta;
+  motivo: string;
 }
 
 interface BaseJogada {
