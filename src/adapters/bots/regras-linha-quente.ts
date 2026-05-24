@@ -3,15 +3,28 @@ import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
 import { calcularNecessidade, liderQuerVaza, type ContextoJogadaQuente } from './contextoLinhaQuente';
 
-export function podeBifurcar(estado: EstadoEmJogo, contexto: ContextoJogadaQuente, liderBaixa: number): boolean {
-  return (
-    contexto.necessidade > 0 &&
-    contexto.vencedoras.length > 0 &&
-    mesaPodePunir(estado, contexto, liderBaixa) &&
-    temSegurancaParaDepois(contexto) &&
-    temPressaoAgora(contexto) &&
-    temAlvo(estado, contexto.jogadorId)
-  );
+export interface ResultadoPodeBifurcar {
+  pode: boolean;
+  motivoRecusa?: string;
+}
+
+export interface DecisaoCartaQuente {
+  carta: CartaAvaliada;
+  motivo: string;
+}
+
+export function podeBifurcar(
+  estado: EstadoEmJogo,
+  contexto: ContextoJogadaQuente,
+  liderBaixa: number,
+): ResultadoPodeBifurcar {
+  if (contexto.necessidade <= 0) return { pode: false, motivoRecusa: 'sem necessidade' };
+  if (contexto.vencedoras.length === 0) return { pode: false, motivoRecusa: 'sem vencedoras' };
+  if (!mesaPodePunir(estado, contexto, liderBaixa)) return { pode: false, motivoRecusa: 'mesa não pode punir' };
+  if (!temSegurancaParaDepois(contexto)) return { pode: false, motivoRecusa: 'sem segurança para depois' };
+  if (!temPressaoAgora(contexto)) return { pode: false, motivoRecusa: 'sem pressão agora' };
+  if (!temAlvo(estado, contexto.jogadorId)) return { pode: false, motivoRecusa: 'sem alvo na mesa' };
+  return { pode: true };
 }
 
 export const MOTIVO_SEM_BIFURCACAO_URGENCIA = 'sem bifurcação: ambas fazem porque urgência >= 0.66';
@@ -20,17 +33,24 @@ export const MOTIVO_SEM_BIFURCACAO_CARTAS_IGUAIS = 'sem bifurcação: ambas não
 export const MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS = 'sem bifurcação: linhas fria e quente escolheram a mesma carta';
 export const MOTIVO_SEM_BIFURCACAO_NAO_PODE = 'sem bifurcação: não há condições para bifurcar';
 
+export function formatarMotivoRecusaBifurcacao(motivoRecusa: string): string {
+  return `sem bifurcação: ${motivoRecusa}`;
+}
+
 export function cartasIguais(a: Carta, b: Carta): boolean {
   return a.valor === b.valor && a.naipe === b.naipe;
 }
 
-export function escolherPressao(contexto: ContextoJogadaQuente): CartaAvaliada {
+export function escolherPressao(contexto: ContextoJogadaQuente): DecisaoCartaQuente {
   const fuga = cartasDeFuga(contexto);
-  if (fuga.length > 0) return cartaMaisCara(fuga);
-  return cartaMaisBarata(vencedorasBaratasSemGarantida(contexto));
+  if (fuga.length > 0) return { carta: cartaMaisCara(fuga), motivo: 'pressão: fuga mais cara' };
+  return {
+    carta: cartaMaisBarata(vencedorasBaratasSemGarantida(contexto)),
+    motivo: 'pressão: vencedora barata sem garantida',
+  };
 }
 
-export function escolherTravessia(estado: EstadoEmJogo, contexto: ContextoJogadaQuente): CartaAvaliada | null {
+export function escolherTravessia(estado: EstadoEmJogo, contexto: ContextoJogadaQuente): DecisaoCartaQuente | null {
   if (
     contexto.necessidade <= 0 ||
     contexto.folga > 1 ||
@@ -40,13 +60,16 @@ export function escolherTravessia(estado: EstadoEmJogo, contexto: ContextoJogada
     return null;
   }
   const candidatas = contexto.vencedoras.filter((avaliada) => !ehGarantida(avaliada));
-  return candidatas.length > 0 ? cartaMaisBarata(candidatas) : null;
+  if (candidatas.length === 0) return null;
+  return { carta: cartaMaisBarata(candidatas), motivo: 'travessia: líder alta+ e urgência baixa' };
 }
 
-export function escolherEmpate(contexto: ContextoJogadaQuente, liderAlta: number): CartaAvaliada | null {
+export function escolherEmpate(contexto: ContextoJogadaQuente, liderAlta: number): DecisaoCartaQuente | null {
   const lider = contexto.lider;
   if (!lider || lider.score <= liderAlta || contexto.empates.length === 0) return null;
-  if (contexto.necessidade <= 0 || contexto.folga >= 2) return cartaMaisCara(contexto.empates);
+  if (contexto.necessidade <= 0 || contexto.folga >= 2) {
+    return { carta: cartaMaisCara(contexto.empates), motivo: 'empate com líder alta+' };
+  }
   return null;
 }
 

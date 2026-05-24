@@ -15,33 +15,51 @@ export class DecisorJogadaLinhaFria implements DecisorJogada {
     if (mao.length === 0) return Promise.reject(new Error('Mão vazia'));
 
     const estadoAtual = estadoEmJogo(estado);
-    if (estadoAtual.mesa.length === 0) {
-      return Promise.resolve(decidirAbertura(mao, estadoAtual, { temperatura: 0 }));
-    }
-
-    const avaliadas = avaliarCartas(mao, estadoAtual.manilha, estadoAtual.cartasReveladas, estadoAtual.maos.length);
-    const jogadorId = estadoAtual.maos[estadoAtual.jogadorAtual].jogador.id;
-    const necessidade = calcularNecessidade(estadoAtual, jogadorId);
-
     if (ehUltimoDaMesa(estadoAtual)) return Promise.resolve(decidirUltimoLinhaFria(mao, estadoAtual).carta);
-    if (necessidade <= 0) return Promise.resolve(this.fugir(estadoAtual, avaliadas));
-    return Promise.resolve(this.buscarVaza(estadoAtual, avaliadas, necessidade));
+    return Promise.resolve(decidirNaoUltimoLinhaFria(mao, estadoAtual).carta);
+  }
+}
+
+export function decidirNaoUltimoLinhaFria(mao: Carta[], estado: EstadoEmJogo): DecisaoLinhaFria {
+  if (estado.mesa.length === 0) {
+    return {
+      carta: decidirAbertura(mao, estado, { temperatura: 0 }),
+      motivo: 'abertura: sem referência na mesa',
+    };
   }
 
-  private fugir(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): Carta {
-    const naoFazem = cartasQueNaoFazem(estado, avaliadas);
-    if (naoFazem.length === 0) return cartaMaisBarata(avaliadas).carta;
-    return cartaMaisCara(naoFazem).carta;
+  const avaliadas = avaliarCartas(mao, estado.manilha, estado.cartasReveladas, estado.maos.length);
+  const jogadorId = estado.maos[estado.jogadorAtual].jogador.id;
+  const necessidade = calcularNecessidade(estado, jogadorId);
+  if (necessidade <= 0) return fugirNaoUltimo(estado, avaliadas);
+  return buscarVazaNaoUltimo(estado, avaliadas, necessidade);
+}
+
+function fugirNaoUltimo(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): DecisaoLinhaFria {
+  const naoFazem = cartasQueNaoFazem(estado, avaliadas);
+  if (naoFazem.length === 0) {
+    return { carta: cartaMaisBarata(avaliadas).carta, motivo: 'não quer fazer; fuga impossível' };
+  }
+  return { carta: cartaMaisCara(naoFazem).carta, motivo: 'não quer fazer; carta mais alta que não faz' };
+}
+
+function buscarVazaNaoUltimo(estado: EstadoEmJogo, avaliadas: CartaAvaliada[], necessidade: number): DecisaoLinhaFria {
+  const vencedoras = cartasQueVencem(estado, avaliadas);
+  if (vencedoras.length > 0) {
+    return {
+      carta: escolherGanhadora(vencedoras, estado.manilha, necessidade).carta,
+      motivo: 'precisa fazer; regra G[N-X]',
+    };
   }
 
-  private buscarVaza(estado: EstadoEmJogo, avaliadas: CartaAvaliada[], necessidade: number): Carta {
-    const vencedoras = cartasQueVencem(estado, avaliadas);
-    if (vencedoras.length > 0) return escolherGanhadora(vencedoras, estado.manilha, necessidade).carta;
-
-    const naoFazem = cartasQueNaoFazem(estado, avaliadas);
-    if (naoFazem.length > 0) return escolherPerdedora(naoFazem, estado.manilha, necessidade).carta;
-    return cartaMaisBarata(avaliadas).carta;
+  const naoFazem = cartasQueNaoFazem(estado, avaliadas);
+  if (naoFazem.length > 0) {
+    return {
+      carta: escolherPerdedora(naoFazem, estado.manilha, necessidade).carta,
+      motivo: 'precisa fazer; regra P[N-X]',
+    };
   }
+  return { carta: cartaMaisBarata(avaliadas).carta, motivo: 'precisa fazer; carta mais barata' };
 }
 
 export function decidirUltimoLinhaFria(mao: Carta[], estado: EstadoEmJogo): DecisaoLinhaFria {
