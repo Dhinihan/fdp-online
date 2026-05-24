@@ -106,6 +106,8 @@ async function registraSemBifurcacaoQuandoConverge(): Promise<void> {
     carta: criarCarta('8', '♦'),
     linhaFria: criarCarta('8', '♦'),
     linhaQuente: criarCarta('8', '♦'),
+    motivoLinhaFria: 'precisa fazer; regra G[N-X]',
+    motivoLinhaQuente: 'precisa fazer; regra G[N-X]',
     motivoSemBifurcacao: 'sem bifurcação: linhas fria e quente escolheram a mesma carta',
   });
 }

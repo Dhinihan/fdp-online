@@ -12,7 +12,15 @@ export interface ContextoUltimoLinhaQuente {
   lider: CartaAvaliada | null;
 }
 
-export function decidirUltimoLinhaQuente(estado: EstadoEmJogo, contexto: ContextoUltimoLinhaQuente): Carta {
+export interface DecisaoUltimoLinhaQuente {
+  carta: Carta;
+  motivo: string;
+}
+
+export function decidirUltimoLinhaQuente(
+  estado: EstadoEmJogo,
+  contexto: ContextoUltimoLinhaQuente,
+): DecisaoUltimoLinhaQuente {
   if (contexto.necessidade > 0) return decidirQuandoPrecisaFazer(estado, contexto);
   return decidirQuandoJaCumpriu(estado, contexto);
 }
@@ -21,29 +29,80 @@ export function cartaPerde(carta: Carta, lider: Carta, manilha: Carta['valor']):
   return !cartaVence(carta, lider, manilha) && !cartasEmpatam(carta, lider, manilha);
 }
 
-function decidirQuandoPrecisaFazer(estado: EstadoEmJogo, contexto: ContextoUltimoLinhaQuente): Carta {
+function decidirQuandoPrecisaFazer(
+  estado: EstadoEmJogo,
+  contexto: ContextoUltimoLinhaQuente,
+): DecisaoUltimoLinhaQuente {
   if (contexto.vencedoras.length === 0) {
-    return escolherPerdedora(cartasQueNaoVencem(contexto), estado.manilha, contexto).carta;
+    return {
+      carta: escolherPerdedora(cartasQueNaoVencem(contexto), estado.manilha, contexto).carta,
+      motivo: 'precisa fazer, sem carta que vence; P[N-X]',
+    };
   }
-  if (deveFazerAgora(estado, contexto)) return escolherGanhadora(contexto.vencedoras, estado.manilha, contexto).carta;
-  if (contexto.perdedoras.length > 0) return cartaMaisForte(contexto.perdedoras, estado.manilha).carta;
-  return escolherGanhadora(contexto.vencedoras, estado.manilha, contexto).carta;
+  if (deveFazerAgora(estado, contexto)) {
+    return {
+      carta: escolherGanhadora(contexto.vencedoras, estado.manilha, contexto).carta,
+      motivo: 'precisa fazer; regra G[N-X]',
+    };
+  }
+  if (contexto.perdedoras.length > 0) {
+    return {
+      carta: escolherPerdedora(contexto.perdedoras, estado.manilha, contexto).carta,
+      motivo: 'precisa fazer; adiou; P[N-X]',
+    };
+  }
+  return {
+    carta: escolherGanhadora(contexto.vencedoras, estado.manilha, contexto).carta,
+    motivo: 'precisa fazer; regra G[N-X]',
+  };
 }
 
-function decidirQuandoJaCumpriu(estado: EstadoEmJogo, contexto: ContextoUltimoLinhaQuente): Carta {
-  if (liderQuerVaza(estado)) return fugirContraLiderQuePrecisa(estado, contexto).carta;
-  if (contexto.perdedoras.length > 0) return cartaMaisForte(contexto.perdedoras, estado.manilha).carta;
-  if (contexto.empates.length > 0) return cartaMaisForte(contexto.empates, estado.manilha).carta;
-  return cartaMaisForte(contexto.avaliadas, estado.manilha).carta;
+function decidirQuandoJaCumpriu(estado: EstadoEmJogo, contexto: ContextoUltimoLinhaQuente): DecisaoUltimoLinhaQuente {
+  if (liderQuerVaza(estado)) return fugirContraLiderQuePrecisa(estado, contexto);
+  if (contexto.perdedoras.length > 0) {
+    return {
+      carta: cartaMaisForte(contexto.perdedoras, estado.manilha).carta,
+      motivo: 'já cumpriu; carta mais alta que não faz',
+    };
+  }
+  if (contexto.empates.length > 0) {
+    return {
+      carta: cartaMaisForte(contexto.empates, estado.manilha).carta,
+      motivo: 'já cumpriu; carta mais alta que não faz',
+    };
+  }
+  return {
+    carta: cartaMaisForte(contexto.avaliadas, estado.manilha).carta,
+    motivo: 'já cumpriu; fuga impossível',
+  };
 }
 
-function fugirContraLiderQuePrecisa(estado: EstadoEmJogo, contexto: ContextoUltimoLinhaQuente): CartaAvaliada {
+function fugirContraLiderQuePrecisa(
+  estado: EstadoEmJogo,
+  contexto: ContextoUltimoLinhaQuente,
+): DecisaoUltimoLinhaQuente {
   if (contexto.lider && ehAltaOuMelhor(contexto.lider) && contexto.empates.length > 0) {
-    return cartaMaisForte(contexto.empates, estado.manilha);
+    return {
+      carta: cartaMaisForte(contexto.empates, estado.manilha).carta,
+      motivo: 'já cumpriu; fuga contra líder alta+',
+    };
   }
-  if (contexto.perdedoras.length > 0) return cartaMaisForte(contexto.perdedoras, estado.manilha);
-  if (contexto.empates.length > 0) return cartaMaisForte(contexto.empates, estado.manilha);
-  return cartaMaisForte(contexto.avaliadas, estado.manilha);
+  if (contexto.perdedoras.length > 0) {
+    return {
+      carta: cartaMaisForte(contexto.perdedoras, estado.manilha).carta,
+      motivo: 'já cumpriu; carta mais alta que não faz',
+    };
+  }
+  if (contexto.empates.length > 0) {
+    return {
+      carta: cartaMaisForte(contexto.empates, estado.manilha).carta,
+      motivo: 'já cumpriu; carta mais alta que não faz',
+    };
+  }
+  return {
+    carta: cartaMaisForte(contexto.avaliadas, estado.manilha).carta,
+    motivo: 'já cumpriu; fuga impossível',
+  };
 }
 
 function deveFazerAgora(estado: EstadoEmJogo, contexto: ContextoUltimoLinhaQuente): boolean {
