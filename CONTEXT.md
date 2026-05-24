@@ -44,6 +44,46 @@ _Avoid_: Fora, morto
 Recurso de sobrevivência da partida que começa em 5 para cada jogador e só diminui ao fim das rodadas.
 _Avoid_: Vida, score
 
+**Estratégia de Bot Explicável**:
+Comportamento de bot cuja declaração e jogada são coerentes com o estado da rodada e acompanhadas de justificativa auditável no debug.
+_Avoid_: IA, inteligência, estratégia
+
+**Árvore de Decisão do Bot**:
+Sequência ordenada de perguntas estratégicas que leva o bot a um **Declarado** ou a uma carta jogada.
+_Avoid_: Heurística solta, regra isolada
+
+**Linha fria**:
+Árvore de decisão conservadora do bot, que prioriza cumprir o próprio **Declarado** com o menor risco.
+_Avoid_: Bot frio, modo fácil
+
+**Linha quente**:
+Árvore de decisão ousada do bot, que aceita mais risco para preservar cartas fortes, atravessar oponentes ou pressionar a mesa.
+_Avoid_: Bot quente, modo difícil
+
+**Decisão de Declaração do Bot**:
+Aplicação da **Árvore de Decisão do Bot** no **Turno 0** para escolher o **Declarado**.
+_Avoid_: Palpite do bot, aposta do bot
+
+**Decisão de Jogada do Bot**:
+Aplicação da **Árvore de Decisão do Bot** nos **Turnos 1..N** para escolher qual carta jogar.
+_Avoid_: Movimento do bot, ação do bot
+
+**Escolha de vencedora por necessidade**:
+Regra de **Decisão de Jogada do Bot** que escolhe, entre as cartas que vencem a mesa, uma vencedora proporcional ao **Feito** ainda necessário.
+_Avoid_: G[N-X]
+
+**Descarte por necessidade**:
+Regra de **Decisão de Jogada do Bot** usada quando o bot não consegue vencer a mesa, descartando uma carta que preserve força proporcional ao **Feito** ainda necessário.
+_Avoid_: P[N-X]
+
+**Posição na Mesa**:
+Lugar estratégico do jogador dentro do turno atual: abrindo a mesa, jogando no meio ou fechando a mesa.
+_Avoid_: Ordem, vez
+
+**Jogador por agir**:
+Jogador que ainda não jogou carta no turno atual.
+_Avoid_: Próximo jogador, jogador restante
+
 ## Relationships
 
 - Uma **Partida** contém uma ou mais **Rodadas**.
@@ -53,6 +93,13 @@ _Avoid_: Vida, score
 - Cada **Rodada** define uma **Manilha**.
 - A diferença absoluta entre **Declarado** e **Feito** reduz os **Pontos** do jogador ao final da **Rodada**.
 - Um jogador com **Pontos** menores ou iguais a zero ao final da **Rodada** se torna um **Jogador eliminado**.
+- Uma **Estratégia de Bot Explicável** produz um **Declarado** no **Turno 0** e escolhe cartas nos **Turnos 1..N**.
+- Uma **Árvore de Decisão do Bot** descreve como uma **Estratégia de Bot Explicável** chega a cada decisão.
+- Uma **Árvore de Decisão do Bot** pode ter uma **Linha fria** e uma **Linha quente** para a mesma decisão.
+- Uma **Estratégia de Bot Explicável** inclui **Decisões de Declaração do Bot** e **Decisões de Jogada do Bot**.
+- Uma **Decisão de Jogada do Bot** pode usar **Escolha de vencedora por necessidade** ou **Descarte por necessidade**.
+- Uma **Decisão de Jogada do Bot** considera a **Posição na Mesa** antes de avaliar a força da carta.
+- Uma **Decisão de Jogada do Bot** no meio da mesa considera se há **Jogadores por agir** que ainda precisam fazer ou já cumpriram.
 
 ## Example dialogue
 
@@ -62,3 +109,4 @@ _Avoid_: Vida, score
 ## Flagged ambiguities
 
 - `turno` é usado em sentido amplo: inclui o **Turno 0** de declaração e os **Turnos 1..N** de jogada.
+- `G[N-X]` e `P[N-X]` são aliases técnicos; na linguagem de produto use **Escolha de vencedora por necessidade** e **Descarte por necessidade**.
