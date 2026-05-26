@@ -25,6 +25,8 @@ Quando as linhas escolhem cartas diferentes, a **temperatura** decide apenas a c
 - **Vencedoras:** cartas da mao que vencem a carta lider atual.
 - **Perdedoras:** cartas da mao que perdem para a carta lider atual.
 - **Empates:** cartas da mao que empatam com a carta lider atual. Empate nao conta como fazer a vaza.
+- **Carta que nao faz a vaza:** perdedora ou empate.
+- **Baixa, media, alta, segura e garantida_agora:** categorias calculadas pelo avaliador de cartas do algoritmo real, considerando forca relativa, manilha, cartas vivas e contexto da vaza. Os exemplos do prototipo servem apenas como atalho de entrevista, nao como contrato de classificacao.
 - **Escolha de vencedora por necessidade:** entre as vencedoras, ordenadas da mais fraca para a mais forte, escolher a carta que preserva forca proporcionalmente ao quanto ainda falta fazer.
 - **Descarte por necessidade:** entre as cartas que nao fazem a vaza, ordenadas da mais fraca para a mais forte, descartar preservando forca proporcionalmente ao quanto ainda falta fazer.
 
@@ -82,6 +84,8 @@ descartePorNecessidade(candidatas, necessidade):
 
 Ao abrir a mesa nao existe carta lider. A decisao e feita pela classificacao da mao.
 
+A arvore depende apenas da ordem de preferencia entre categorias. A forma exata de classificar cada carta pertence ao avaliador de cartas, nao a esta arvore.
+
 ```text
 se necessidade <= 0:
   escolher a carta mais barata na primeira categoria disponivel:
@@ -112,9 +116,6 @@ se jogadoresPorAgir == 1:
     Linha fria so pode tentar fazer se:
       existe vencedora garantida_agora
       ou urgencia alta
-    Linha quente pode tentar fazer se:
-      urgencia alta
-      ou pode atravessar lider que quer fazer e jogou carta alta+
   senao:
     pode tentar fazer normalmente
 
@@ -195,6 +196,8 @@ e lider jogou carta alta+
 e existe vencedora que nao seja garantida_agora
 ```
 
+Na pratica, `pode atravessar` pode fazer a Linha quente divergir da Linha fria mesmo quando a guarda de posicao bloqueou a tentativa conservadora, desde que a urgencia seja alta e o lider atual tenha jogado alta+ que o bot consiga vencer sem gastar uma garantida_agora.
+
 `pode pressionar e esperar` significa:
 
 ```text
@@ -232,6 +235,8 @@ necessidade > 0
 e urgencia < 0.66
 e existe carta que nao faz a vaza
 ```
+
+Esse ramo existe para a Linha quente tambem poder escolher espera ativa quando nao ha motivo suficiente para atravessar, pressionar ou gastar vencedora segura. A decisao relativa e `descartePorNecessidade(perdedoras + empates, necessidade)`.
 
 ## Arvore: Fecha a Mesa
 
@@ -288,6 +293,10 @@ nao existe lider
 ou lider ainda precisa fazer e lider e alta+
 ou urgencia alta
 ```
+
+Quando `necessidade > 0`, a Linha quente fechando pode adiar a tentativa se existe vencedora, mas `deve fazer agora` e falso. Nesse caso, se houver perdedora, descarta por necessidade apenas entre perdedoras. Se nao houver descarte seguro, volta a fazer com vencedora por necessidade.
+
+Quando `necessidade <= 0`, a Linha quente fechando prioriza nao fazer a vaza. A unica divergencia agressiva antes disso e empatar uma carta alta+ de um lider interessado, porque empate nao toma a vaza mas pressiona o lider. Se nao houver esse empate, ela prefere perdedora mais forte, depois empate mais forte, e so segue a Linha fria quando nao ha carta que nao faz.
 
 ## Contrato de Debug
 
