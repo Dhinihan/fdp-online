@@ -3,19 +3,22 @@ import type { Carta } from '@/core/Carta';
 import { calcularIndiceVencedor, cartaVence } from '@/core/comparador-carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { estadoEmJogo, type EstadoEmJogo, type MesaItem, type EstadoRodada } from '@/types/estado-rodada';
+import { calcularNecessidade, ehUltimoDaMesa } from './contexto-posicao-mesa';
 import { decidirAberturaLinhaFria } from './decidirAbertura';
 import {
   descartePorNecessidade,
   escolherVencedoraPorNecessidade,
   ordenarPorForcaReal,
 } from './escolhas-por-necessidade';
-import { avaliarGuardaDePosicao } from './guarda-posicao-linha-fria';
+import { avaliarGuardaDePosicao, type GuardaPosicao } from './guarda-posicao';
 
 export interface DecisaoLinhaFria {
   carta: Carta;
   motivo: string;
   caminho?: string[];
 }
+
+const CAMINHO_MEIO = ['jogada', 'joga no meio', 'linha fria'] as const;
 
 export class DecisorJogadaLinhaFria implements DecisorJogada {
   decidirJogada(mao: Carta[], estado: EstadoRodada): Promise<Carta> {
@@ -49,15 +52,33 @@ function fugirNaoUltimo(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): Decis
 
 function buscarVazaNaoUltimo(estado: EstadoEmJogo, avaliadas: CartaAvaliada[], necessidade: number): DecisaoLinhaFria {
   const vencedoras = cartasQueVencem(estado, avaliadas);
-  const guarda = avaliarGuardaDePosicao({ estado, necessidade, tamanhoMao: avaliadas.length, vencedoras });
-  if (!guarda.permite) {
-    return descartarComGuardaBloqueada(estado, { avaliadas, necessidade, motivo: guarda.motivo });
-  }
+  const guarda = avaliarGuardaDePosicao({
+    estado,
+    necessidade,
+    tamanhoMao: avaliadas.length,
+    temGarantidaAgora: temGarantidaAgora(vencedoras),
+  });
+  const contexto = { estado, avaliadas, necessidade, guarda, vencedoras };
+  if (!guarda.permite) return descartarComGuardaBloqueada(contexto);
+  return decidirComGuardaPermitida(contexto);
+}
 
+interface ContextoBuscaVaza {
+  estado: EstadoEmJogo;
+  avaliadas: CartaAvaliada[];
+  necessidade: number;
+  guarda: GuardaPosicao;
+  vencedoras: CartaAvaliada[];
+}
+
+function decidirComGuardaPermitida(contexto: ContextoBuscaVaza): DecisaoLinhaFria {
+  const { estado, avaliadas, necessidade, guarda, vencedoras } = contexto;
+  const caminho = [...CAMINHO_MEIO, 'guarda de posição permitiu'];
   if (vencedoras.length > 0) {
     return {
       carta: escolherVencedoraPorNecessidade(vencedoras, estado.manilha, necessidade).carta,
-      motivo: 'precisa fazer; regra G[N-X]',
+      motivo: motivoGuardaPermitiu(guarda.motivo, 'precisa fazer; regra G[N-X]'),
+      caminho,
     };
   }
 
@@ -65,33 +86,45 @@ function buscarVazaNaoUltimo(estado: EstadoEmJogo, avaliadas: CartaAvaliada[], n
   if (naoFazem.length > 0) {
     return {
       carta: descartePorNecessidade(naoFazem, estado.manilha, necessidade).carta,
-      motivo: 'precisa fazer; regra P[N-X]',
-    };
-  }
-  return { carta: cartaMaisBarata(avaliadas).carta, motivo: 'precisa fazer; carta mais barata' };
-}
-
-interface DescarteComGuardaBloqueada {
-  avaliadas: CartaAvaliada[];
-  necessidade: number;
-  motivo: string;
-}
-
-function descartarComGuardaBloqueada(estado: EstadoEmJogo, descarte: DescarteComGuardaBloqueada): DecisaoLinhaFria {
-  const caminho = ['jogada', 'joga no meio', 'linha fria', 'guarda de posição bloqueou'];
-  const naoFazem = cartasQueNaoFazem(estado, descarte.avaliadas);
-  if (naoFazem.length > 0) {
-    return {
-      carta: descartePorNecessidade(naoFazem, estado.manilha, descarte.necessidade).carta,
-      motivo: `guarda de posição bloqueou; ${descarte.motivo}`,
+      motivo: motivoGuardaPermitiu(guarda.motivo, 'precisa fazer; regra P[N-X]'),
       caminho,
     };
   }
   return {
-    carta: cartaMaisBarata(descarte.avaliadas).carta,
-    motivo: `guarda de posição bloqueou; ${descarte.motivo}; fuga impossível`,
+    carta: cartaMaisBarata(avaliadas).carta,
+    motivo: motivoGuardaPermitiu(guarda.motivo, 'precisa fazer; carta mais barata'),
     caminho,
   };
+}
+
+function descartarComGuardaBloqueada(contexto: ContextoBuscaVaza): DecisaoLinhaFria {
+  const { estado, avaliadas, necessidade, guarda } = contexto;
+  const caminho = [...CAMINHO_MEIO, 'guarda de posição bloqueou'];
+  const naoFazem = cartasQueNaoFazem(estado, avaliadas);
+  if (naoFazem.length > 0) {
+    return {
+      carta: descartePorNecessidade(naoFazem, estado.manilha, necessidade).carta,
+      motivo: motivoGuardaBloqueou(guarda.motivo),
+      caminho,
+    };
+  }
+  return {
+    carta: cartaMaisBarata(avaliadas).carta,
+    motivo: `${motivoGuardaBloqueou(guarda.motivo)}; fuga impossível`,
+    caminho,
+  };
+}
+
+function motivoGuardaPermitiu(motivoGuarda: string, sufixo: string): string {
+  return `guarda de posição permitiu; ${motivoGuarda}; ${sufixo}`;
+}
+
+function motivoGuardaBloqueou(motivoGuarda: string): string {
+  return `guarda de posição bloqueou; ${motivoGuarda}`;
+}
+
+function temGarantidaAgora(vencedoras: CartaAvaliada[]): boolean {
+  return vencedoras.some((avaliada) => avaliada.categoria === 'garantida_agora');
 }
 
 export function decidirUltimoLinhaFria(mao: Carta[], estado: EstadoEmJogo): DecisaoLinhaFria {
@@ -131,10 +164,6 @@ function decidirUltimoQuandoJaCumpriu(estado: EstadoEmJogo, avaliadas: CartaAval
   return { carta: cartaMaisForte(avaliadas, estado.manilha).carta, motivo: 'já cumpriu; fuga impossível' };
 }
 
-function calcularNecessidade(estado: EstadoEmJogo, jogadorId: string): number {
-  return (estado.declaracoes[jogadorId] ?? 0) - (estado.vazas[jogadorId] ?? 0);
-}
-
 function cartasQueVencem(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): CartaAvaliada[] {
   const melhor = melhorCartaMesa(estado.mesa, estado.manilha);
   if (!melhor) return [...avaliadas];
@@ -163,8 +192,4 @@ function cartaMaisBarata(avaliadas: CartaAvaliada[]): CartaAvaliada {
 
 function cartaMaisCara(avaliadas: CartaAvaliada[]): CartaAvaliada {
   return [...avaliadas].sort((a, b) => b.score - a.score)[0];
-}
-
-function ehUltimoDaMesa(estado: EstadoEmJogo): boolean {
-  return estado.mesa.length === estado.maos.length - 1;
 }

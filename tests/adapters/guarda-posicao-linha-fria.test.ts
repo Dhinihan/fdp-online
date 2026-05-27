@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { decidirNaoUltimoLinhaFria } from '@/adapters/bots/DecisorJogadaLinhaFria';
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
-import { criarCarta, criarJogador } from '../core/rodada-fixtures';
+import { criarCarta } from '../core/rodada-fixtures';
+import {
+  CAMINHO_GUARDA_BLOQUEOU,
+  CAMINHO_GUARDA_PERMITIU,
+  cartasQueGarantemTresDeOuros,
+  criarEstadoComDoisPorAgir,
+  criarEstadoComUmPorAgir,
+} from './fixtures-linha-fria';
 
 interface CenarioGuarda {
   nome: string;
@@ -34,19 +41,19 @@ const cenarios: CenarioGuarda[] = [
       declaracoes: { j2: 1, j3: 1, bot: 0 },
       vazas: { j2: 0, j3: 1, bot: 0 },
     }),
-    esperado: decisaoGanhadora(criarCarta('K', '♦')),
+    esperado: decisaoGanhadora(criarCarta('K', '♦'), 'jogadores por agir já cumpriram'),
   },
   {
     nome: 'deve permitir tentativa com jogador interessado por agir quando há urgência alta',
     mao: [criarCarta('7', '♦'), criarCarta('K', '♦')],
     estado: criarEstadoComDoisPorAgir({ declaracoes: { j2: 2, j3: 1 }, vazas: { j2: 0, j3: 0 } }),
-    esperado: decisaoGanhadora(criarCarta('K', '♦')),
+    esperado: decisaoGanhadora(criarCarta('K', '♦'), 'urgência alta'),
   },
   {
     nome: 'deve permitir tentativa quando o único jogador por agir já cumpriu',
     mao: [criarCarta('7', '♦'), criarCarta('K', '♦')],
     estado: criarEstadoComUmPorAgir({ declaracoes: { j2: 1, j3: 1 }, vazas: { j2: 0, j3: 1 } }),
-    esperado: decisaoGanhadora(criarCarta('K', '♦')),
+    esperado: decisaoGanhadora(criarCarta('K', '♦'), 'jogadores por agir já cumpriram'),
   },
   {
     nome: 'deve permitir tentativa com um jogador interessado por agir quando existe vencedora garantida',
@@ -57,7 +64,7 @@ const cenarios: CenarioGuarda[] = [
       manilha: '4',
       cartasReveladas: cartasQueGarantemTresDeOuros(),
     }),
-    esperado: decisaoGanhadora(criarCarta('3', '♦')),
+    esperado: decisaoGanhadora(criarCarta('3', '♦'), 'vencedora garantida agora'),
   },
   {
     nome: 'deve jogar carta mais barata quando a guarda bloqueia e nenhuma carta deixa de fazer',
@@ -76,66 +83,18 @@ describe('guarda de posição da linha fria', () => {
   });
 });
 
-function criarEstadoComUmPorAgir(config: Partial<EstadoEmJogo>): EstadoEmJogo {
-  return criarEstado({
-    jogadorAtual: 1,
-    mesa: [
-      { jogadorId: 'j1', carta: criarCarta('8', '♣') },
-      { jogadorId: 'bot', carta: criarCarta('6', '♣') },
-    ],
-    manilha: '5',
-    ...config,
-  });
-}
-
-function criarEstadoComDoisPorAgir(config: Partial<EstadoEmJogo>): EstadoEmJogo {
-  return criarEstado({
-    jogadorAtual: 1,
-    mesa: [{ jogadorId: 'j1', carta: criarCarta('8', '♣') }],
-    manilha: '5',
-    ...config,
-  });
-}
-
-function criarEstado(config: Partial<EstadoEmJogo>): EstadoEmJogo {
-  const jogadores = ['j1', 'j2', 'j3', 'bot'].map((id) => criarJogador(id, id === 'bot' ? 'Bot' : id.toUpperCase()));
-  return {
-    fase: 'aguardandoJogada',
-    jogadorAtual: 3,
-    pontos: {},
-    maos: jogadores.map((jogador) => ({ jogador, cartas: [], visivel: true })),
-    cartasPorRodada: 3,
-    manilha: '5',
-    cartaVirada: null,
-    declaracoes: {},
-    mesa: [],
-    cartasReveladas: [],
-    vazas: {},
-    turno: 1,
-    ...config,
-  };
-}
-
 function decisaoBloqueada(carta: Carta): CenarioGuarda['esperado'] {
   return {
     carta,
     motivo: 'guarda de posição bloqueou; jogador por agir ainda precisa',
-    caminho: ['jogada', 'joga no meio', 'linha fria', 'guarda de posição bloqueou'],
+    caminho: [...CAMINHO_GUARDA_BLOQUEOU],
   };
 }
 
-function decisaoGanhadora(carta: Carta): CenarioGuarda['esperado'] {
-  return { carta, motivo: 'precisa fazer; regra G[N-X]' };
-}
-
-function cartasQueGarantemTresDeOuros(): Carta[] {
-  return [
-    criarCarta('3', '♣'),
-    criarCarta('3', '♥'),
-    criarCarta('3', '♠'),
-    criarCarta('4', '♣'),
-    criarCarta('4', '♥'),
-    criarCarta('4', '♠'),
-    criarCarta('4', '♦'),
-  ];
+function decisaoGanhadora(carta: Carta, motivoGuarda: string): CenarioGuarda['esperado'] {
+  return {
+    carta,
+    motivo: `guarda de posição permitiu; ${motivoGuarda}; precisa fazer; regra G[N-X]`,
+    caminho: [...CAMINHO_GUARDA_PERMITIU],
+  };
 }

@@ -1,6 +1,7 @@
 import { avaliarCartas, type CategoriaCarta } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
+import { calcularNecessidade, urgenciaAlta } from './contexto-posicao-mesa';
 import { criarCaminhoJogadaDebug } from './debug-jogada-bot';
 
 export interface DecisaoAberturaLinhaFria {
@@ -12,10 +13,8 @@ export interface DecisaoAberturaLinhaFria {
 export function decidirAberturaLinhaFria(mao: Carta[], estado: EstadoEmJogo): DecisaoAberturaLinhaFria {
   if (mao.length === 0) throw new Error('decidirAbertura: mão vazia');
   const jogadorId = estado.maos[estado.jogadorAtual].jogador.id;
-  const necessidade = (estado.declaracoes[jogadorId] ?? 0) - (estado.vazas[jogadorId] ?? 0);
-  const urgencia = necessidade / mao.length;
-  const urgenciaAlta = urgencia >= 0.66;
-  const ramo = definirRamoAbertura(necessidade, urgenciaAlta);
+  const necessidade = calcularNecessidade(estado, jogadorId);
+  const ramo = definirRamoAbertura(necessidade, urgenciaAlta(necessidade, mao.length));
   const ordemCategorias = definirOrdemCategorias(ramo);
 
   const avaliadas = avaliarCartas(mao, estado.manilha, estado.cartasReveladas, estado.maos.length);
