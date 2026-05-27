@@ -52,7 +52,6 @@ function registrarJogadaDireta(): void {
     linhaQuente: mao[0],
     carta: mao[0],
     escolheuQuente: false,
-    motivoSemBifurcacao: 'sem bifurcação: fuga impossível',
   });
 }
 
@@ -116,13 +115,14 @@ describe('Logger debug das jogadas dos bots', () => {
     expect(log).toHaveBeenCalledWith('Sorteio por temperatura: não ocorreu');
   });
 
-  it('deve registrar bifurcação ausente com motivo em escolhas diretas', () => {
+  it('deve registrar bifurcação ausente sem motivo separado', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     vi.spyOn(console, 'groupCollapsed').mockImplementation(() => undefined);
     vi.spyOn(console, 'groupEnd').mockImplementation(() => undefined);
     registrarJogadaDireta();
 
-    expect(log).toHaveBeenCalledWith('Bifurcação: não ocorreu | sem bifurcação: fuga impossível');
+    expect(log).toHaveBeenCalledWith('Bifurcação: não ocorreu');
+    expect(log).not.toHaveBeenCalledWith(expect.stringContaining('sem bifurcação:'));
   });
 
   it('deve registrar sorteio por temperatura sem chamar de determinístico', () => {
