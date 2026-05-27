@@ -108,8 +108,8 @@ async function registraSemBifurcacaoQuandoConverge(): Promise<void> {
     linhaQuente: criarCarta('8', '♦'),
     motivoLinhaFria: 'precisa fazer; regra G[N-X]',
     motivoLinhaQuente: 'precisa fazer; regra G[N-X]',
-    motivoSemBifurcacao: 'sem bifurcação: linhas fria e quente escolheram a mesma carta',
   });
+  expect(jogadas[0]).not.toHaveProperty('motivoSemBifurcacao');
 }
 
 function jogarContraNove(estado: EstadoEmJogo): Promise<Carta> {

@@ -14,7 +14,6 @@ interface EscolhaDireta {
   motivoLinhaQuente?: string;
   caminhoLinhaFria: string[];
   caminhoLinhaQuente: string[];
-  motivoSemBifurcacao?: string;
   escolheuQuente: boolean;
 }
 
@@ -47,7 +46,6 @@ export function registrarEscolhaDireta(config: EscolhaDireta): Carta {
     ),
     motivoLinhaFria: config.motivoLinhaFria,
     motivoLinhaQuente: config.motivoLinhaQuente,
-    motivoSemBifurcacao: config.motivoSemBifurcacao,
     carta: config.carta,
     escolheuQuente: config.escolheuQuente,
   });

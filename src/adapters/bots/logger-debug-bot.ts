@@ -20,7 +20,6 @@ export interface DecisaoJogadaDebug {
   quente?: LinhaJogadaDebug;
   motivoLinhaFria?: string;
   motivoLinhaQuente?: string;
-  motivoSemBifurcacao?: string;
   carta: Carta;
   sorteio?: number;
   escolheuQuente: boolean;
@@ -119,8 +118,7 @@ function formatarBifurcacao(decisao: DecisaoJogadaDebug): string {
       decisao.linhaQuente,
     )}`;
   }
-  const motivo = decisao.motivoSemBifurcacao ? ` | ${decisao.motivoSemBifurcacao}` : '';
-  return `Bifurcação: não ocorreu${motivo}`;
+  return 'Bifurcação: não ocorreu';
 }
 
 function formatarTituloJogada(titulo: TituloJogada): string {

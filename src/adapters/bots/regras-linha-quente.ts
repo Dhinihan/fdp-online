@@ -27,14 +27,8 @@ export function podeBifurcar(
   return { pode: true };
 }
 
-export const MOTIVO_SEM_BIFURCACAO_URGENCIA = 'sem bifurcação: ambas fazem porque urgência >= 0.66';
-export const MOTIVO_SEM_BIFURCACAO_FUGA_IMPOSSIVEL = 'sem bifurcação: fuga impossível';
-export const MOTIVO_SEM_BIFURCACAO_CARTAS_IGUAIS = 'sem bifurcação: ambas não querem fazer e escolheram a mesma carta';
-export const MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS = 'sem bifurcação: linhas fria e quente escolheram a mesma carta';
-export const MOTIVO_SEM_BIFURCACAO_NAO_PODE = 'sem bifurcação: não há condições para bifurcar';
-
 export function formatarMotivoRecusaBifurcacao(motivoRecusa: string): string {
-  return `sem bifurcação: ${motivoRecusa}`;
+  return `linha quente segue fria: ${motivoRecusa}`;
 }
 
 export function cartasIguais(a: Carta, b: Carta): boolean {

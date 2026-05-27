@@ -2,10 +2,16 @@ import { describe, expect, it, vi } from 'vitest';
 import { DecisorJogadaLinhaFria } from '@/adapters/bots/DecisorJogadaLinhaFria';
 import { DecisorJogadaLinhaQuente } from '@/adapters/bots/DecisorJogadaLinhaQuente';
 import type { DecisaoJogadaDebug, LoggerDebugBot } from '@/adapters/bots/logger-debug-bot';
-import type { Carta } from '@/core/Carta';
-import type { Jogador } from '@/types/entidades';
-import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
-import { criarCarta, criarJogador } from '../core/rodada-fixtures';
+import { criarCarta } from '../core/rodada-fixtures';
+import {
+  cenarioBifurcacao,
+  cenarioBifurcacaoAntesDoFim,
+  criarEstado,
+  maoBifurcacao,
+  mesaComBaixa,
+  mesaComDois,
+  mesaComQuatro,
+} from './fixtures-jogada-linha-quente';
 
 describe('DecisorJogadaLinhaQuente', () => {
   it('deve escolher linha quente com segurança quando o RNG cai abaixo da temperatura', escolheLinhaQuente);
@@ -81,6 +87,7 @@ async function registraContratoExplicavel(): Promise<void> {
     caminho: ['jogada', 'joga no meio', 'linha fria'],
   });
   expect(jogadas[0]?.quente?.caminho).toEqual(['jogada', 'joga no meio', 'linha quente']);
+  expect(jogadas[0]).toMatchObject(decisaoSorteadaLinhaQuente());
 }
 
 async function atravessaComCartaBarata(): Promise<void> {
@@ -146,84 +153,12 @@ function criarBot(temperatura: number, valorRng: number, logger?: LoggerDebugBot
   });
 }
 
-function criarEstado(config: Partial<EstadoEmJogo>): EstadoEmJogo {
-  const jogadores = criarJogadores();
+function decisaoSorteadaLinhaQuente(): Partial<DecisaoJogadaDebug> {
   return {
-    fase: 'aguardandoJogada',
-    jogadorAtual: 3,
-    pontos: {},
-    maos: jogadores.map((jogador) => ({ jogador, cartas: [], visivel: true })),
-    cartasPorRodada: 3,
-    manilha: '5',
-    cartaVirada: null,
-    declaracoes: {},
-    mesa: [],
-    cartasReveladas: [],
-    vazas: {},
-    turno: 1,
-    ...config,
+    carta: criarCarta('4', '♦'),
+    linhaFria: criarCarta('3', '♦'),
+    linhaQuente: criarCarta('4', '♦'),
+    sorteio: 0,
+    escolheuQuente: true,
   };
-}
-
-function cenarioBifurcacao(): Partial<EstadoEmJogo> {
-  return {
-    mesa: mesaComQuatro(),
-    declaracoes: { j1: 0, j2: 1, bot: 1 },
-    vazas: { j1: 0, j2: 0, bot: 0 },
-    cartasReveladas: cartasQueGarantemTresDeOuros(),
-  };
-}
-
-function cenarioBifurcacaoAntesDoFim(): Partial<EstadoEmJogo> {
-  return {
-    ...cenarioBifurcacao(),
-    mesa: [
-      { jogadorId: 'j1', carta: criarCarta('4', '♣') },
-      { jogadorId: 'j2', carta: criarCarta('4', '♥') },
-    ],
-  };
-}
-
-function maoBifurcacao(): Carta[] {
-  return [criarCarta('3', '♦'), criarCarta('4', '♦')];
-}
-
-function criarJogadores(): Jogador[] {
-  return [criarJogador('j1', 'J1'), criarJogador('j2', 'J2'), criarJogador('j3', 'J3'), criarJogador('bot', 'Bot')];
-}
-
-function mesaComBaixa(): MesaItem[] {
-  return [
-    { jogadorId: 'j1', carta: criarCarta('8', '♣') },
-    { jogadorId: 'j2', carta: criarCarta('4', '♥') },
-    { jogadorId: 'j3', carta: criarCarta('6', '♠') },
-  ];
-}
-
-function mesaComDois(): MesaItem[] {
-  return [
-    { jogadorId: 'j1', carta: criarCarta('2', '♣') },
-    { jogadorId: 'j2', carta: criarCarta('7', '♥') },
-    { jogadorId: 'j3', carta: criarCarta('8', '♠') },
-  ];
-}
-
-function mesaComQuatro(): MesaItem[] {
-  return [
-    { jogadorId: 'j1', carta: criarCarta('4', '♣') },
-    { jogadorId: 'j2', carta: criarCarta('4', '♥') },
-    { jogadorId: 'j3', carta: criarCarta('4', '♠') },
-  ];
-}
-
-function cartasQueGarantemTresDeOuros(): Carta[] {
-  return [
-    criarCarta('3', '♣'),
-    criarCarta('3', '♥'),
-    criarCarta('3', '♠'),
-    criarCarta('5', '♣'),
-    criarCarta('5', '♥'),
-    criarCarta('5', '♠'),
-    criarCarta('5', '♦'),
-  ];
 }
