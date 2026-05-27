@@ -93,9 +93,11 @@ describe('Logger debug da declaração dos bots', () => {
 
     expect(group).toHaveBeenCalledWith('🟡 Brás (T=0.35) — DECLARAÇÃO');
     expect(log).toHaveBeenCalledWith(expect.stringContaining('Mão: ['));
-    expect(log).toHaveBeenCalledWith(expect.stringContaining('Seguras contadas:'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('Base determinística:'));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('Altas candidatas:'));
-    expect(log).toHaveBeenCalledWith(expect.stringContaining('Sorteios de altas:'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('Sorteios aplicáveis:'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('Sorteios não aplicáveis:'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('Resultado final:'));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('→ Declarou:'));
   });
 });

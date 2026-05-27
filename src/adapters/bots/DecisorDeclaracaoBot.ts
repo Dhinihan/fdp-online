@@ -36,22 +36,21 @@ export class DecisorDeclaracaoBot implements DecisorDeclaracao {
     const avaliadas = avaliarCartas(mao, estado.manilha, cartasPublicas(estado), estado.maos.length);
     const segurasContadas = filtrarCategorias(avaliadas, ['segura', 'garantida_agora']);
     const altasCandidatas = filtrarCategorias(avaliadas, ['alta']);
-    const altasSorteadas = avaliadas
-      .filter((avaliada) => avaliada.categoria === 'alta')
-      .map((avaliada) => ({ carta: avaliada, conta: this.deveContar() }));
-    const contagemAltas = altasSorteadas.filter((sorteio) => sorteio.conta).length;
-    const base = segurasContadas.length + contagemAltas;
-    const defensivo = this.avaliarDefensivo(avaliadas, base, estado.cartasPorRodada);
+    const sorteiosAltas = classificarSorteiosAltas(altasCandidatas, () => this.deveContar());
+    const baseDeterministica = segurasContadas.length;
+    const baseComSorteios = baseDeterministica + sorteiosAltas.aplicaveis.length;
+    const defensivo = this.avaliarDefensivo(avaliadas, baseComSorteios, estado.cartasPorRodada);
     const contagemDefensiva = defensivo.estado === 'aplicado' ? 1 : 0;
-    const declaracao = Math.min(mao.length, Math.max(0, base + contagemDefensiva));
+    const declaracao = Math.min(mao.length, Math.max(0, baseComSorteios + contagemDefensiva));
 
     this.logger?.registrarDeclaracao({
       mao: avaliadas,
-      segurasContadas,
+      baseDeterministica,
       altasCandidatas,
-      sorteiosAltas: altasSorteadas,
+      sorteiosAplicaveis: sorteiosAltas.aplicaveis,
+      sorteiosNaoAplicaveis: sorteiosAltas.naoAplicaveis,
       defensivo,
-      declaracao,
+      resultadoFinal: declaracao,
       regraEspecialPrimeiraRodada: false,
     });
 
@@ -67,11 +66,12 @@ export class DecisorDeclaracaoBot implements DecisorDeclaracao {
 
     this.logger?.registrarDeclaracao({
       mao: avaliadas,
-      segurasContadas: filtrarCategorias(avaliadas, ['segura', 'garantida_agora']),
+      baseDeterministica: 0,
       altasCandidatas: filtrarCategorias(avaliadas, ['alta']),
-      sorteiosAltas: [],
+      sorteiosAplicaveis: [],
+      sorteiosNaoAplicaveis: [],
       defensivo: { estado: 'não elegível' },
-      declaracao,
+      resultadoFinal: declaracao,
       regraEspecialPrimeiraRodada: true,
     });
 
@@ -107,6 +107,23 @@ function contarCategorias(categorias: CategoriaCarta[], esperadas: CategoriaCart
 
 function filtrarCategorias(avaliadas: CartaAvaliada[], esperadas: CategoriaCarta[]): CartaAvaliada[] {
   return avaliadas.filter((avaliada) => esperadas.includes(avaliada.categoria));
+}
+
+function classificarSorteiosAltas(
+  altasCandidatas: CartaAvaliada[],
+  deveContar: () => boolean,
+): { aplicaveis: CartaAvaliada[]; naoAplicaveis: CartaAvaliada[] } {
+  return altasCandidatas.reduce(
+    (acumulado, avaliada) => {
+      if (deveContar()) {
+        acumulado.aplicaveis.push(avaliada);
+      } else {
+        acumulado.naoAplicaveis.push(avaliada);
+      }
+      return acumulado;
+    },
+    { aplicaveis: [] as CartaAvaliada[], naoAplicaveis: [] as CartaAvaliada[] },
+  );
 }
 
 function ehCategoriaForte(categoria: CategoriaCarta): boolean {
