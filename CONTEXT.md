@@ -84,6 +84,14 @@ _Avoid_: Ordem, vez
 Jogador que ainda não jogou carta no turno atual.
 _Avoid_: Próximo jogador, jogador restante
 
+**Carta alta+**:
+Carta cuja categoria estratégica é **alta**, **segura** ou **garantida_agora**.
+_Avoid_: Limiar numérico de força, valor alto
+
+**Vencedora segura**:
+Carta da categoria estratégica **segura** que vence a carta líder atual.
+_Avoid_: Lista manual de valores, carta forte absoluta
+
 ## Relationships
 
 - Uma **Partida** contém uma ou mais **Rodadas**.
