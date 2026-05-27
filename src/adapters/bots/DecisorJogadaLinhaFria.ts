@@ -9,6 +9,7 @@ import {
   escolherVencedoraPorNecessidade,
   ordenarPorForcaReal,
 } from './escolhas-por-necessidade';
+import { avaliarGuardaDePosicao } from './guarda-posicao-linha-fria';
 
 export interface DecisaoLinhaFria {
   carta: Carta;
@@ -48,6 +49,11 @@ function fugirNaoUltimo(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): Decis
 
 function buscarVazaNaoUltimo(estado: EstadoEmJogo, avaliadas: CartaAvaliada[], necessidade: number): DecisaoLinhaFria {
   const vencedoras = cartasQueVencem(estado, avaliadas);
+  const guarda = avaliarGuardaDePosicao({ estado, necessidade, tamanhoMao: avaliadas.length, vencedoras });
+  if (!guarda.permite) {
+    return descartarComGuardaBloqueada(estado, { avaliadas, necessidade, motivo: guarda.motivo });
+  }
+
   if (vencedoras.length > 0) {
     return {
       carta: escolherVencedoraPorNecessidade(vencedoras, estado.manilha, necessidade).carta,
@@ -63,6 +69,29 @@ function buscarVazaNaoUltimo(estado: EstadoEmJogo, avaliadas: CartaAvaliada[], n
     };
   }
   return { carta: cartaMaisBarata(avaliadas).carta, motivo: 'precisa fazer; carta mais barata' };
+}
+
+interface DescarteComGuardaBloqueada {
+  avaliadas: CartaAvaliada[];
+  necessidade: number;
+  motivo: string;
+}
+
+function descartarComGuardaBloqueada(estado: EstadoEmJogo, descarte: DescarteComGuardaBloqueada): DecisaoLinhaFria {
+  const caminho = ['jogada', 'joga no meio', 'linha fria', 'guarda de posição bloqueou'];
+  const naoFazem = cartasQueNaoFazem(estado, descarte.avaliadas);
+  if (naoFazem.length > 0) {
+    return {
+      carta: descartePorNecessidade(naoFazem, estado.manilha, descarte.necessidade).carta,
+      motivo: `guarda de posição bloqueou; ${descarte.motivo}`,
+      caminho,
+    };
+  }
+  return {
+    carta: cartaMaisBarata(descarte.avaliadas).carta,
+    motivo: `guarda de posição bloqueou; ${descarte.motivo}; fuga impossível`,
+    caminho,
+  };
 }
 
 export function decidirUltimoLinhaFria(mao: Carta[], estado: EstadoEmJogo): DecisaoLinhaFria {
