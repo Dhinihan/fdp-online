@@ -1,6 +1,7 @@
 import { avaliarCartas, type CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
 import { estadoEmJogo, type EstadoRodada, type MesaItem } from '@/types/estado-rodada';
+import type { DecisaoDeclaracaoDebug, DefensivoDebug } from './debug-declaracao-bot';
 import type { ContextoJogadaDebug, LinhaJogadaDebug } from './debug-jogada-bot';
 /* eslint-disable no-console */
 
@@ -8,27 +9,6 @@ export interface LoggerDebugBot {
   registrarDeclaracao(decisao: DecisaoDeclaracaoDebug): void;
   registrarJogada(decisao: DecisaoJogadaDebug): void;
 }
-
-export interface DecisaoDeclaracaoDebug {
-  mao: CartaAvaliada[];
-  segurasContadas: CartaAvaliada[];
-  altasCandidatas: CartaAvaliada[];
-  sorteiosAltas: SorteioAltaDebug[];
-  defensivo: DefensivoDebug;
-  declaracao: number;
-  regraEspecialPrimeiraRodada: boolean;
-}
-
-export interface SorteioAltaDebug {
-  carta: CartaAvaliada;
-  conta: boolean;
-}
-
-export type DefensivoDebug =
-  | { estado: 'não elegível' }
-  | { estado: 'sorteou'; aplicaria: boolean }
-  | { estado: 'bloqueado'; base: number; teto: number; resultado: number; cartasPorRodada: number }
-  | { estado: 'aplicado' };
 
 export interface DecisaoJogadaDebug {
   estado: EstadoRodada;
@@ -65,7 +45,7 @@ function registrarDeclaracao(nome: string, temperatura: number, decisao: Decisao
   }
   console.log(`Mão: [${formatarAvaliadas(decisao.mao)}]`);
   console.log(formatarContagens(decisao));
-  console.log(`→ Declarou: ${decisao.declaracao.toString()}`);
+  console.log(`→ Declarou: ${decisao.resultadoFinal.toString()}`);
   console.groupEnd();
 }
 
@@ -108,18 +88,22 @@ function formatarMesa(mesa: MesaItem[]): string {
 }
 
 function formatarContagens(decisao: DecisaoDeclaracaoDebug): string {
+  if (decisao.regraEspecialPrimeiraRodada) return formatarContagensPrimeiraRodada(decisao);
   return [
-    `Seguras contadas: [${formatarAvaliadas(decisao.segurasContadas)}] (${decisao.segurasContadas.length.toString()})`,
+    `Base determinística: ${decisao.baseDeterministica.toString()}`,
     `Altas candidatas: [${formatarAvaliadas(decisao.altasCandidatas)}] (${decisao.altasCandidatas.length.toString()})`,
-    formatarAltasSorteadas(decisao.sorteiosAltas),
+    `Sorteios aplicáveis: [${formatarAvaliadas(decisao.sorteiosAplicaveis)}] (${decisao.sorteiosAplicaveis.length.toString()})`,
+    `Sorteios não aplicáveis: [${formatarAvaliadas(decisao.sorteiosNaoAplicaveis)}] (${decisao.sorteiosNaoAplicaveis.length.toString()})`,
     `+1 defensivo: ${formatarDefensivo(decisao.defensivo)}`,
+    `Resultado final: ${decisao.resultadoFinal.toString()}`,
   ].join(' | ');
 }
 
-function formatarAltasSorteadas(sorteios: SorteioAltaDebug[]): string {
-  const consideradas = sorteios.filter((sorteio) => sorteio.conta).map((sorteio) => sorteio.carta);
-  const porCarta = sorteios.map((sorteio) => `${formatarCarta(sorteio.carta.carta)} ${simNao(sorteio.conta)}`);
-  return `Altas consideradas: [${formatarAvaliadas(consideradas)}] (${consideradas.length.toString()}/${sorteios.length.toString()}) | Sorteios de altas: ${porCarta.join(', ')}`;
+function formatarContagensPrimeiraRodada(decisao: DecisaoDeclaracaoDebug): string {
+  return [
+    `Fortes visíveis: [${formatarAvaliadas(decisao.fortesVisiveis)}] (${decisao.fortesVisiveis.length.toString()})`,
+    `Resultado final: ${decisao.resultadoFinal.toString()}`,
+  ].join(' | ');
 }
 
 function formatarDefensivo(defensivo: DefensivoDebug): string {
