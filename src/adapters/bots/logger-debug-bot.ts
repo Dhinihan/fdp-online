@@ -88,12 +88,20 @@ function formatarMesa(mesa: MesaItem[]): string {
 }
 
 function formatarContagens(decisao: DecisaoDeclaracaoDebug): string {
+  if (decisao.regraEspecialPrimeiraRodada) return formatarContagensPrimeiraRodada(decisao);
   return [
     `Base determinística: ${decisao.baseDeterministica.toString()}`,
     `Altas candidatas: [${formatarAvaliadas(decisao.altasCandidatas)}] (${decisao.altasCandidatas.length.toString()})`,
     `Sorteios aplicáveis: [${formatarAvaliadas(decisao.sorteiosAplicaveis)}] (${decisao.sorteiosAplicaveis.length.toString()})`,
     `Sorteios não aplicáveis: [${formatarAvaliadas(decisao.sorteiosNaoAplicaveis)}] (${decisao.sorteiosNaoAplicaveis.length.toString()})`,
     `+1 defensivo: ${formatarDefensivo(decisao.defensivo)}`,
+    `Resultado final: ${decisao.resultadoFinal.toString()}`,
+  ].join(' | ');
+}
+
+function formatarContagensPrimeiraRodada(decisao: DecisaoDeclaracaoDebug): string {
+  return [
+    `Fortes visíveis: [${formatarAvaliadas(decisao.fortesVisiveis)}] (${decisao.fortesVisiveis.length.toString()})`,
     `Resultado final: ${decisao.resultadoFinal.toString()}`,
   ].join(' | ');
 }

@@ -3,6 +3,7 @@ import type { CartaAvaliada } from '@/core/avaliador-carta';
 export interface DecisaoDeclaracaoDebug {
   mao: CartaAvaliada[];
   baseDeterministica: number;
+  fortesVisiveis: CartaAvaliada[];
   altasCandidatas: CartaAvaliada[];
   sorteiosAplicaveis: CartaAvaliada[];
   sorteiosNaoAplicaveis: CartaAvaliada[];

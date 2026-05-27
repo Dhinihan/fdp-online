@@ -46,6 +46,7 @@ export class DecisorDeclaracaoBot implements DecisorDeclaracao {
     this.logger?.registrarDeclaracao({
       mao: avaliadas,
       baseDeterministica,
+      fortesVisiveis: filtrarFortes(avaliadas),
       altasCandidatas,
       sorteiosAplicaveis: sorteiosAltas.aplicaveis,
       sorteiosNaoAplicaveis: sorteiosAltas.naoAplicaveis,
@@ -62,11 +63,13 @@ export class DecisorDeclaracaoBot implements DecisorDeclaracao {
     const visiveis = cartasVisiveisDosOutros(emJogo);
     const avaliadas = visiveis.flatMap((carta) => avaliarCartas([carta], emJogo.manilha, [], emJogo.maos.length));
     const temAltaVisivel = avaliadas.some((avaliada) => ehCategoriaForte(avaliada.categoria));
+    const fortesVisiveis = filtrarFortes(avaliadas);
     const declaracao = temAltaVisivel ? 0 : 1;
 
     this.logger?.registrarDeclaracao({
       mao: avaliadas,
       baseDeterministica: 0,
+      fortesVisiveis,
       altasCandidatas: filtrarCategorias(avaliadas, ['alta']),
       sorteiosAplicaveis: [],
       sorteiosNaoAplicaveis: [],
@@ -107,6 +110,10 @@ function contarCategorias(categorias: CategoriaCarta[], esperadas: CategoriaCart
 
 function filtrarCategorias(avaliadas: CartaAvaliada[], esperadas: CategoriaCarta[]): CartaAvaliada[] {
   return avaliadas.filter((avaliada) => esperadas.includes(avaliada.categoria));
+}
+
+function filtrarFortes(avaliadas: CartaAvaliada[]): CartaAvaliada[] {
+  return avaliadas.filter((avaliada) => ehCategoriaForte(avaliada.categoria));
 }
 
 function classificarSorteiosAltas(

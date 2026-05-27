@@ -8,7 +8,14 @@ import type { EstadoRodada } from '@/types/estado-rodada';
 function criarRng(valores: number[]): GeradorAleatorio {
   let indice = 0;
   return {
-    random: () => valores[indice++] ?? 0,
+    random: () => {
+      if (indice >= valores.length) {
+        throw new Error(`RNG de teste sem valor na posição ${indice.toString()}`);
+      }
+      const valor = valores[indice];
+      indice += 1;
+      return valor;
+    },
     randomInt: (min: number) => min,
     shuffle: <T>(array: T[]) => [...array],
   };
@@ -57,6 +64,7 @@ function esperarDeclaracaoComSorteios(decisao: DecisaoDeclaracaoDebug): void {
     resultadoFinal: 2,
     regraEspecialPrimeiraRodada: false,
   });
+  expect(identificarCartas(decisao.fortesVisiveis)).toEqual(['3♣', '2♦', '2♥']);
   expect(identificarCartas(decisao.altasCandidatas)).toEqual(['2♦', '2♥']);
   expect(identificarCartas(decisao.sorteiosAplicaveis)).toEqual(['2♦']);
   expect(identificarCartas(decisao.sorteiosNaoAplicaveis)).toEqual(['2♥']);
@@ -84,24 +92,49 @@ describe('Contrato de debug da declaração do bot com sorteios de altas', () =>
 });
 
 describe('Contrato de debug da declaração do bot na primeira rodada', () => {
-  it('deve manter o contrato mínimo também na regra especial da primeira rodada', async () => {
+  it('deve expor fortes visíveis quando a regra especial da primeira rodada zera a declaração', async () => {
     const debug: DecisaoDeclaracaoDebug[] = [];
-    const mao = [{ valor: '4', naipe: '♣' }] satisfies Carta[];
+    const mao = [{ valor: '5', naipe: '♦' }] satisfies Carta[];
+    const visiveis = [{ valor: '3', naipe: '♣' }] satisfies Carta[];
     const decisor = new DecisorDeclaracaoBot(0, criarRng([0]), {
       poucasBaixas: 1,
       declaracaoBaixa: 1,
       logger: criarLogger(debug),
     });
 
-    await expect(decisor.declarar(criarEstado(mao, 1), mao)).resolves.toBe(1);
+    await expect(decisor.declarar(criarEstadoPrimeiraRodada(mao, visiveis), mao)).resolves.toBe(0);
 
-    expect(esperarContratoBase(debug)).toMatchObject({
+    const decisao = esperarContratoBase(debug);
+    expect(decisao).toMatchObject({
       baseDeterministica: 0,
+      altasCandidatas: [],
       sorteiosAplicaveis: [],
       sorteiosNaoAplicaveis: [],
       defensivo: { estado: 'não elegível' },
-      resultadoFinal: 1,
+      resultadoFinal: 0,
       regraEspecialPrimeiraRodada: true,
     });
+    expect(identificarCartas(decisao.fortesVisiveis)).toEqual(['3♣']);
   });
 });
+
+function criarEstadoPrimeiraRodada(mao: Carta[], visiveis: Carta[]): EstadoRodada {
+  return {
+    fase: 'aguardandoDeclaracao',
+    pontos: { humano: 5, bot1: 5, bot2: 5 },
+    cartasPorRodada: 1,
+    jogadorAtual: 1,
+    cartaVirada: { valor: 'Q', naipe: '♦' },
+    manilha: 'K',
+    maos: [
+      { jogador: { id: 'humano', nome: 'Você', pontos: 5 }, cartas: visiveis, visivel: true },
+      { jogador: { id: 'bot1', nome: 'Brás', pontos: 5, temperatura: 0.35 }, cartas: mao, visivel: true },
+      { jogador: { id: 'bot2', nome: 'Lia', pontos: 5, temperatura: 0.2 }, cartas: [], visivel: true },
+    ],
+    mesa: [],
+    declaracoes: {},
+    vazas: {},
+    cartasReveladas: visiveis,
+    turno: 1,
+  };
+}
