@@ -2,6 +2,7 @@ import type { Carta } from '@/core/Carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import type { GeradorAleatorio } from '@/core/RngComSeed';
 import { estadoEmJogo, type EstadoRodada } from '@/types/estado-rodada';
+import { criarContextoJogadaDebug, criarLinhaJogadaDebug } from './debug-jogada-bot';
 import { decidirAbertura } from './decidirAbertura';
 import { DecisorJogadaLinhaQuente } from './DecisorJogadaLinhaQuente';
 import type { LoggerDebugBot } from './logger-debug-bot';
@@ -42,6 +43,9 @@ export class DecisorJogadaBot implements DecisorJogada {
         mao,
         linhaFria: carta,
         linhaQuente: carta,
+        contexto: criarContextoJogadaDebug(estado, mao.length),
+        fria: criarLinhaJogadaDebug(carta, 'abertura: árvore de abertura', ['jogada', 'abre a mesa', 'linha fria']),
+        quente: criarLinhaJogadaDebug(carta, 'abertura: segue linha fria', ['jogada', 'abre a mesa', 'linha quente']),
         carta,
         escolheuQuente: false,
       });

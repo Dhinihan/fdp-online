@@ -12,6 +12,7 @@ describe('DecisorJogadaLinhaQuente', () => {
   it('deve escolher linha fria com segurança quando a temperatura é zero', escolheLinhaFria);
   it('deve usar posicionamento determinístico quando é o último e precisa fazer', usaPosicionamentoDeterministico);
   it('deve registrar posicionamento determinístico quando logger é injetado', registraPosicionamentoDeterministico);
+  it('deve registrar contexto e caminhos auditáveis da decisão', registraContratoExplicavel);
   it('deve empatar quando já cumpriu, líder precisa e carta líder é alta', empataAltaCumprido);
   it('deve atravessar com carta barata quando precisa e tem folga baixa', atravessaComCartaBarata);
   it('deve convergir para linha fria quando não existe pressão agora', convergeSemPressao);
@@ -55,6 +56,34 @@ async function registraPosicionamentoDeterministico(): Promise<void> {
   expect(jogadas).toHaveLength(1);
   expect(jogadas[0]).toMatchObject({ carta: criarCarta('8', '♦'), escolheuQuente: false });
   expect(jogadas[0]?.sorteio).toBeUndefined();
+}
+
+async function registraContratoExplicavel(): Promise<void> {
+  const estado = criarEstado(cenarioBifurcacaoAntesDoFim());
+  const jogadas: DecisaoJogadaDebug[] = [];
+  const bot = criarBot(1, 0, {
+    registrarDeclaracao: () => undefined,
+    registrarJogada: (jogada) => jogadas.push(jogada),
+  });
+
+  await bot.decidirJogada(maoBifurcacao(), estado);
+
+  expect(jogadas[0]?.contexto).toMatchObject({
+    posicaoMesa: 'meio',
+    necessidade: 1,
+    urgencia: 0.5,
+    urgenciaAlta: false,
+    jogadoresPorAgir: 1,
+    liderId: 'j1',
+    liderNecessidade: 0,
+    jogadoresInteressadosPorAgir: 0,
+  });
+  expect(jogadas[0]?.fria).toMatchObject({
+    carta: criarCarta('3', '♦'),
+    motivo: 'precisa fazer; regra G[N-X]',
+    caminho: ['jogada', 'joga no meio', 'linha fria'],
+  });
+  expect(jogadas[0]?.quente?.caminho).toEqual(['jogada', 'joga no meio', 'linha quente']);
 }
 
 async function atravessaComCartaBarata(): Promise<void> {

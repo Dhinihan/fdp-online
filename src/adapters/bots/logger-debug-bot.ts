@@ -1,6 +1,7 @@
 import { avaliarCartas, type CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
 import { estadoEmJogo, type EstadoRodada, type MesaItem } from '@/types/estado-rodada';
+import type { ContextoJogadaDebug, LinhaJogadaDebug } from './debug-jogada-bot';
 /* eslint-disable no-console */
 
 export interface LoggerDebugBot {
@@ -34,6 +35,9 @@ export interface DecisaoJogadaDebug {
   mao: Carta[];
   linhaFria: Carta;
   linhaQuente: Carta;
+  contexto?: ContextoJogadaDebug;
+  fria?: LinhaJogadaDebug;
+  quente?: LinhaJogadaDebug;
   motivoLinhaFria?: string;
   motivoLinhaQuente?: string;
   motivoSemBifurcacao?: string;

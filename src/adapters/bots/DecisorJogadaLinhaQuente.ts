@@ -59,7 +59,11 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
   }
 
   private decidirUltimaJogada(base: BaseJogada): Carta {
-    const quente = decidirUltimoLinhaQuente(base.estadoAtual, base.contexto);
+    const quente = criarDecisaoQuente(decidirUltimoLinhaQuente(base.estadoAtual, base.contexto), [
+      'jogada',
+      'fecha a mesa',
+      'linha quente',
+    ]);
     return this.resolverBifurcacao(base, quente, MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS);
   }
 
@@ -72,10 +76,14 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
       const motivo = bifurcacao.motivoRecusa
         ? formatarMotivoRecusaBifurcacao(bifurcacao.motivoRecusa)
         : MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS;
-      return this.registrarSemBifurcacao(base, { carta: base.fria, motivo }, motivo);
+      return this.registrarSemBifurcacao(
+        base,
+        criarDecisaoQuente({ carta: base.fria, motivo }, base.caminhoLinhaFria),
+        motivo,
+      );
     }
 
-    const quente = escolherPressao(base.contexto);
+    const quente = criarDecisaoQuente(escolherPressao(base.contexto), ['jogada', 'joga no meio', 'linha quente']);
     return this.resolverBifurcacao(base, quente, MOTIVO_SEM_BIFURCACAO_CARTAS_IGUAIS);
   }
 
@@ -94,6 +102,8 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
       quente: quente.carta,
       motivoLinhaFria: base.motivoLinhaFria,
       motivoLinhaQuente: quente.motivo,
+      caminhoLinhaFria: base.caminhoLinhaFria,
+      caminhoLinhaQuente: quente.caminho,
       sorteio,
     });
   }
@@ -117,6 +127,8 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
       linhaQuente: carta,
       motivoLinhaFria: base.motivoLinhaFria,
       motivoLinhaQuente,
+      caminhoLinhaFria: base.caminhoLinhaFria,
+      caminhoLinhaQuente: ['jogada', 'linha quente', 'escolha direta'],
       escolheuQuente: true,
     });
   }
@@ -131,6 +143,8 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
       linhaQuente: quente.carta,
       motivoLinhaFria: base.motivoLinhaFria,
       motivoLinhaQuente: quente.motivo,
+      caminhoLinhaFria: base.caminhoLinhaFria,
+      caminhoLinhaQuente: quente.caminho,
       motivoSemBifurcacao: motivo,
       escolheuQuente: false,
     });
@@ -140,6 +154,7 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
 interface DecisaoQuente {
   carta: Carta;
   motivo: string;
+  caminho: string[];
 }
 
 interface BaseJogada {
@@ -149,6 +164,7 @@ interface BaseJogada {
   contexto: ContextoJogadaQuente;
   fria: Carta;
   motivoLinhaFria: string;
+  caminhoLinhaFria: string[];
 }
 
 interface ConfigBaseJogada {
@@ -167,5 +183,16 @@ function criarBaseJogada(config: ConfigBaseJogada): BaseJogada {
     contexto: config.contexto,
     fria: config.decisaoFria.carta,
     motivoLinhaFria: config.decisaoFria.motivo,
+    caminhoLinhaFria: ['jogada', caminhoPosicao(config.estadoAtual), 'linha fria'],
   };
+}
+
+function caminhoPosicao(estado: EstadoEmJogo): string {
+  if (estado.mesa.length === 0) return 'abre a mesa';
+  if (ehUltimoDaMesa(estado)) return 'fecha a mesa';
+  return 'joga no meio';
+}
+
+function criarDecisaoQuente(decisao: { carta: Carta; motivo: string }, caminho: string[]): DecisaoQuente {
+  return { ...decisao, caminho };
 }
