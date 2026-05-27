@@ -1,10 +1,7 @@
 import { avaliarCartas, type CategoriaCarta } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
-
-export function decidirAbertura(mao: Carta[], estado: EstadoEmJogo, _params?: unknown): Carta {
-  return decidirAberturaLinhaFria(mao, estado).carta;
-}
+import { criarCaminhoJogadaDebug } from './debug-jogada-bot';
 
 export interface DecisaoAberturaLinhaFria {
   carta: Carta;
@@ -54,6 +51,6 @@ function criarDecisaoAbertura(
   return {
     carta,
     motivo: `abertura: ${ramo}; ordem ${ordemCategorias.join('-')}`,
-    caminho: ['jogada', 'abre a mesa', 'linha fria', ramo],
+    caminho: criarCaminhoJogadaDebug('abre', 'fria', ramo),
   };
 }

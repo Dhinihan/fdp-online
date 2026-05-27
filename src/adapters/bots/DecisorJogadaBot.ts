@@ -13,7 +13,6 @@ interface ConfigDecisorJogadaBot {
   rng: Pick<GeradorAleatorio, 'random'>;
   liderBaixa?: number;
   liderAlta?: number;
-  urgenciaAbrirForte?: number;
   logger?: LoggerDebugBot;
 }
 

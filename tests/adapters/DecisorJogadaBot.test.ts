@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decidirAbertura } from '@/adapters/bots/decidirAbertura';
+import { decidirAberturaLinhaFria } from '@/adapters/bots/decidirAbertura';
 import { DecisorJogadaBot } from '@/adapters/bots/DecisorJogadaBot';
 import type { DecisaoJogadaDebug } from '@/adapters/bots/logger-debug-bot';
 import type { Carta } from '@/core/Carta';
@@ -55,7 +55,7 @@ async function abrirFrioUrgenciaAlta(): Promise<void> {
     vazas: { bot: 0 },
     cartasReveladas: [],
   });
-  const bot = new DecisorJogadaBot({ temperatura: 0, rng: { random: () => 0 }, urgenciaAbrirForte: 0.5 });
+  const bot = new DecisorJogadaBot({ temperatura: 0, rng: { random: () => 0 } });
   const mao = [criarCarta('3', '♠'), criarCarta('8', '♦')];
 
   await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('3', '♠'));
@@ -68,7 +68,7 @@ async function abrirQuenteUrgenciaAlta(): Promise<void> {
     vazas: { bot: 0 },
     cartasReveladas: cartasQueGarantemTresDeOuros(),
   });
-  const bot = new DecisorJogadaBot({ temperatura: 0.5, rng: { random: () => 0 }, urgenciaAbrirForte: 0.5 });
+  const bot = new DecisorJogadaBot({ temperatura: 0.5, rng: { random: () => 0 } });
   const mao = [criarCarta('3', '♦'), criarCarta('8', '♦')];
 
   await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('8', '♦'));
@@ -107,7 +107,7 @@ async function abrirFolgaNegativa(): Promise<void> {
     vazas: { bot: 0 },
     cartasReveladas: [],
   });
-  const bot = new DecisorJogadaBot({ temperatura: 0.5, rng: { random: () => 0 }, urgenciaAbrirForte: 0.5 });
+  const bot = new DecisorJogadaBot({ temperatura: 0.5, rng: { random: () => 0 } });
   const mao = [criarCarta('2', '♠'), criarCarta('8', '♦'), criarCarta('A', '♣')];
 
   // A urgência deve ser alta (quebra de cautela) e escolher a carta '2' de Espadas (alta)
@@ -160,7 +160,7 @@ function deveFalharMaoVaziaAbertura(): void {
     vazas: { bot: 0 },
   });
 
-  expect(() => decidirAbertura([], estado, { temperatura: 0.5 })).toThrow('decidirAbertura: mão vazia');
+  expect(() => decidirAberturaLinhaFria([], estado)).toThrow('decidirAbertura: mão vazia');
 }
 
 function criarBot(temperatura: number, valorRng: number): DecisorJogadaBot {
