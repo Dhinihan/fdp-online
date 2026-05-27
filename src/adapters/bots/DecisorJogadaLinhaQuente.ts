@@ -164,7 +164,7 @@ interface ConfigBaseJogada {
   estado: EstadoRodada;
   estadoAtual: EstadoEmJogo;
   contexto: ContextoJogadaQuente;
-  decisaoFria: { carta: Carta; motivo: string };
+  decisaoFria: { carta: Carta; motivo: string; caminho?: string[] };
 }
 
 function criarBaseJogada(config: ConfigBaseJogada): BaseJogada {
@@ -177,6 +177,6 @@ function criarBaseJogada(config: ConfigBaseJogada): BaseJogada {
     posicao,
     fria: config.decisaoFria.carta,
     motivoLinhaFria: config.decisaoFria.motivo,
-    caminhoLinhaFria: criarCaminhoJogadaDebug(posicao, 'fria'),
+    caminhoLinhaFria: config.decisaoFria.caminho ?? criarCaminhoJogadaDebug(posicao, 'fria'),
   };
 }

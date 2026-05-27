@@ -3,11 +3,12 @@ import type { Carta } from '@/core/Carta';
 import { calcularIndiceVencedor, cartaVence, compararForcaReal } from '@/core/comparador-carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { estadoEmJogo, type EstadoEmJogo, type MesaItem, type EstadoRodada } from '@/types/estado-rodada';
-import { decidirAbertura } from './decidirAbertura';
+import { decidirAberturaLinhaFria } from './decidirAbertura';
 
 export interface DecisaoLinhaFria {
   carta: Carta;
   motivo: string;
+  caminho?: string[];
 }
 
 export class DecisorJogadaLinhaFria implements DecisorJogada {
@@ -22,10 +23,7 @@ export class DecisorJogadaLinhaFria implements DecisorJogada {
 
 export function decidirNaoUltimoLinhaFria(mao: Carta[], estado: EstadoEmJogo): DecisaoLinhaFria {
   if (estado.mesa.length === 0) {
-    return {
-      carta: decidirAbertura(mao, estado, { temperatura: 0 }),
-      motivo: 'abertura: sem referência na mesa',
-    };
+    return decidirAberturaLinhaFria(mao, estado);
   }
 
   const avaliadas = avaliarCartas(mao, estado.manilha, estado.cartasReveladas, estado.maos.length);

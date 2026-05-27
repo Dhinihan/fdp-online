@@ -3,7 +3,7 @@ import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import type { GeradorAleatorio } from '@/core/RngComSeed';
 import { estadoEmJogo, type EstadoRodada } from '@/types/estado-rodada';
 import { criarCaminhoJogadaDebug } from './debug-jogada-bot';
-import { decidirAbertura } from './decidirAbertura';
+import { decidirAberturaLinhaFria } from './decidirAbertura';
 import { DecisorJogadaLinhaQuente } from './DecisorJogadaLinhaQuente';
 import type { LoggerDebugBot } from './logger-debug-bot';
 import { registrarEscolhaDireta } from './registrar-decisao-jogada-bot';
@@ -13,19 +13,14 @@ interface ConfigDecisorJogadaBot {
   rng: Pick<GeradorAleatorio, 'random'>;
   liderBaixa?: number;
   liderAlta?: number;
-  urgenciaAbrirForte?: number;
   logger?: LoggerDebugBot;
 }
 
 export class DecisorJogadaBot implements DecisorJogada {
   private readonly quente: DecisorJogadaLinhaQuente;
-  private readonly temperatura: number;
-  private readonly urgenciaAbrirForte: number;
   private readonly logger?: LoggerDebugBot;
 
   constructor(config: ConfigDecisorJogadaBot) {
-    this.temperatura = config.temperatura;
-    this.urgenciaAbrirForte = config.urgenciaAbrirForte ?? 0.5;
     this.quente = new DecisorJogadaLinhaQuente(config);
     this.logger = config.logger;
   }
@@ -35,20 +30,17 @@ export class DecisorJogadaBot implements DecisorJogada {
 
     const estadoAtual = estadoEmJogo(estado);
     if (estadoAtual.mesa.length === 0) {
-      const carta = decidirAbertura(mao, estadoAtual, {
-        temperatura: this.temperatura,
-        urgenciaAbrirForte: this.urgenciaAbrirForte,
-      });
+      const fria = decidirAberturaLinhaFria(mao, estadoAtual);
       return registrarEscolhaDireta({
         logger: this.logger,
         mao,
         estado,
-        carta,
-        linhaFria: carta,
-        linhaQuente: carta,
-        motivoLinhaFria: 'abertura: árvore de abertura',
+        carta: fria.carta,
+        linhaFria: fria.carta,
+        linhaQuente: fria.carta,
+        motivoLinhaFria: fria.motivo,
         motivoLinhaQuente: 'abertura: segue linha fria',
-        caminhoLinhaFria: criarCaminhoJogadaDebug('abre', 'fria'),
+        caminhoLinhaFria: fria.caminho,
         caminhoLinhaQuente: criarCaminhoJogadaDebug('abre', 'quente'),
         escolheuQuente: false,
       });
