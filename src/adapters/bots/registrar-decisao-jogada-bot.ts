@@ -1,5 +1,6 @@
 import type { Carta } from '@/core/Carta';
 import type { EstadoRodada } from '@/types/estado-rodada';
+import { criarContextoJogadaDebug, criarLinhaJogadaDebug } from './debug-jogada-bot';
 import type { LoggerDebugBot } from './logger-debug-bot';
 
 interface EscolhaDireta {
@@ -11,6 +12,8 @@ interface EscolhaDireta {
   linhaQuente?: Carta;
   motivoLinhaFria?: string;
   motivoLinhaQuente?: string;
+  caminhoLinhaFria: string[];
+  caminhoLinhaQuente: string[];
   motivoSemBifurcacao?: string;
   escolheuQuente: boolean;
 }
@@ -24,6 +27,8 @@ interface Bifurcacao {
   quente: Carta;
   motivoLinhaFria?: string;
   motivoLinhaQuente?: string;
+  caminhoLinhaFria: string[];
+  caminhoLinhaQuente: string[];
   sorteio: number;
 }
 
@@ -33,6 +38,13 @@ export function registrarEscolhaDireta(config: EscolhaDireta): Carta {
     estado: config.estado,
     linhaFria: config.linhaFria ?? config.carta,
     linhaQuente: config.linhaQuente ?? config.carta,
+    contexto: criarContextoJogadaDebug(config.estado, config.mao.length),
+    fria: criarLinhaJogadaDebug(config.linhaFria ?? config.carta, config.motivoLinhaFria, config.caminhoLinhaFria),
+    quente: criarLinhaJogadaDebug(
+      config.linhaQuente ?? config.carta,
+      config.motivoLinhaQuente,
+      config.caminhoLinhaQuente,
+    ),
     motivoLinhaFria: config.motivoLinhaFria,
     motivoLinhaQuente: config.motivoLinhaQuente,
     motivoSemBifurcacao: config.motivoSemBifurcacao,
@@ -50,6 +62,9 @@ export function registrarBifurcacao(config: Bifurcacao): Carta {
     estado: config.estado,
     linhaFria: config.fria,
     linhaQuente: config.quente,
+    contexto: criarContextoJogadaDebug(config.estado, config.mao.length),
+    fria: criarLinhaJogadaDebug(config.fria, config.motivoLinhaFria, config.caminhoLinhaFria),
+    quente: criarLinhaJogadaDebug(config.quente, config.motivoLinhaQuente, config.caminhoLinhaQuente),
     motivoLinhaFria: config.motivoLinhaFria,
     motivoLinhaQuente: config.motivoLinhaQuente,
     carta,

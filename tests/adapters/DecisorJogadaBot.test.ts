@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { decidirAbertura } from '@/adapters/bots/decidirAbertura';
 import { DecisorJogadaBot } from '@/adapters/bots/DecisorJogadaBot';
+import type { DecisaoJogadaDebug } from '@/adapters/bots/logger-debug-bot';
 import type { Carta } from '@/core/Carta';
 import type { Jogador } from '@/types/entidades';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
@@ -14,6 +15,7 @@ describe('DecisorJogadaBot', () => {
   it('deve escolher a de menor score dentro da mesma categoria na abertura', abrirMenorScoreNaCategoria);
   it('deve jogar garantida quando só tem ela na abertura', abrirGarantidaInevitavel);
   it('deve lidar com folga negativa na abertura sem quebrar ou dar NaN/Infinity', abrirFolgaNegativa);
+  it('deve registrar contexto explicável quando abre a mesa', registraContextoAbertura);
   it('deve falhar se a mão estiver vazia na abertura', deveFalharMaoVaziaAbertura);
 });
 
@@ -110,6 +112,38 @@ async function abrirFolgaNegativa(): Promise<void> {
 
   // A urgência deve ser alta (quebra de cautela) e escolher a carta '2' de Espadas (alta)
   await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('2', '♠'));
+}
+
+async function registraContextoAbertura(): Promise<void> {
+  const estado = criarEstado({
+    mesa: [],
+    declaracoes: { bot: 2 },
+    vazas: { bot: 0 },
+  });
+  const jogadas: DecisaoJogadaDebug[] = [];
+  const bot = new DecisorJogadaBot({
+    temperatura: 0,
+    rng: { random: () => 0 },
+    logger: {
+      registrarDeclaracao: () => undefined,
+      registrarJogada: (jogada) => jogadas.push(jogada),
+    },
+  });
+
+  await bot.decidirJogada([criarCarta('8', '♦'), criarCarta('4', '♦')], estado);
+
+  expect(jogadas[0]?.contexto).toMatchObject({
+    posicaoMesa: 'abre',
+    necessidade: 2,
+    urgencia: 1,
+    urgenciaAlta: true,
+    jogadoresPorAgir: 3,
+  });
+  expect(jogadas[0]?.fria?.caminho).toEqual(['jogada', 'abre a mesa', 'linha fria']);
+  expect(jogadas[0]?.quente).toMatchObject({
+    motivo: 'abertura: segue linha fria',
+    caminho: ['jogada', 'abre a mesa', 'linha quente'],
+  });
 }
 
 function deveFalharMaoVaziaAbertura(): void {
