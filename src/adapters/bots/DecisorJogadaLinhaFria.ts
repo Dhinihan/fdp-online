@@ -1,9 +1,14 @@
 import { avaliarCartas, type CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
-import { calcularIndiceVencedor, cartaVence, compararForcaReal } from '@/core/comparador-carta';
+import { calcularIndiceVencedor, cartaVence } from '@/core/comparador-carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { estadoEmJogo, type EstadoEmJogo, type MesaItem, type EstadoRodada } from '@/types/estado-rodada';
 import { decidirAberturaLinhaFria } from './decidirAbertura';
+import {
+  descartePorNecessidade,
+  escolherVencedoraPorNecessidade,
+  ordenarPorForcaReal,
+} from './escolhas-por-necessidade';
 
 export interface DecisaoLinhaFria {
   carta: Carta;
@@ -45,7 +50,7 @@ function buscarVazaNaoUltimo(estado: EstadoEmJogo, avaliadas: CartaAvaliada[], n
   const vencedoras = cartasQueVencem(estado, avaliadas);
   if (vencedoras.length > 0) {
     return {
-      carta: escolherGanhadora(vencedoras, estado.manilha, necessidade).carta,
+      carta: escolherVencedoraPorNecessidade(vencedoras, estado.manilha, necessidade).carta,
       motivo: 'precisa fazer; regra G[N-X]',
     };
   }
@@ -53,7 +58,7 @@ function buscarVazaNaoUltimo(estado: EstadoEmJogo, avaliadas: CartaAvaliada[], n
   const naoFazem = cartasQueNaoFazem(estado, avaliadas);
   if (naoFazem.length > 0) {
     return {
-      carta: escolherPerdedora(naoFazem, estado.manilha, necessidade).carta,
+      carta: descartePorNecessidade(naoFazem, estado.manilha, necessidade).carta,
       motivo: 'precisa fazer; regra P[N-X]',
     };
   }
@@ -77,13 +82,13 @@ function decidirUltimoQuandoPrecisaFazer(
   const vencedoras = cartasQueVencem(estado, avaliadas);
   if (vencedoras.length > 0) {
     return {
-      carta: escolherGanhadora(vencedoras, estado.manilha, necessidade).carta,
+      carta: escolherVencedoraPorNecessidade(vencedoras, estado.manilha, necessidade).carta,
       motivo: 'precisa fazer; regra G[N-X]',
     };
   }
 
   return {
-    carta: escolherPerdedora(cartasQueNaoFazem(estado, avaliadas), estado.manilha, necessidade).carta,
+    carta: descartePorNecessidade(cartasQueNaoFazem(estado, avaliadas), estado.manilha, necessidade).carta,
     motivo: 'precisa fazer sem carta que vence; regra P[N-X]',
   };
 }
@@ -116,22 +121,6 @@ function cartasQueNaoFazem(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): Ca
 function melhorCartaMesa(mesa: MesaItem[], manilha: Carta['valor']): Carta | null {
   if (mesa.length === 0) return null;
   return mesa[calcularIndiceVencedor(mesa, manilha)].carta;
-}
-
-function escolherGanhadora(avaliadas: CartaAvaliada[], manilha: Carta['valor'], necessidade: number): CartaAvaliada {
-  const ordenadas = ordenarPorForcaReal(avaliadas, manilha);
-  const indice = ordenadas.length >= necessidade ? ordenadas.length - necessidade : 0;
-  return ordenadas[indice];
-}
-
-function escolherPerdedora(avaliadas: CartaAvaliada[], manilha: Carta['valor'], necessidade: number): CartaAvaliada {
-  const ordenadas = ordenarPorForcaReal(avaliadas, manilha);
-  const indice = ordenadas.length > necessidade ? ordenadas.length - necessidade : 0;
-  return ordenadas[indice];
-}
-
-function ordenarPorForcaReal(avaliadas: CartaAvaliada[], manilha: Carta['valor']): CartaAvaliada[] {
-  return [...avaliadas].sort((a, b) => compararForcaReal(a.carta, b.carta, manilha));
 }
 
 function cartaMaisForte(avaliadas: CartaAvaliada[], manilha: Carta['valor']): CartaAvaliada {

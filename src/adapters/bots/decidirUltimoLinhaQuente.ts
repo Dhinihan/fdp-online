@@ -1,7 +1,12 @@
 import type { CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
-import { calcularIndiceVencedor, cartasEmpatam, cartaVence, compararForcaReal } from '@/core/comparador-carta';
+import { calcularIndiceVencedor, cartasEmpatam, cartaVence } from '@/core/comparador-carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
+import {
+  descartePorNecessidade,
+  escolherVencedoraPorNecessidade,
+  ordenarPorForcaReal,
+} from './escolhas-por-necessidade';
 
 export interface ContextoUltimoLinhaQuente {
   necessidade: number;
@@ -35,24 +40,24 @@ function decidirQuandoPrecisaFazer(
 ): DecisaoUltimoLinhaQuente {
   if (contexto.vencedoras.length === 0) {
     return {
-      carta: escolherPerdedora(cartasQueNaoVencem(contexto), estado.manilha, contexto).carta,
+      carta: descartePorNecessidade(cartasQueNaoVencem(contexto), estado.manilha, contexto.necessidade).carta,
       motivo: 'precisa fazer, sem carta que vence; P[N-X]',
     };
   }
   if (deveFazerAgora(estado, contexto)) {
     return {
-      carta: escolherGanhadora(contexto.vencedoras, estado.manilha, contexto).carta,
+      carta: escolherVencedoraPorNecessidade(contexto.vencedoras, estado.manilha, contexto.necessidade).carta,
       motivo: 'precisa fazer; regra G[N-X]',
     };
   }
   if (contexto.perdedoras.length > 0) {
     return {
-      carta: escolherPerdedora(contexto.perdedoras, estado.manilha, contexto).carta,
+      carta: descartePorNecessidade(contexto.perdedoras, estado.manilha, contexto.necessidade).carta,
       motivo: 'precisa fazer; adiou; P[N-X]',
     };
   }
   return {
-    carta: escolherGanhadora(contexto.vencedoras, estado.manilha, contexto).carta,
+    carta: escolherVencedoraPorNecessidade(contexto.vencedoras, estado.manilha, contexto.necessidade).carta,
     motivo: 'precisa fazer; regra G[N-X]',
   };
 }
@@ -111,26 +116,6 @@ function deveFazerAgora(estado: EstadoEmJogo, contexto: ContextoUltimoLinhaQuent
   return contexto.necessidade / contexto.avaliadas.length >= 0.66;
 }
 
-function escolherGanhadora(
-  avaliadas: CartaAvaliada[],
-  manilha: Carta['valor'],
-  contexto: ContextoUltimoLinhaQuente,
-): CartaAvaliada {
-  const ordenadas = ordenarPorForcaReal(avaliadas, manilha);
-  const indice = ordenadas.length >= contexto.necessidade ? ordenadas.length - contexto.necessidade : 0;
-  return ordenadas[indice];
-}
-
-function escolherPerdedora(
-  avaliadas: CartaAvaliada[],
-  manilha: Carta['valor'],
-  contexto: ContextoUltimoLinhaQuente,
-): CartaAvaliada {
-  const ordenadas = ordenarPorForcaReal(avaliadas, manilha);
-  const indice = ordenadas.length > contexto.necessidade ? ordenadas.length - contexto.necessidade : 0;
-  return ordenadas[indice];
-}
-
 function cartasQueNaoVencem(contexto: ContextoUltimoLinhaQuente): CartaAvaliada[] {
   return [...contexto.perdedoras, ...contexto.empates];
 }
@@ -143,10 +128,6 @@ function liderQuerVaza(estado: EstadoEmJogo): boolean {
 
 function ehAltaOuMelhor(avaliada: CartaAvaliada): boolean {
   return ['alta', 'segura', 'garantida_agora'].includes(avaliada.categoria);
-}
-
-function ordenarPorForcaReal(avaliadas: CartaAvaliada[], manilha: Carta['valor']): CartaAvaliada[] {
-  return [...avaliadas].sort((a, b) => compararForcaReal(a.carta, b.carta, manilha));
 }
 
 function cartaMaisForte(avaliadas: CartaAvaliada[], manilha: Carta['valor']): CartaAvaliada {
