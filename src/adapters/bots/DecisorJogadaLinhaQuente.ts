@@ -3,6 +3,7 @@ import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import type { GeradorAleatorio } from '@/core/RngComSeed';
 import { estadoEmJogo, type EstadoEmJogo, type EstadoRodada } from '@/types/estado-rodada';
 import { criarContextoLinhaQuente, ehUltimoDaMesa, type ContextoJogadaQuente } from './contextoLinhaQuente';
+import { criarCaminhoJogadaDebug, type PosicaoMesaJogadaDebug } from './debug-jogada-bot';
 import { decidirUltimoLinhaQuente } from './decidirUltimoLinhaQuente';
 import { decidirNaoUltimoLinhaFria, decidirUltimoLinhaFria } from './DecisorJogadaLinhaFria';
 import type { LoggerDebugBot } from './logger-debug-bot';
@@ -59,11 +60,10 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
   }
 
   private decidirUltimaJogada(base: BaseJogada): Carta {
-    const quente = criarDecisaoQuente(decidirUltimoLinhaQuente(base.estadoAtual, base.contexto), [
-      'jogada',
-      'fecha a mesa',
-      'linha quente',
-    ]);
+    const quente = criarDecisaoQuente(
+      decidirUltimoLinhaQuente(base.estadoAtual, base.contexto),
+      criarCaminhoJogadaDebug(base.posicao, 'quente'),
+    );
     return this.resolverBifurcacao(base, quente, MOTIVO_SEM_BIFURCACAO_LINHAS_IGUAIS);
   }
 
@@ -83,7 +83,7 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
       );
     }
 
-    const quente = criarDecisaoQuente(escolherPressao(base.contexto), ['jogada', 'joga no meio', 'linha quente']);
+    const quente = criarDecisaoQuente(escolherPressao(base.contexto), criarCaminhoJogadaDebug(base.posicao, 'quente'));
     return this.resolverBifurcacao(base, quente, MOTIVO_SEM_BIFURCACAO_CARTAS_IGUAIS);
   }
 
@@ -128,7 +128,7 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
       motivoLinhaFria: base.motivoLinhaFria,
       motivoLinhaQuente,
       caminhoLinhaFria: base.caminhoLinhaFria,
-      caminhoLinhaQuente: ['jogada', 'linha quente', 'escolha direta'],
+      caminhoLinhaQuente: criarCaminhoJogadaDebug(base.posicao, 'quente', 'escolha direta'),
       escolheuQuente: true,
     });
   }
@@ -162,6 +162,7 @@ interface BaseJogada {
   estado: EstadoRodada;
   estadoAtual: EstadoEmJogo;
   contexto: ContextoJogadaQuente;
+  posicao: PosicaoMesaJogadaDebug;
   fria: Carta;
   motivoLinhaFria: string;
   caminhoLinhaFria: string[];
@@ -181,16 +182,17 @@ function criarBaseJogada(config: ConfigBaseJogada): BaseJogada {
     estado: config.estado,
     estadoAtual: config.estadoAtual,
     contexto: config.contexto,
+    posicao: definirPosicao(config.estadoAtual),
     fria: config.decisaoFria.carta,
     motivoLinhaFria: config.decisaoFria.motivo,
-    caminhoLinhaFria: ['jogada', caminhoPosicao(config.estadoAtual), 'linha fria'],
+    caminhoLinhaFria: criarCaminhoJogadaDebug(definirPosicao(config.estadoAtual), 'fria'),
   };
 }
 
-function caminhoPosicao(estado: EstadoEmJogo): string {
-  if (estado.mesa.length === 0) return 'abre a mesa';
-  if (ehUltimoDaMesa(estado)) return 'fecha a mesa';
-  return 'joga no meio';
+function definirPosicao(estado: EstadoEmJogo): PosicaoMesaJogadaDebug {
+  if (estado.mesa.length === 0) return 'abre';
+  if (ehUltimoDaMesa(estado)) return 'fecha';
+  return 'meio';
 }
 
 function criarDecisaoQuente(decisao: { carta: Carta; motivo: string }, caminho: string[]): DecisaoQuente {

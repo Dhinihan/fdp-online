@@ -3,8 +3,11 @@ import { calcularIndiceVencedor } from '@/core/comparador-carta';
 import { estadoEmJogo, type EstadoEmJogo, type EstadoRodada } from '@/types/estado-rodada';
 import { calcularNecessidade } from './contextoLinhaQuente';
 
+export type PosicaoMesaJogadaDebug = 'abre' | 'meio' | 'fecha';
+export type LinhaDecisaoJogadaDebug = 'fria' | 'quente';
+
 export interface ContextoJogadaDebug {
-  posicaoMesa: 'abre' | 'meio' | 'fecha';
+  posicaoMesa: PosicaoMesaJogadaDebug;
   necessidade: number;
   urgencia: number;
   urgenciaAlta: boolean;
@@ -46,10 +49,25 @@ export function criarLinhaJogadaDebug(carta: Carta, motivo: string | undefined, 
   };
 }
 
-function definirPosicaoMesa(estado: EstadoEmJogo, jogadoresPorAgir: number): ContextoJogadaDebug['posicaoMesa'] {
+export function criarCaminhoJogadaDebug(
+  posicao: PosicaoMesaJogadaDebug,
+  linha: LinhaDecisaoJogadaDebug,
+  etapa?: string,
+): string[] {
+  const caminho = ['jogada', rotuloPosicao(posicao), `linha ${linha}`];
+  return etapa ? [...caminho, etapa] : caminho;
+}
+
+function definirPosicaoMesa(estado: EstadoEmJogo, jogadoresPorAgir: number): PosicaoMesaJogadaDebug {
   if (estado.mesa.length === 0) return 'abre';
   if (jogadoresPorAgir === 0) return 'fecha';
   return 'meio';
+}
+
+function rotuloPosicao(posicao: PosicaoMesaJogadaDebug): string {
+  if (posicao === 'abre') return 'abre a mesa';
+  if (posicao === 'fecha') return 'fecha a mesa';
+  return 'joga no meio';
 }
 
 function calcularJogadoresPorAgir(estado: EstadoEmJogo): number {

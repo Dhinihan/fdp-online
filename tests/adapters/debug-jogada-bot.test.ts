@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { criarContextoJogadaDebug, criarLinhaJogadaDebug } from '@/adapters/bots/debug-jogada-bot';
+import {
+  criarCaminhoJogadaDebug,
+  criarContextoJogadaDebug,
+  criarLinhaJogadaDebug,
+} from '@/adapters/bots/debug-jogada-bot';
 import type { Jogador } from '@/types/entidades';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
 import { criarCarta, criarJogador } from '../core/rodada-fixtures';
@@ -8,6 +12,7 @@ describe('debug da jogada dos bots', () => {
   it('deve descrever abertura com jogadores por agir em ordem circular', deveDescreverAbertura);
   it('deve descrever jogada no meio com líder e interessados por agir', deveDescreverMeio);
   it('deve descrever fechamento sem jogadores por agir', deveDescreverFechamento);
+  it('deve criar caminho canônico com etapa opcional', deveCriarCaminhoCanonico);
   it('deve criar linha com motivo padrão quando motivo não foi registrado', deveCriarLinhaComMotivoPadrao);
 });
 
@@ -77,6 +82,16 @@ function deveCriarLinhaComMotivoPadrao(): void {
     motivo: 'motivo não registrado',
     caminho: ['jogada', 'linha fria'],
   });
+}
+
+function deveCriarCaminhoCanonico(): void {
+  expect(criarCaminhoJogadaDebug('meio', 'quente', 'escolha direta')).toEqual([
+    'jogada',
+    'joga no meio',
+    'linha quente',
+    'escolha direta',
+  ]);
+  expect(criarCaminhoJogadaDebug('fecha', 'fria')).toEqual(['jogada', 'fecha a mesa', 'linha fria']);
 }
 
 function criarEstado(config: Partial<EstadoEmJogo>): EstadoEmJogo {

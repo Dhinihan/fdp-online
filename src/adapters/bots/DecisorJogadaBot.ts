@@ -2,10 +2,11 @@ import type { Carta } from '@/core/Carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import type { GeradorAleatorio } from '@/core/RngComSeed';
 import { estadoEmJogo, type EstadoRodada } from '@/types/estado-rodada';
-import { criarContextoJogadaDebug, criarLinhaJogadaDebug } from './debug-jogada-bot';
+import { criarCaminhoJogadaDebug } from './debug-jogada-bot';
 import { decidirAbertura } from './decidirAbertura';
 import { DecisorJogadaLinhaQuente } from './DecisorJogadaLinhaQuente';
 import type { LoggerDebugBot } from './logger-debug-bot';
+import { registrarEscolhaDireta } from './registrar-decisao-jogada-bot';
 
 interface ConfigDecisorJogadaBot {
   temperatura: number;
@@ -38,18 +39,19 @@ export class DecisorJogadaBot implements DecisorJogada {
         temperatura: this.temperatura,
         urgenciaAbrirForte: this.urgenciaAbrirForte,
       });
-      this.logger?.registrarJogada({
-        estado,
+      return registrarEscolhaDireta({
+        logger: this.logger,
         mao,
+        estado,
+        carta,
         linhaFria: carta,
         linhaQuente: carta,
-        contexto: criarContextoJogadaDebug(estado, mao.length),
-        fria: criarLinhaJogadaDebug(carta, 'abertura: árvore de abertura', ['jogada', 'abre a mesa', 'linha fria']),
-        quente: criarLinhaJogadaDebug(carta, 'abertura: segue linha fria', ['jogada', 'abre a mesa', 'linha quente']),
-        carta,
+        motivoLinhaFria: 'abertura: árvore de abertura',
+        motivoLinhaQuente: 'abertura: segue linha fria',
+        caminhoLinhaFria: criarCaminhoJogadaDebug('abre', 'fria'),
+        caminhoLinhaQuente: criarCaminhoJogadaDebug('abre', 'quente'),
         escolheuQuente: false,
       });
-      return carta;
     }
 
     return this.quente.decidirJogada(mao, estado);

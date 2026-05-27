@@ -12,8 +12,8 @@ interface EscolhaDireta {
   linhaQuente?: Carta;
   motivoLinhaFria?: string;
   motivoLinhaQuente?: string;
-  caminhoLinhaFria?: string[];
-  caminhoLinhaQuente?: string[];
+  caminhoLinhaFria: string[];
+  caminhoLinhaQuente: string[];
   motivoSemBifurcacao?: string;
   escolheuQuente: boolean;
 }
@@ -27,8 +27,8 @@ interface Bifurcacao {
   quente: Carta;
   motivoLinhaFria?: string;
   motivoLinhaQuente?: string;
-  caminhoLinhaFria?: string[];
-  caminhoLinhaQuente?: string[];
+  caminhoLinhaFria: string[];
+  caminhoLinhaQuente: string[];
   sorteio: number;
 }
 
@@ -39,15 +39,11 @@ export function registrarEscolhaDireta(config: EscolhaDireta): Carta {
     linhaFria: config.linhaFria ?? config.carta,
     linhaQuente: config.linhaQuente ?? config.carta,
     contexto: criarContextoJogadaDebug(config.estado, config.mao.length),
-    fria: criarLinhaJogadaDebug(
-      config.linhaFria ?? config.carta,
-      config.motivoLinhaFria,
-      config.caminhoLinhaFria ?? [],
-    ),
+    fria: criarLinhaJogadaDebug(config.linhaFria ?? config.carta, config.motivoLinhaFria, config.caminhoLinhaFria),
     quente: criarLinhaJogadaDebug(
       config.linhaQuente ?? config.carta,
       config.motivoLinhaQuente,
-      config.caminhoLinhaQuente ?? [],
+      config.caminhoLinhaQuente,
     ),
     motivoLinhaFria: config.motivoLinhaFria,
     motivoLinhaQuente: config.motivoLinhaQuente,
@@ -67,8 +63,8 @@ export function registrarBifurcacao(config: Bifurcacao): Carta {
     linhaFria: config.fria,
     linhaQuente: config.quente,
     contexto: criarContextoJogadaDebug(config.estado, config.mao.length),
-    fria: criarLinhaJogadaDebug(config.fria, config.motivoLinhaFria, config.caminhoLinhaFria ?? []),
-    quente: criarLinhaJogadaDebug(config.quente, config.motivoLinhaQuente, config.caminhoLinhaQuente ?? []),
+    fria: criarLinhaJogadaDebug(config.fria, config.motivoLinhaFria, config.caminhoLinhaFria),
+    quente: criarLinhaJogadaDebug(config.quente, config.motivoLinhaQuente, config.caminhoLinhaQuente),
     motivoLinhaFria: config.motivoLinhaFria,
     motivoLinhaQuente: config.motivoLinhaQuente,
     carta,
