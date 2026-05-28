@@ -126,7 +126,7 @@ function liderQuerVaza(estado: EstadoEmJogo): boolean {
   return necessidade > 0;
 }
 
-function ehAltaOuMelhor(avaliada: CartaAvaliada): boolean {
+export function ehAltaOuMelhor(avaliada: CartaAvaliada): boolean {
   return ['alta', 'segura', 'garantida_agora'].includes(avaliada.categoria);
 }
 

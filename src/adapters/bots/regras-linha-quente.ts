@@ -2,6 +2,8 @@ import type { CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
 import { calcularNecessidade, liderQuerVaza, type ContextoJogadaQuente } from './contextoLinhaQuente';
+import { ehAltaOuMelhor } from './decidirUltimoLinhaQuente';
+import { ordenarPorForcaReal } from './escolhas-por-necessidade';
 
 export interface ResultadoPodeBifurcar {
   pode: boolean;
@@ -58,11 +60,25 @@ export function escolherTravessia(estado: EstadoEmJogo, contexto: ContextoJogada
   return { carta: cartaMaisBarata(candidatas).carta, motivo: 'travessia: líder alta+ e urgência baixa' };
 }
 
-export function escolherEmpate(contexto: ContextoJogadaQuente, liderAlta: number): DecisaoCartaQuente | null {
-  const lider = contexto.lider;
-  if (!lider || lider.score <= liderAlta || contexto.empates.length === 0) return null;
-  if (contexto.necessidade <= 0 || contexto.folga >= 2) {
-    return { carta: cartaMaisCara(contexto.empates).carta, motivo: 'empate com líder alta+' };
+export function escolherJaCumpriuNoMeio(
+  estado: EstadoEmJogo,
+  contexto: ContextoJogadaQuente,
+): DecisaoCartaQuente | null {
+  if (contexto.necessidade > 0) return null;
+  if (liderQuerVaza(estado) && contexto.lider && ehAltaOuMelhor(contexto.lider) && contexto.empates.length > 0) {
+    return {
+      carta: cartaMaisCara(contexto.empates).carta,
+      motivo: 'já cumpriu; empate contra líder alta+',
+    };
+  }
+  if (contexto.perdedoras.length > 0) {
+    return {
+      carta: cartaMaisForte(contexto.perdedoras, estado.manilha).carta,
+      motivo: 'já cumpriu; perdedora mais forte',
+    };
+  }
+  if (contexto.empates.length > 0) {
+    return { carta: cartaMaisCara(contexto.empates).carta, motivo: 'já cumpriu; empate mais caro' };
   }
   return null;
 }
@@ -116,4 +132,9 @@ function cartaMaisBarata(avaliadas: CartaAvaliada[]): CartaAvaliada {
 
 function cartaMaisCara(avaliadas: CartaAvaliada[]): CartaAvaliada {
   return [...avaliadas].sort((a, b) => b.score - a.score)[0];
+}
+
+function cartaMaisForte(avaliadas: CartaAvaliada[], manilha: Carta['valor']): CartaAvaliada {
+  const ordenadas = ordenarPorForcaReal(avaliadas, manilha);
+  return ordenadas[ordenadas.length - 1];
 }

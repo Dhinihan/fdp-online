@@ -9,7 +9,6 @@ import {
   criarEstado,
   maoBifurcacao,
   mesaComBaixa,
-  mesaComDois,
   mesaComQuatro,
 } from './fixtures-jogada-linha-quente';
 
@@ -20,6 +19,8 @@ describe('DecisorJogadaLinhaQuente', () => {
   it('deve registrar posicionamento determinístico quando logger é injetado', registraPosicionamentoDeterministico);
   it('deve registrar contexto e caminhos auditáveis da decisão', registraContratoExplicavel);
   it('deve empatar quando já cumpriu, líder precisa e carta líder é alta', empataAltaCumprido);
+  it('deve preferir perdedora no meio quando líder é média e já cumpriu', perdedoraComLiderMedia);
+  it('deve registrar seguir fria quando já cumpriu sem carta que não faz', registraSeguirFriaSemFuga);
   it('deve atravessar com carta barata quando precisa e tem folga baixa', atravessaComCartaBarata);
   it('deve convergir para linha fria quando não existe pressão agora', convergeSemPressao);
   it('não deve sortear temperatura quando não há bifurcação', naoSorteiaSemBifurcacao);
@@ -104,12 +105,59 @@ async function atravessaComCartaBarata(): Promise<void> {
 }
 
 async function empataAltaCumprido(): Promise<void> {
-  const estado = criarEstado({ mesa: mesaComDois(), declaracoes: { j1: 1, bot: 1 }, vazas: { j1: 0, bot: 1 } });
+  const estado = criarEstado({
+    mesa: [
+      { jogadorId: 'j1', carta: criarCarta('2', '♣') },
+      { jogadorId: 'j2', carta: criarCarta('7', '♥') },
+    ],
+    declaracoes: { j1: 1, bot: 1 },
+    vazas: { j1: 0, bot: 1 },
+  });
   const bot = criarBot(1, 0);
 
   await expect(bot.decidirJogada([criarCarta('2', '♦'), criarCarta('4', '♦')], estado)).resolves.toEqual(
     criarCarta('2', '♦'),
   );
+}
+
+async function perdedoraComLiderMedia(): Promise<void> {
+  const estado = criarEstado({
+    mesa: [
+      { jogadorId: 'j1', carta: criarCarta('9', '♣') },
+      { jogadorId: 'j2', carta: criarCarta('6', '♥') },
+    ],
+    declaracoes: { j1: 1, bot: 1 },
+    vazas: { j1: 0, bot: 1 },
+  });
+  const mao = [criarCarta('9', '♦'), criarCarta('7', '♦')];
+  const bot = criarBot(1, 0);
+  const fria = new DecisorJogadaLinhaFria();
+
+  await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('7', '♦'));
+  await expect(fria.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('9', '♦'));
+}
+
+async function registraSeguirFriaSemFuga(): Promise<void> {
+  const estado = criarEstado({
+    mesa: [
+      { jogadorId: 'j1', carta: criarCarta('4', '♣') },
+      { jogadorId: 'j2', carta: criarCarta('4', '♥') },
+    ],
+    declaracoes: { bot: 1 },
+    vazas: { bot: 1 },
+    manilha: '6',
+  });
+  const mao = [criarCarta('5', '♦'), criarCarta('8', '♦'), criarCarta('K', '♦')];
+  const jogadas: DecisaoJogadaDebug[] = [];
+  const bot = criarBot(1, 0, {
+    registrarDeclaracao: () => undefined,
+    registrarJogada: (jogada) => jogadas.push(jogada),
+  });
+
+  await bot.decidirJogada(mao, estado);
+
+  expect(jogadas[0]?.quente?.motivo).toBe('linha quente segue fria: sem carta que não faz');
+  expect(jogadas[0]?.quente?.caminho).toEqual(['jogada', 'joga no meio', 'linha quente', 'segue fria']);
 }
 
 async function convergeSemPressao(): Promise<void> {

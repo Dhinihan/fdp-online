@@ -11,7 +11,6 @@ interface ConfigDecisorJogadaBot {
   temperatura: number;
   rng: Pick<GeradorAleatorio, 'random'>;
   liderBaixa?: number;
-  liderAlta?: number;
   logger?: LoggerDebugBot;
 }
 

@@ -76,7 +76,7 @@ async function jogaMaisForteSemFuga(): Promise<void> {
 async function sorteiaQuandoLinhasDiferem(): Promise<void> {
   const estado = criarEstado({ mesa: mesaComK(), declaracoes: { j1: 0, bot: 1 }, vazas: { j1: 0, bot: 0 } });
   const random = vi.fn(() => 0);
-  const decisor = new DecisorJogadaLinhaQuente({ temperatura: 1, rng: { random }, liderBaixa: 8, liderAlta: 11 });
+  const decisor = new DecisorJogadaLinhaQuente({ temperatura: 1, rng: { random }, liderBaixa: 8 });
 
   await expect(decisor.decidirJogada([criarCarta('Q', '♦'), criarCarta('A', '♦')], estado)).resolves.toEqual(
     criarCarta('Q', '♦'),
@@ -92,7 +92,6 @@ async function registraSemBifurcacaoQuandoConverge(): Promise<void> {
     temperatura: 1,
     rng: { random },
     liderBaixa: 8,
-    liderAlta: 11,
     logger: {
       registrarDeclaracao: () => undefined,
       registrarJogada: (jogada) => jogadas.push(jogada),
@@ -118,7 +117,7 @@ function jogarContraNove(estado: EstadoEmJogo): Promise<Carta> {
 }
 
 function bot(): DecisorJogadaLinhaQuente {
-  return new DecisorJogadaLinhaQuente({ temperatura: 1, rng: { random: () => 0 }, liderBaixa: 8, liderAlta: 11 });
+  return new DecisorJogadaLinhaQuente({ temperatura: 1, rng: { random: () => 0 }, liderBaixa: 8 });
 }
 
 function criarEstado(config: Partial<EstadoEmJogo>): EstadoEmJogo {
