@@ -106,29 +106,18 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
   private escolherQuenteDireta(base: BaseJogada): Carta | null {
     if (base.contexto.necessidade <= 0) {
       const jaCumpriu = escolherJaCumpriuNoMeio(base.estadoAtual, base.contexto);
-      if (jaCumpriu) return this.registrarQuente(base, jaCumpriu.carta, jaCumpriu.motivo);
+      if (jaCumpriu) return this.resolverQuenteRecomendada(base, jaCumpriu.carta, jaCumpriu.motivo);
       return this.registrarSeguirFria(base);
     }
 
     const travessia = escolherTravessia(base.estadoAtual, base.contexto);
     if (!travessia) return null;
-    return this.registrarQuente(base, travessia.carta, `linha quente atravessou: ${travessia.motivo}`);
+    return this.resolverQuenteRecomendada(base, travessia.carta, `linha quente atravessou: ${travessia.motivo}`);
   }
 
-  private registrarQuente(base: BaseJogada, carta: Carta, motivoLinhaQuente: string): Carta {
-    return registrarEscolhaDireta({
-      logger: this.logger,
-      mao: base.mao,
-      estado: base.estado,
-      carta,
-      linhaFria: base.fria,
-      linhaQuente: carta,
-      motivoLinhaFria: base.motivoLinhaFria,
-      motivoLinhaQuente,
-      caminhoLinhaFria: base.caminhoLinhaFria,
-      caminhoLinhaQuente: criarCaminhoJogadaDebug(base.posicao, 'quente', 'escolha direta'),
-      escolheuQuente: true,
-    });
+  private resolverQuenteRecomendada(base: BaseJogada, carta: Carta, motivo: string): Carta {
+    const quente = criarDecisaoQuente({ carta, motivo }, criarCaminhoJogadaDebug(base.posicao, 'quente'));
+    return this.resolverBifurcacao(base, quente);
   }
 
   private registrarSeguirFria(base: BaseJogada): Carta {
