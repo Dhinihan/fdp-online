@@ -1,9 +1,8 @@
 import type { Carta } from '@/core/Carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import type { GeradorAleatorio } from '@/core/RngComSeed';
-import { estadoEmJogo, type EstadoRodada } from '@/types/estado-rodada';
-import { criarCaminhoJogadaDebug } from './debug-jogada-bot';
-import { decidirAberturaLinhaFria } from './decidirAbertura';
+import { estadoEmJogo, type EstadoEmJogo, type EstadoRodada } from '@/types/estado-rodada';
+import { decidirAberturaLinhaFria, decidirAberturaLinhaQuente } from './decidirAbertura';
 import { DecisorJogadaLinhaQuente } from './DecisorJogadaLinhaQuente';
 import type { LoggerDebugBot } from './logger-debug-bot';
 import { registrarEscolhaDireta } from './registrar-decisao-jogada-bot';
@@ -30,22 +29,27 @@ export class DecisorJogadaBot implements DecisorJogada {
 
     const estadoAtual = estadoEmJogo(estado);
     if (estadoAtual.mesa.length === 0) {
-      const fria = decidirAberturaLinhaFria(mao, estadoAtual);
-      return registrarEscolhaDireta({
-        logger: this.logger,
-        mao,
-        estado,
-        carta: fria.carta,
-        linhaFria: fria.carta,
-        linhaQuente: fria.carta,
-        motivoLinhaFria: fria.motivo,
-        motivoLinhaQuente: 'abertura: segue linha fria',
-        caminhoLinhaFria: fria.caminho,
-        caminhoLinhaQuente: criarCaminhoJogadaDebug('abre', 'quente'),
-        escolheuQuente: false,
-      });
+      return this.decidirAbertura(mao, estado, estadoAtual);
     }
 
     return this.quente.decidirJogada(mao, estado);
+  }
+
+  private decidirAbertura(mao: Carta[], estado: EstadoRodada, estadoAtual: EstadoEmJogo): Carta {
+    const fria = decidirAberturaLinhaFria(mao, estadoAtual);
+    const quente = decidirAberturaLinhaQuente(fria);
+    return registrarEscolhaDireta({
+      logger: this.logger,
+      mao,
+      estado,
+      carta: fria.carta,
+      linhaFria: fria.carta,
+      linhaQuente: quente.carta,
+      motivoLinhaFria: fria.motivo,
+      motivoLinhaQuente: quente.motivo,
+      caminhoLinhaFria: fria.caminho,
+      caminhoLinhaQuente: quente.caminho,
+      escolheuQuente: false,
+    });
   }
 }

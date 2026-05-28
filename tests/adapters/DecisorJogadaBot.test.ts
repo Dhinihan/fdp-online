@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { decidirAberturaLinhaFria } from '@/adapters/bots/decidirAbertura';
 import { DecisorJogadaBot } from '@/adapters/bots/DecisorJogadaBot';
 import type { DecisaoJogadaDebug } from '@/adapters/bots/logger-debug-bot';
@@ -120,10 +120,11 @@ async function registraContextoAbertura(): Promise<void> {
     declaracoes: { bot: 2 },
     vazas: { bot: 0 },
   });
+  const rng = vi.fn(() => 0);
   const jogadas: DecisaoJogadaDebug[] = [];
   const bot = new DecisorJogadaBot({
-    temperatura: 0,
-    rng: { random: () => 0 },
+    temperatura: 1,
+    rng: { random: rng },
     logger: {
       registrarDeclaracao: () => undefined,
       registrarJogada: (jogada) => jogadas.push(jogada),
@@ -132,10 +133,12 @@ async function registraContextoAbertura(): Promise<void> {
 
   await bot.decidirJogada([criarCarta('8', '♦'), criarCarta('4', '♦')], estado);
 
+  expect(rng).not.toHaveBeenCalled();
   expect(jogadas[0]?.fria).toMatchObject({
     motivo: 'abertura: urgência alta; ordem alta-média-segura-baixa-garantida_agora',
     caminho: ['jogada', 'abre a mesa', 'linha fria', 'urgência alta'],
   });
+  expect(jogadas[0]?.fria?.carta).toEqual(jogadas[0]?.quente?.carta);
   esperarContextoAbertura(jogadas[0]);
 }
 
@@ -149,8 +152,10 @@ function esperarContextoAbertura(jogada: DecisaoJogadaDebug | undefined): void {
   });
   expect(jogada?.quente).toMatchObject({
     motivo: 'abertura: segue linha fria',
-    caminho: ['jogada', 'abre a mesa', 'linha quente'],
+    caminho: ['jogada', 'abre a mesa', 'linha quente', 'segue linha fria'],
   });
+  expect(jogada?.sorteio).toBeUndefined();
+  expect(jogada?.escolheuQuente).toBe(false);
 }
 
 function deveFalharMaoVaziaAbertura(): void {

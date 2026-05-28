@@ -4,11 +4,16 @@ import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { calcularNecessidade, urgenciaAlta } from './contexto-posicao-mesa';
 import { criarCaminhoJogadaDebug } from './debug-jogada-bot';
 
-export interface DecisaoAberturaLinhaFria {
+export interface DecisaoAbertura {
   carta: Carta;
   motivo: string;
   caminho: string[];
 }
+
+export type DecisaoAberturaLinhaFria = DecisaoAbertura;
+export type DecisaoAberturaLinhaQuente = DecisaoAbertura;
+
+export const MOTIVO_ABERTURA_LINHA_QUENTE = 'abertura: segue linha fria';
 
 export function decidirAberturaLinhaFria(mao: Carta[], estado: EstadoEmJogo): DecisaoAberturaLinhaFria {
   if (mao.length === 0) throw new Error('decidirAbertura: mão vazia');
@@ -27,6 +32,14 @@ export function decidirAberturaLinhaFria(mao: Carta[], estado: EstadoEmJogo): De
   }
 
   return criarDecisaoAbertura(mao[0], ramo, ordemCategorias);
+}
+
+export function decidirAberturaLinhaQuente(fria: DecisaoAberturaLinhaFria): DecisaoAberturaLinhaQuente {
+  return {
+    carta: fria.carta,
+    motivo: MOTIVO_ABERTURA_LINHA_QUENTE,
+    caminho: criarCaminhoJogadaDebug('abre', 'quente', 'segue linha fria'),
+  };
 }
 
 type RamoAbertura = 'já cumpriu' | 'urgência alta' | 'precisa sem urgência alta';
