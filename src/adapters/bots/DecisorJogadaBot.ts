@@ -1,7 +1,7 @@
 import type { Carta } from '@/core/Carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import type { GeradorAleatorio } from '@/core/RngComSeed';
-import { estadoEmJogo, type EstadoRodada } from '@/types/estado-rodada';
+import { estadoEmJogo, type EstadoEmJogo, type EstadoRodada } from '@/types/estado-rodada';
 import { decidirAberturaLinhaFria, decidirAberturaLinhaQuente } from './decidirAbertura';
 import { DecisorJogadaLinhaQuente } from './DecisorJogadaLinhaQuente';
 import type { LoggerDebugBot } from './logger-debug-bot';
@@ -29,14 +29,13 @@ export class DecisorJogadaBot implements DecisorJogada {
 
     const estadoAtual = estadoEmJogo(estado);
     if (estadoAtual.mesa.length === 0) {
-      return this.decidirAbertura(mao, estado);
+      return this.decidirAbertura(mao, estado, estadoAtual);
     }
 
     return this.quente.decidirJogada(mao, estado);
   }
 
-  private decidirAbertura(mao: Carta[], estado: EstadoRodada): Carta {
-    const estadoAtual = estadoEmJogo(estado);
+  private decidirAbertura(mao: Carta[], estado: EstadoRodada, estadoAtual: EstadoEmJogo): Carta {
     const fria = decidirAberturaLinhaFria(mao, estadoAtual);
     const quente = decidirAberturaLinhaQuente(fria);
     return registrarEscolhaDireta({

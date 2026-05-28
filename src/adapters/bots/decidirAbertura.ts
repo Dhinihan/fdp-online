@@ -4,17 +4,14 @@ import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { calcularNecessidade, urgenciaAlta } from './contexto-posicao-mesa';
 import { criarCaminhoJogadaDebug } from './debug-jogada-bot';
 
-export interface DecisaoAberturaLinhaFria {
+export interface DecisaoAbertura {
   carta: Carta;
   motivo: string;
   caminho: string[];
 }
 
-export interface DecisaoAberturaLinhaQuente {
-  carta: Carta;
-  motivo: string;
-  caminho: string[];
-}
+export type DecisaoAberturaLinhaFria = DecisaoAbertura;
+export type DecisaoAberturaLinhaQuente = DecisaoAbertura;
 
 export const MOTIVO_ABERTURA_LINHA_QUENTE = 'abertura: segue linha fria';
 
