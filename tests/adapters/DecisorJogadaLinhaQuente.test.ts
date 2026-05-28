@@ -83,8 +83,8 @@ async function registraContratoExplicavel(): Promise<void> {
   });
   expect(jogadas[0]?.fria).toMatchObject({
     carta: criarCarta('3', '♦'),
-    motivo: 'precisa fazer; regra G[N-X]',
-    caminho: ['jogada', 'joga no meio', 'linha fria'],
+    motivo: 'guarda de posição permitiu; jogadores por agir já cumpriram; precisa fazer; regra G[N-X]',
+    caminho: ['jogada', 'joga no meio', 'linha fria', 'guarda de posição permitiu'],
   });
   expect(jogadas[0]?.quente?.caminho).toEqual(['jogada', 'joga no meio', 'linha quente']);
   expect(jogadas[0]).toMatchObject(decisaoSorteadaLinhaQuente());

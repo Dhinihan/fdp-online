@@ -1,7 +1,12 @@
 import type { Carta } from '@/core/Carta';
 import { calcularIndiceVencedor } from '@/core/comparador-carta';
 import { estadoEmJogo, type EstadoEmJogo, type EstadoRodada } from '@/types/estado-rodada';
-import { calcularNecessidade } from './contextoLinhaQuente';
+import {
+  calcularJogadoresPorAgir,
+  calcularNecessidade,
+  jogadoresInteressadosPorAgir,
+  urgenciaAlta,
+} from './contexto-posicao-mesa';
 
 export type PosicaoMesaJogadaDebug = 'abre' | 'meio' | 'fecha';
 export type LinhaDecisaoJogadaDebug = 'fria' | 'quente';
@@ -33,11 +38,11 @@ export function criarContextoJogadaDebug(estado: EstadoRodada, tamanhoMao: numbe
     posicaoMesa: definirPosicaoMesa(atual, jogadoresPorAgir),
     necessidade,
     urgencia: tamanhoMao === 0 ? 0 : necessidade / tamanhoMao,
-    urgenciaAlta: tamanhoMao > 0 && necessidade / tamanhoMao >= 0.66,
+    urgenciaAlta: urgenciaAlta(necessidade, tamanhoMao),
     jogadoresPorAgir,
     liderId,
     liderNecessidade: liderId ? calcularNecessidade(atual, liderId) : null,
-    jogadoresInteressadosPorAgir: contarInteressadosPorAgir(atual),
+    jogadoresInteressadosPorAgir: jogadoresInteressadosPorAgir(atual).length,
   };
 }
 
@@ -70,19 +75,7 @@ function rotuloPosicao(posicao: PosicaoMesaJogadaDebug): string {
   return 'joga no meio';
 }
 
-function calcularJogadoresPorAgir(estado: EstadoEmJogo): number {
-  return Math.max(0, estado.maos.length - estado.mesa.length - 1);
-}
-
 function obterLiderId(estado: EstadoEmJogo): string | null {
   if (estado.mesa.length === 0) return null;
   return estado.mesa[calcularIndiceVencedor(estado.mesa, estado.manilha)].jogadorId;
-}
-
-function contarInteressadosPorAgir(estado: EstadoEmJogo): number {
-  const jogadoresPorAgir = calcularJogadoresPorAgir(estado);
-  return Array.from({ length: jogadoresPorAgir }).filter((_, indice) => {
-    const jogador = estado.maos[(estado.jogadorAtual + indice + 1) % estado.maos.length].jogador;
-    return calcularNecessidade(estado, jogador.id) > 0;
-  }).length;
 }

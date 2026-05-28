@@ -2,7 +2,10 @@ import { avaliarCartas, type CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
 import { calcularIndiceVencedor, cartasEmpatam, cartaVence } from '@/core/comparador-carta';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
+import { calcularNecessidade } from './contexto-posicao-mesa';
 import { cartaPerde } from './decidirUltimoLinhaQuente';
+
+export { calcularNecessidade, ehUltimoDaMesa } from './contexto-posicao-mesa';
 
 export interface ContextoJogadaQuente {
   jogadorId: string;
@@ -36,14 +39,6 @@ export function liderQuerVaza(estado: EstadoEmJogo): boolean {
   if (estado.mesa.length === 0) return false;
   const lider = estado.mesa[calcularIndiceVencedor(estado.mesa, estado.manilha)];
   return calcularNecessidade(estado, lider.jogadorId) > 0;
-}
-
-export function calcularNecessidade(estado: EstadoEmJogo, jogadorId: string): number {
-  return (estado.declaracoes[jogadorId] ?? 0) - (estado.vazas[jogadorId] ?? 0);
-}
-
-export function ehUltimoDaMesa(estado: EstadoEmJogo): boolean {
-  return estado.mesa.length === estado.maos.length - 1;
 }
 
 function avaliarLider(estado: EstadoEmJogo): CartaAvaliada | null {
