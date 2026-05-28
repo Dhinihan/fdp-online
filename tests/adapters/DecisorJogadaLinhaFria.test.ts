@@ -39,12 +39,12 @@ const cenariosDeUltimo: {
     },
   },
   {
-    nome: 'deve fugir no último com a carta mais alta que não faz quando já cumpriu',
+    nome: 'deve fugir no último com a carta mais forte que não faz quando já cumpriu',
     mao: [criarCarta('Q', '♦'), criarCarta('K', '♦')],
     estado: criarEstadoLinhaFria({ mesa: mesaComK(), declaracoes: { bot: 1 }, vazas: { bot: 1 }, manilha: '5' }),
     esperado: {
       carta: criarCarta('K', '♦'),
-      motivo: 'já cumpriu; carta mais alta que não faz',
+      motivo: 'já cumpriu; carta mais forte que não faz',
       caminho: [...CAMINHO_FECHA_JA_CUMPRIU],
     },
   },
@@ -58,7 +58,7 @@ const cenariosDeUltimo: {
     }),
     esperado: {
       carta: criarCarta('K', '♦'),
-      motivo: 'já cumpriu; carta mais alta que não faz',
+      motivo: 'já cumpriu; carta mais forte que não faz',
       caminho: [...CAMINHO_FECHA_JA_CUMPRIU],
     },
   },

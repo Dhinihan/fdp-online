@@ -20,7 +20,6 @@ export interface DecisaoLinhaFria {
 }
 
 const CAMINHO_MEIO = ['jogada', 'joga no meio', 'linha fria'] as const;
-const CAMINHO_JA_CUMPRIU = [...CAMINHO_MEIO, 'já cumpriu'] as const;
 
 export class DecisorJogadaLinhaFria implements DecisorJogada {
   decidirJogada(mao: Carta[], estado: EstadoRodada): Promise<Carta> {
@@ -45,7 +44,7 @@ export function decidirNaoUltimoLinhaFria(mao: Carta[], estado: EstadoEmJogo): D
 }
 
 function fugirNaoUltimo(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): DecisaoLinhaFria {
-  const caminho = [...CAMINHO_JA_CUMPRIU];
+  const caminho = criarCaminhoJogadaDebug('meio', 'fria', 'já cumpriu');
   const naoFazem = cartasQueNaoFazem(estado, avaliadas);
   if (naoFazem.length === 0) {
     return { carta: cartaMaisBarata(avaliadas).carta, motivo: 'já cumpriu; fuga impossível', caminho };
@@ -167,7 +166,7 @@ function decidirUltimoQuandoJaCumpriu(estado: EstadoEmJogo, avaliadas: CartaAval
   if (naoFazem.length > 0) {
     return {
       carta: cartaMaisForte(naoFazem, estado.manilha).carta,
-      motivo: 'já cumpriu; carta mais alta que não faz',
+      motivo: 'já cumpriu; carta mais forte que não faz',
       caminho,
     };
   }
