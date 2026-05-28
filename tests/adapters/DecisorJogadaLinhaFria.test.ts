@@ -3,31 +3,50 @@ import { DecisorJogadaLinhaFria, decidirUltimoLinhaFria } from '@/adapters/bots/
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { criarCarta } from '../core/rodada-fixtures';
-import { cartasQueGarantemTresDeOuros, criarEstadoLinhaFria, mesaComK, mesaComQuatro } from './fixtures-linha-fria';
+import {
+  CAMINHO_FECHA_JA_CUMPRIU,
+  CAMINHO_FECHA_PRECISA,
+  cartasQueGarantemTresDeOuros,
+  criarEstadoLinhaFria,
+  mesaComK,
+  mesaComQuatro,
+} from './fixtures-linha-fria';
 
 const cenariosDeUltimo: {
   nome: string;
   mao: Carta[];
   estado: EstadoEmJogo;
-  esperado: { carta: Carta; motivo: string };
+  esperado: { carta: Carta; motivo: string; caminho: string[] };
 }[] = [
   {
     nome: 'deve escolher G[N-X] no último quando precisa fazer e tem ganhadoras',
     mao: [criarCarta('5', '♦'), criarCarta('8', '♦'), criarCarta('K', '♦')],
     estado: criarEstadoLinhaFria({ mesa: mesaComQuatro(), declaracoes: { bot: 2 }, vazas: { bot: 0 }, manilha: '6' }),
-    esperado: { carta: criarCarta('8', '♦'), motivo: 'precisa fazer; regra G[N-X]' },
+    esperado: {
+      carta: criarCarta('8', '♦'),
+      motivo: 'precisa fazer; regra G[N-X]',
+      caminho: [...CAMINHO_FECHA_PRECISA],
+    },
   },
   {
     nome: 'deve escolher P[N-X] no último quando precisa fazer sem carta que vence',
     mao: [criarCarta('4', '♦'), criarCarta('6', '♦'), criarCarta('9', '♦'), criarCarta('Q', '♦')],
     estado: criarEstadoLinhaFria({ mesa: mesaComK(), declaracoes: { bot: 2 }, vazas: { bot: 0 }, manilha: '5' }),
-    esperado: { carta: criarCarta('9', '♦'), motivo: 'precisa fazer sem carta que vence; regra P[N-X]' },
+    esperado: {
+      carta: criarCarta('9', '♦'),
+      motivo: 'precisa fazer sem carta que vence; regra P[N-X]',
+      caminho: [...CAMINHO_FECHA_PRECISA],
+    },
   },
   {
     nome: 'deve fugir no último com a carta mais alta que não faz quando já cumpriu',
     mao: [criarCarta('Q', '♦'), criarCarta('K', '♦')],
     estado: criarEstadoLinhaFria({ mesa: mesaComK(), declaracoes: { bot: 1 }, vazas: { bot: 1 }, manilha: '5' }),
-    esperado: { carta: criarCarta('K', '♦'), motivo: 'já cumpriu; carta mais alta que não faz' },
+    esperado: {
+      carta: criarCarta('K', '♦'),
+      motivo: 'já cumpriu; carta mais alta que não faz',
+      caminho: [...CAMINHO_FECHA_JA_CUMPRIU],
+    },
   },
   {
     nome: 'deve tratar empate como carta que não faz no último quando já cumpriu',
@@ -37,13 +56,21 @@ const cenariosDeUltimo: {
       declaracoes: { bot: 1 },
       vazas: { bot: 1 },
     }),
-    esperado: { carta: criarCarta('K', '♦'), motivo: 'já cumpriu; carta mais alta que não faz' },
+    esperado: {
+      carta: criarCarta('K', '♦'),
+      motivo: 'já cumpriu; carta mais alta que não faz',
+      caminho: [...CAMINHO_FECHA_JA_CUMPRIU],
+    },
   },
   {
     nome: 'deve jogar a carta mais alta no último quando fuga é impossível',
     mao: [criarCarta('5', '♦'), criarCarta('8', '♦'), criarCarta('K', '♦')],
     estado: criarEstadoLinhaFria({ mesa: mesaComQuatro(), declaracoes: { bot: 1 }, vazas: { bot: 1 }, manilha: '6' }),
-    esperado: { carta: criarCarta('K', '♦'), motivo: 'já cumpriu; fuga impossível' },
+    esperado: {
+      carta: criarCarta('K', '♦'),
+      motivo: 'já cumpriu; fuga impossível',
+      caminho: [...CAMINHO_FECHA_JA_CUMPRIU],
+    },
   },
 ];
 

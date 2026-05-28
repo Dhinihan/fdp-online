@@ -73,3 +73,9 @@ export function cartasQueGarantemTresDeOuros(): Carta[] {
 export const CAMINHO_GUARDA_BLOQUEOU = ['jogada', 'joga no meio', 'linha fria', 'guarda de posição bloqueou'] as const;
 
 export const CAMINHO_GUARDA_PERMITIU = ['jogada', 'joga no meio', 'linha fria', 'guarda de posição permitiu'] as const;
+
+export const CAMINHO_JA_CUMPRIU = ['jogada', 'joga no meio', 'linha fria', 'já cumpriu'] as const;
+
+export const CAMINHO_FECHA_PRECISA = ['jogada', 'fecha a mesa', 'linha fria', 'precisa fazer'] as const;
+
+export const CAMINHO_FECHA_JA_CUMPRIU = ['jogada', 'fecha a mesa', 'linha fria', 'já cumpriu'] as const;

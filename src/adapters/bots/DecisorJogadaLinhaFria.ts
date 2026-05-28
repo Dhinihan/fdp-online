@@ -4,6 +4,7 @@ import { calcularIndiceVencedor, cartaVence } from '@/core/comparador-carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { estadoEmJogo, type EstadoEmJogo, type MesaItem, type EstadoRodada } from '@/types/estado-rodada';
 import { calcularNecessidade, ehUltimoDaMesa } from './contexto-posicao-mesa';
+import { criarCaminhoJogadaDebug } from './debug-jogada-bot';
 import { decidirAberturaLinhaFria } from './decidirAbertura';
 import {
   descartePorNecessidade,
@@ -19,6 +20,7 @@ export interface DecisaoLinhaFria {
 }
 
 const CAMINHO_MEIO = ['jogada', 'joga no meio', 'linha fria'] as const;
+const CAMINHO_JA_CUMPRIU = [...CAMINHO_MEIO, 'já cumpriu'] as const;
 
 export class DecisorJogadaLinhaFria implements DecisorJogada {
   decidirJogada(mao: Carta[], estado: EstadoRodada): Promise<Carta> {
@@ -43,11 +45,12 @@ export function decidirNaoUltimoLinhaFria(mao: Carta[], estado: EstadoEmJogo): D
 }
 
 function fugirNaoUltimo(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): DecisaoLinhaFria {
+  const caminho = [...CAMINHO_JA_CUMPRIU];
   const naoFazem = cartasQueNaoFazem(estado, avaliadas);
   if (naoFazem.length === 0) {
-    return { carta: cartaMaisBarata(avaliadas).carta, motivo: 'não quer fazer; fuga impossível' };
+    return { carta: cartaMaisBarata(avaliadas).carta, motivo: 'já cumpriu; fuga impossível', caminho };
   }
-  return { carta: cartaMaisCara(naoFazem).carta, motivo: 'não quer fazer; carta mais alta que não faz' };
+  return { carta: cartaMaisCara(naoFazem).carta, motivo: 'já cumpriu; carta mais alta que não faz', caminho };
 }
 
 function buscarVazaNaoUltimo(estado: EstadoEmJogo, avaliadas: CartaAvaliada[], necessidade: number): DecisaoLinhaFria {
@@ -141,27 +144,35 @@ function decidirUltimoQuandoPrecisaFazer(
   avaliadas: CartaAvaliada[],
   necessidade: number,
 ): DecisaoLinhaFria {
+  const caminho = criarCaminhoJogadaDebug('fecha', 'fria', 'precisa fazer');
   const vencedoras = cartasQueVencem(estado, avaliadas);
   if (vencedoras.length > 0) {
     return {
       carta: escolherVencedoraPorNecessidade(vencedoras, estado.manilha, necessidade).carta,
       motivo: 'precisa fazer; regra G[N-X]',
+      caminho,
     };
   }
 
   return {
     carta: descartePorNecessidade(cartasQueNaoFazem(estado, avaliadas), estado.manilha, necessidade).carta,
     motivo: 'precisa fazer sem carta que vence; regra P[N-X]',
+    caminho,
   };
 }
 
 function decidirUltimoQuandoJaCumpriu(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): DecisaoLinhaFria {
+  const caminho = criarCaminhoJogadaDebug('fecha', 'fria', 'já cumpriu');
   const naoFazem = cartasQueNaoFazem(estado, avaliadas);
   if (naoFazem.length > 0) {
-    return { carta: cartaMaisForte(naoFazem, estado.manilha).carta, motivo: 'já cumpriu; carta mais alta que não faz' };
+    return {
+      carta: cartaMaisForte(naoFazem, estado.manilha).carta,
+      motivo: 'já cumpriu; carta mais alta que não faz',
+      caminho,
+    };
   }
 
-  return { carta: cartaMaisForte(avaliadas, estado.manilha).carta, motivo: 'já cumpriu; fuga impossível' };
+  return { carta: cartaMaisForte(avaliadas, estado.manilha).carta, motivo: 'já cumpriu; fuga impossível', caminho };
 }
 
 function cartasQueVencem(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): CartaAvaliada[] {

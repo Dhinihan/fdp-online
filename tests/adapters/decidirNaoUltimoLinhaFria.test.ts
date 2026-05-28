@@ -5,6 +5,7 @@ import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { criarCarta } from '../core/rodada-fixtures';
 import {
   CAMINHO_GUARDA_PERMITIU,
+  CAMINHO_JA_CUMPRIU,
   cartasQueGarantemTresDeOuros,
   criarEstadoLinhaFria,
   mesaComK,
@@ -53,16 +54,38 @@ const cenarios: {
     },
   },
   {
-    nome: 'deve fugir com carta mais alta que não faz',
+    nome: 'deve fugir com carta mais alta que não faz quando já cumpriu',
     mao: [criarCarta('Q', '♦'), criarCarta('K', '♦')],
     estado: criarEstadoLinhaFria({ mesa: mesaComK(), declaracoes: { bot: 1 }, vazas: { bot: 1 }, manilha: '5' }),
-    esperado: { carta: criarCarta('K', '♦'), motivo: 'não quer fazer; carta mais alta que não faz' },
+    esperado: {
+      carta: criarCarta('K', '♦'),
+      motivo: 'já cumpriu; carta mais alta que não faz',
+      caminho: [...CAMINHO_JA_CUMPRIU],
+    },
   },
   {
-    nome: 'deve indicar fuga impossível quando todas fazem',
+    nome: 'deve tratar empate como carta que não faz quando já cumpriu no meio',
+    mao: [criarCarta('K', '♦'), criarCarta('A', '♦')],
+    estado: criarEstadoLinhaFria({
+      mesa: [{ jogadorId: 'j1', carta: criarCarta('K', '♣') }],
+      declaracoes: { bot: 1 },
+      vazas: { bot: 1 },
+    }),
+    esperado: {
+      carta: criarCarta('K', '♦'),
+      motivo: 'já cumpriu; carta mais alta que não faz',
+      caminho: [...CAMINHO_JA_CUMPRIU],
+    },
+  },
+  {
+    nome: 'deve indicar fuga impossível com carta mais barata quando já cumpriu',
     mao: [criarCarta('5', '♦'), criarCarta('8', '♦'), criarCarta('K', '♦')],
     estado: criarEstadoLinhaFria({ mesa: mesaComQuatro(), declaracoes: { bot: 1 }, vazas: { bot: 1 }, manilha: '6' }),
-    esperado: { carta: criarCarta('5', '♦'), motivo: 'não quer fazer; fuga impossível' },
+    esperado: {
+      carta: criarCarta('5', '♦'),
+      motivo: 'já cumpriu; fuga impossível',
+      caminho: [...CAMINHO_JA_CUMPRIU],
+    },
   },
   {
     nome: 'deve buscar vaza com G[N-X] quando precisa fazer e tem vencedoras',
