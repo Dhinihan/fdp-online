@@ -83,6 +83,16 @@ const cenariosJaCumpriuNoMeio: {
     mao: [criarCarta('5', '♦'), criarCarta('8', '♦'), criarCarta('K', '♦')],
     esperado: null,
   },
+  {
+    nome: 'retornar null quando ainda precisa cumprir mesmo com folga alta',
+    estado: {
+      mesa: [{ jogadorId: 'j1', carta: criarCarta('2', '♣') }],
+      declaracoes: { j1: 2, bot: 2 },
+      vazas: { j1: 0, bot: 0 },
+    },
+    mao: [criarCarta('2', '♦'), criarCarta('4', '♦'), criarCarta('6', '♦'), criarCarta('8', '♦')],
+    esperado: null,
+  },
 ];
 
 describe('escolherJaCumpriuNoMeio', () => {

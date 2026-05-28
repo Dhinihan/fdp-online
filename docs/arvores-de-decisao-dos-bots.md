@@ -162,11 +162,11 @@ A Linha quente parte da mesma leitura de necessidade e posicao, mas pode recomen
 ```text
 se necessidade <= 0:
   se lider interessado e lider e alta+ e existe empate:
-    recomendar o empate mais caro
+    recomendar o empate mais forte
   senao se existe perdedora:
     recomendar a perdedora mais forte
   senao se existe empate:
-    recomendar o empate mais caro
+    recomendar o empate mais forte
   senao:
     seguir Linha fria
 

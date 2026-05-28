@@ -5,7 +5,7 @@ import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
 import { calcularNecessidade } from './contexto-posicao-mesa';
 import { cartaPerde } from './decidirUltimoLinhaQuente';
 
-export { calcularNecessidade, ehUltimoDaMesa } from './contexto-posicao-mesa';
+export { calcularNecessidade, ehUltimoDaMesa, liderQuerVaza } from './contexto-posicao-mesa';
 
 export interface ContextoJogadaQuente {
   jogadorId: string;
@@ -33,12 +33,6 @@ export function criarContextoLinhaQuente(estado: EstadoEmJogo, mao: Carta[]): Co
     empates: lider ? avaliadas.filter((a) => cartasEmpatam(a.carta, lider.carta, estado.manilha)) : [],
     lider,
   };
-}
-
-export function liderQuerVaza(estado: EstadoEmJogo): boolean {
-  if (estado.mesa.length === 0) return false;
-  const lider = estado.mesa[calcularIndiceVencedor(estado.mesa, estado.manilha)];
-  return calcularNecessidade(estado, lider.jogadorId) > 0;
 }
 
 function avaliarLider(estado: EstadoEmJogo): CartaAvaliada | null {

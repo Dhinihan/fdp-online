@@ -2,8 +2,7 @@ import type { CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
 import { calcularNecessidade, liderQuerVaza, type ContextoJogadaQuente } from './contextoLinhaQuente';
-import { ehAltaOuMelhor } from './decidirUltimoLinhaQuente';
-import { ordenarPorForcaReal } from './escolhas-por-necessidade';
+import { MOTIVOS_FUGA_MEIO, escolherFugaJaCumpriu } from './escolher-fuga-ja-cumpriu';
 
 export interface ResultadoPodeBifurcar {
   pode: boolean;
@@ -65,22 +64,11 @@ export function escolherJaCumpriuNoMeio(
   contexto: ContextoJogadaQuente,
 ): DecisaoCartaQuente | null {
   if (contexto.necessidade > 0) return null;
-  if (liderQuerVaza(estado) && contexto.lider && ehAltaOuMelhor(contexto.lider) && contexto.empates.length > 0) {
-    return {
-      carta: cartaMaisCara(contexto.empates).carta,
-      motivo: 'já cumpriu; empate contra líder alta+',
-    };
-  }
-  if (contexto.perdedoras.length > 0) {
-    return {
-      carta: cartaMaisForte(contexto.perdedoras, estado.manilha).carta,
-      motivo: 'já cumpriu; perdedora mais forte',
-    };
-  }
-  if (contexto.empates.length > 0) {
-    return { carta: cartaMaisCara(contexto.empates).carta, motivo: 'já cumpriu; empate mais caro' };
-  }
-  return null;
+  return escolherFugaJaCumpriu(estado, contexto, {
+    liderInteressado: liderQuerVaza(estado),
+    fallbackSemFuga: 'null',
+    motivos: MOTIVOS_FUGA_MEIO,
+  });
 }
 
 function mesaPodePunir(estado: EstadoEmJogo, contexto: ContextoJogadaQuente, liderBaixa: number): boolean {
@@ -132,9 +120,4 @@ function cartaMaisBarata(avaliadas: CartaAvaliada[]): CartaAvaliada {
 
 function cartaMaisCara(avaliadas: CartaAvaliada[]): CartaAvaliada {
   return [...avaliadas].sort((a, b) => b.score - a.score)[0];
-}
-
-function cartaMaisForte(avaliadas: CartaAvaliada[], manilha: Carta['valor']): CartaAvaliada {
-  const ordenadas = ordenarPorForcaReal(avaliadas, manilha);
-  return ordenadas[ordenadas.length - 1];
 }
