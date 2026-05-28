@@ -149,8 +149,10 @@ function esperarContextoAbertura(jogada: DecisaoJogadaDebug | undefined): void {
   });
   expect(jogada?.quente).toMatchObject({
     motivo: 'abertura: segue linha fria',
-    caminho: ['jogada', 'abre a mesa', 'linha quente'],
+    caminho: ['jogada', 'abre a mesa', 'linha quente', 'segue linha fria'],
   });
+  expect(jogada?.sorteio).toBeUndefined();
+  expect(jogada?.escolheuQuente).toBe(false);
 }
 
 function deveFalharMaoVaziaAbertura(): void {
