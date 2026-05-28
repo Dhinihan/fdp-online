@@ -2,6 +2,7 @@ import type { CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
 import { calcularNecessidade, liderQuerVaza, type ContextoJogadaQuente } from './contextoLinhaQuente';
+import { MOTIVOS_FUGA_MEIO, escolherFugaJaCumpriu } from './escolher-fuga-ja-cumpriu';
 
 export interface ResultadoPodeBifurcar {
   pode: boolean;
@@ -58,13 +59,16 @@ export function escolherTravessia(estado: EstadoEmJogo, contexto: ContextoJogada
   return { carta: cartaMaisBarata(candidatas).carta, motivo: 'travessia: líder alta+ e urgência baixa' };
 }
 
-export function escolherEmpate(contexto: ContextoJogadaQuente, liderAlta: number): DecisaoCartaQuente | null {
-  const lider = contexto.lider;
-  if (!lider || lider.score <= liderAlta || contexto.empates.length === 0) return null;
-  if (contexto.necessidade <= 0 || contexto.folga >= 2) {
-    return { carta: cartaMaisCara(contexto.empates).carta, motivo: 'empate com líder alta+' };
-  }
-  return null;
+export function escolherJaCumpriuNoMeio(
+  estado: EstadoEmJogo,
+  contexto: ContextoJogadaQuente,
+): DecisaoCartaQuente | null {
+  if (contexto.necessidade > 0) return null;
+  return escolherFugaJaCumpriu(estado, contexto, {
+    liderInteressado: liderQuerVaza(estado),
+    fallbackSemFuga: 'null',
+    motivos: MOTIVOS_FUGA_MEIO,
+  });
 }
 
 function mesaPodePunir(estado: EstadoEmJogo, contexto: ContextoJogadaQuente, liderBaixa: number): boolean {

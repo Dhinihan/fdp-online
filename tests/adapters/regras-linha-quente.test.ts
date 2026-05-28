@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { criarContextoLinhaQuente } from '@/adapters/bots/contextoLinhaQuente';
-import { escolherEmpate, escolherPressao, escolherTravessia, podeBifurcar } from '@/adapters/bots/regras-linha-quente';
+import {
+  escolherJaCumpriuNoMeio,
+  escolherPressao,
+  escolherTravessia,
+  podeBifurcar,
+} from '@/adapters/bots/regras-linha-quente';
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
 import { criarCarta, criarJogador } from '../core/rodada-fixtures';
@@ -32,14 +37,69 @@ describe('podeBifurcar', () => {
   });
 });
 
-describe('escolherEmpate', () => {
-  it('deve retornar carta e motivo quando já cumpriu e líder é alta+', () => {
-    const estado = criarEstado({ mesa: mesaComDois(), declaracoes: { j1: 1, bot: 1 }, vazas: { j1: 0, bot: 1 } });
-    const contexto = criarContextoLinhaQuente(estado, [criarCarta('2', '♦'), criarCarta('4', '♦')]);
+const cenariosJaCumpriuNoMeio: {
+  nome: string;
+  estado: Partial<EstadoEmJogo>;
+  mao: Carta[];
+  esperado: { carta: Carta; motivo: string } | null;
+}[] = [
+  {
+    nome: 'empatar contra líder interessado alta+',
+    estado: {
+      mesa: [
+        { jogadorId: 'j1', carta: criarCarta('2', '♣') },
+        { jogadorId: 'j2', carta: criarCarta('7', '♥') },
+      ],
+      declaracoes: { j1: 1, bot: 1 },
+      vazas: { j1: 0, bot: 1 },
+    },
+    mao: [criarCarta('2', '♦'), criarCarta('4', '♦')],
+    esperado: { carta: criarCarta('2', '♦'), motivo: 'já cumpriu; empate contra líder alta+' },
+  },
+  {
+    nome: 'preferir perdedora com líder média',
+    estado: {
+      mesa: [
+        { jogadorId: 'j1', carta: criarCarta('9', '♣') },
+        { jogadorId: 'j2', carta: criarCarta('6', '♥') },
+      ],
+      declaracoes: { j1: 1, bot: 1 },
+      vazas: { j1: 0, bot: 1 },
+    },
+    mao: [criarCarta('9', '♦'), criarCarta('7', '♦')],
+    esperado: { carta: criarCarta('7', '♦'), motivo: 'já cumpriu; perdedora mais forte' },
+  },
+  {
+    nome: 'retornar null sem carta que não faz',
+    estado: {
+      mesa: [
+        { jogadorId: 'j1', carta: criarCarta('4', '♣') },
+        { jogadorId: 'j2', carta: criarCarta('4', '♥') },
+      ],
+      declaracoes: { bot: 1 },
+      vazas: { bot: 1 },
+      manilha: '6',
+    },
+    mao: [criarCarta('5', '♦'), criarCarta('8', '♦'), criarCarta('K', '♦')],
+    esperado: null,
+  },
+  {
+    nome: 'retornar null quando ainda precisa cumprir mesmo com folga alta',
+    estado: {
+      mesa: [{ jogadorId: 'j1', carta: criarCarta('2', '♣') }],
+      declaracoes: { j1: 2, bot: 2 },
+      vazas: { j1: 0, bot: 0 },
+    },
+    mao: [criarCarta('2', '♦'), criarCarta('4', '♦'), criarCarta('6', '♦'), criarCarta('8', '♦')],
+    esperado: null,
+  },
+];
 
-    const decisao = escolherEmpate(contexto, 11);
-    expect(decisao?.carta).toEqual(criarCarta('2', '♦'));
-    expect(decisao?.motivo).toBe('empate com líder alta+');
+describe('escolherJaCumpriuNoMeio', () => {
+  it.each(cenariosJaCumpriuNoMeio)('deve $nome', ({ estado: config, mao, esperado }) => {
+    const estado = criarEstado(config);
+    const contexto = criarContextoLinhaQuente(estado, mao);
+    expect(escolherJaCumpriuNoMeio(estado, contexto)).toEqual(esperado);
   });
 });
 
@@ -109,14 +169,6 @@ function mesaComBaixa(): MesaItem[] {
     { jogadorId: 'j1', carta: criarCarta('8', '♣') },
     { jogadorId: 'j2', carta: criarCarta('4', '♥') },
     { jogadorId: 'j3', carta: criarCarta('6', '♠') },
-  ];
-}
-
-function mesaComDois(): MesaItem[] {
-  return [
-    { jogadorId: 'j1', carta: criarCarta('2', '♣') },
-    { jogadorId: 'j2', carta: criarCarta('7', '♥') },
-    { jogadorId: 'j3', carta: criarCarta('8', '♠') },
   ];
 }
 

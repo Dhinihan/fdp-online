@@ -169,7 +169,7 @@ function deveFalharMaoVaziaAbertura(): void {
 }
 
 function criarBot(temperatura: number, valorRng: number): DecisorJogadaBot {
-  return new DecisorJogadaBot({ temperatura, rng: { random: () => valorRng }, liderBaixa: 8, liderAlta: 11 });
+  return new DecisorJogadaBot({ temperatura, rng: { random: () => valorRng }, liderBaixa: 8 });
 }
 
 function criarEstado(config: Partial<EstadoEmJogo>): EstadoEmJogo {

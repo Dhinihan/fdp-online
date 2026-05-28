@@ -1,3 +1,4 @@
+import { calcularIndiceVencedor } from '@/core/comparador-carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
 
 export const LIMIAR_URGENCIA_ALTA = 0.66;
@@ -27,4 +28,10 @@ export function urgenciaAlta(necessidade: number, tamanhoMao: number): boolean {
 
 export function ehUltimoDaMesa(estado: EstadoEmJogo): boolean {
   return estado.mesa.length === estado.maos.length - 1;
+}
+
+export function liderQuerVaza(estado: EstadoEmJogo): boolean {
+  if (estado.mesa.length === 0) return false;
+  const lider = estado.mesa[calcularIndiceVencedor(estado.mesa, estado.manilha)];
+  return calcularNecessidade(estado, lider.jogadorId) > 0;
 }

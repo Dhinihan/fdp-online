@@ -11,7 +11,7 @@ import type { LoggerDebugBot } from './logger-debug-bot';
 import { registrarBifurcacao, registrarEscolhaDireta } from './registrar-decisao-jogada-bot';
 import {
   cartasIguais,
-  escolherEmpate,
+  escolherJaCumpriuNoMeio,
   escolherPressao,
   escolherTravessia,
   formatarMotivoRecusaBifurcacao,
@@ -22,7 +22,6 @@ interface ConfigLinhaQuente {
   temperatura: number;
   rng: Pick<GeradorAleatorio, 'random'>;
   liderBaixa?: number;
-  liderAlta?: number;
   logger?: LoggerDebugBot;
 }
 
@@ -30,14 +29,12 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
   private readonly temperatura: number;
   private readonly rng: Pick<GeradorAleatorio, 'random'>;
   private readonly liderBaixa: number;
-  private readonly liderAlta: number;
   private readonly logger?: LoggerDebugBot;
 
   constructor(config: ConfigLinhaQuente) {
     this.temperatura = config.temperatura;
     this.rng = config.rng;
     this.liderBaixa = config.liderBaixa ?? 8;
-    this.liderAlta = config.liderAlta ?? 11;
     this.logger = config.logger;
   }
 
@@ -107,28 +104,30 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
   }
 
   private escolherQuenteDireta(base: BaseJogada): Carta | null {
-    const empate = escolherEmpate(base.contexto, this.liderAlta);
-    if (empate) return this.registrarQuente(base, empate.carta, `linha quente empatou: ${empate.motivo}`);
+    if (base.contexto.necessidade <= 0) {
+      const jaCumpriu = escolherJaCumpriuNoMeio(base.estadoAtual, base.contexto);
+      if (jaCumpriu) return this.resolverQuenteRecomendada(base, jaCumpriu.carta, jaCumpriu.motivo);
+      return this.registrarSeguirFria(base);
+    }
 
     const travessia = escolherTravessia(base.estadoAtual, base.contexto);
     if (!travessia) return null;
-    return this.registrarQuente(base, travessia.carta, `linha quente atravessou: ${travessia.motivo}`);
+    return this.resolverQuenteRecomendada(base, travessia.carta, `linha quente atravessou: ${travessia.motivo}`);
   }
 
-  private registrarQuente(base: BaseJogada, carta: Carta, motivoLinhaQuente: string): Carta {
-    return registrarEscolhaDireta({
-      logger: this.logger,
-      mao: base.mao,
-      estado: base.estado,
-      carta,
-      linhaFria: base.fria,
-      linhaQuente: carta,
-      motivoLinhaFria: base.motivoLinhaFria,
-      motivoLinhaQuente,
-      caminhoLinhaFria: base.caminhoLinhaFria,
-      caminhoLinhaQuente: criarCaminhoJogadaDebug(base.posicao, 'quente', 'escolha direta'),
-      escolheuQuente: true,
-    });
+  private resolverQuenteRecomendada(base: BaseJogada, carta: Carta, motivo: string): Carta {
+    const quente = criarDecisaoQuente({ carta, motivo }, criarCaminhoJogadaDebug(base.posicao, 'quente'));
+    return this.resolverBifurcacao(base, quente);
+  }
+
+  private registrarSeguirFria(base: BaseJogada): Carta {
+    return this.registrarSemBifurcacao(
+      base,
+      criarDecisaoQuente(
+        { carta: base.fria, motivo: 'linha quente segue fria: sem carta que não faz' },
+        criarCaminhoJogadaDebug(base.posicao, 'quente', 'segue fria'),
+      ),
+    );
   }
 
   private registrarSemBifurcacao(base: BaseJogada, quente: DecisaoQuente): Carta {

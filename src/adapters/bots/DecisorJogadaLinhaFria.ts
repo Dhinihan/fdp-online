@@ -6,11 +6,7 @@ import { estadoEmJogo, type EstadoEmJogo, type MesaItem, type EstadoRodada } fro
 import { calcularNecessidade, ehUltimoDaMesa } from './contexto-posicao-mesa';
 import { criarCaminhoJogadaDebug } from './debug-jogada-bot';
 import { decidirAberturaLinhaFria } from './decidirAbertura';
-import {
-  descartePorNecessidade,
-  escolherVencedoraPorNecessidade,
-  ordenarPorForcaReal,
-} from './escolhas-por-necessidade';
+import { cartaMaisForte, descartePorNecessidade, escolherVencedoraPorNecessidade } from './escolhas-por-necessidade';
 import { avaliarGuardaDePosicao, type GuardaPosicao } from './guarda-posicao';
 
 export interface DecisaoLinhaFria {
@@ -189,11 +185,6 @@ function cartasQueNaoFazem(estado: EstadoEmJogo, avaliadas: CartaAvaliada[]): Ca
 function melhorCartaMesa(mesa: MesaItem[], manilha: Carta['valor']): Carta | null {
   if (mesa.length === 0) return null;
   return mesa[calcularIndiceVencedor(mesa, manilha)].carta;
-}
-
-function cartaMaisForte(avaliadas: CartaAvaliada[], manilha: Carta['valor']): CartaAvaliada {
-  const ordenadas = ordenarPorForcaReal(avaliadas, manilha);
-  return ordenadas[ordenadas.length - 1];
 }
 
 function cartaMaisBarata(avaliadas: CartaAvaliada[]): CartaAvaliada {

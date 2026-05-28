@@ -25,3 +25,8 @@ export function descartePorNecessidade(
 export function ordenarPorForcaReal(avaliadas: CartaAvaliada[], manilha: Carta['valor']): CartaAvaliada[] {
   return [...avaliadas].sort((a, b) => compararForcaReal(a.carta, b.carta, manilha));
 }
+
+export function cartaMaisForte(avaliadas: CartaAvaliada[], manilha: Carta['valor']): CartaAvaliada {
+  const ordenadas = ordenarPorForcaReal(avaliadas, manilha);
+  return ordenadas[ordenadas.length - 1];
+}

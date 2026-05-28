@@ -161,8 +161,12 @@ A Linha quente parte da mesma leitura de necessidade e posicao, mas pode recomen
 
 ```text
 se necessidade <= 0:
-  se lider e alta+ e existe empate:
-    recomendar o empate mais caro
+  se lider interessado e lider e alta+ e existe empate:
+    recomendar o empate mais forte
+  senao se existe perdedora:
+    recomendar a perdedora mais forte
+  senao se existe empate:
+    recomendar o empate mais forte
   senao:
     seguir Linha fria
 
@@ -185,6 +189,12 @@ senao se pode esperar oportunidade:
 senao:
   seguir Linha fria
 ```
+
+Quando `necessidade <= 0`, a Linha quente no meio espelha a prioridade da Linha quente fechando.
+Empate agressivo contra lider interessado so vale com carta lider `alta+`, porque empate nao toma a vaza mas impede o lider de cumprir.
+Com lider `media` ou `baixa`, a Linha quente **nao** empata para punir: prefere perdedora mais forte e deixa o lider seguir na vaza.
+A Linha fria, no mesmo caso, joga a carta mais alta entre perdedoras e empates; quando ha empate na mao, fria e quente costumam divergir aqui.
+`seguir Linha fria` no fim do ramo so ocorre quando nao ha perdedora nem empate (fuga impossivel sem vencer).
 
 `pode atravessar` significa:
 
