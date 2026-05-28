@@ -206,7 +206,17 @@ e lider jogou carta alta+
 e existe vencedora que nao seja garantida_agora
 ```
 
-Na pratica, `pode atravessar` pode fazer a Linha quente divergir da Linha fria mesmo quando a guarda de posicao bloqueou a tentativa conservadora, desde que a urgencia seja alta e o lider atual tenha jogado alta+ que o bot consiga vencer sem gastar uma garantida_agora.
+`necessidade > 0` aqui nao define o atravessar; so separa este bloco do ramo `necessidade <= 0`, em que a Linha quente tenta **nao** fazer a vaza. Quando `pode atravessar` e verdadeiro, fria e quente **ambas** querem vencer; a divergencia esta na **carta**:
+
+- **Linha fria:** `escolherVencedoraPorNecessidade(vencedoras, necessidade)` — pode gastar `garantida_agora` e escolhe forca proporcional ao quanto ainda falta.
+- **Linha quente:** vencedora mais barata que nao seja `garantida_agora`.
+
+Com urgencia alta, a Guarda de Posicao da Linha fria **ja permite** tentar vencer. O atravessar nao ignora a guarda; escolhe uma carta diferente da fria.
+
+Exemplo: faltam 2 vazas, ha 3 cartas na mao, lider com 2 ainda precisa fazer, mao com `3` (`garantida_agora`) e duas manilhas `4`, todas vencem o lider.
+
+- Linha fria: `G[2-2]` → `3`
+- Linha quente: manilha `4` mais barata (nao e `garantida_agora`)
 
 `pode pressionar e esperar` significa:
 

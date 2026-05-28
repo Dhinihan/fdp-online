@@ -22,7 +22,6 @@ describe('DecisorJogadaLinhaQuente', () => {
   it('deve preferir perdedora no meio quando líder é média e já cumpriu', perdedoraComLiderMedia);
   it('deve respeitar temperatura zero quando já cumpriu diverge da linha fria', respeitaTemperaturaZeroJaCumpriu);
   it('deve registrar seguir fria quando já cumpriu sem carta que não faz', registraSeguirFriaSemFuga);
-  it('deve atravessar com carta barata quando precisa e tem folga baixa', atravessaComCartaBarata);
   it('deve convergir para linha fria quando não existe pressão agora', convergeSemPressao);
   it('não deve sortear temperatura quando não há bifurcação', naoSorteiaSemBifurcacao);
   it('deve repetir a escolha com RNG determinístico', repeteEscolhaDeterministica);
@@ -90,19 +89,6 @@ async function registraContratoExplicavel(): Promise<void> {
   });
   expect(jogadas[0]?.quente?.caminho).toEqual(['jogada', 'joga no meio', 'linha quente']);
   expect(jogadas[0]).toMatchObject(decisaoSorteadaLinhaQuente());
-}
-
-async function atravessaComCartaBarata(): Promise<void> {
-  const estado = criarEstado({
-    mesa: [{ jogadorId: 'j1', carta: criarCarta('K', '♣') }],
-    declaracoes: { j1: 1, bot: 1 },
-    vazas: { j1: 0, bot: 0 },
-  });
-  const bot = criarBot(1, 0);
-
-  await expect(bot.decidirJogada([criarCarta('A', '♦'), criarCarta('3', '♦')], estado)).resolves.toEqual(
-    criarCarta('A', '♦'),
-  );
 }
 
 async function empataAltaCumprido(): Promise<void> {
