@@ -15,20 +15,7 @@ interface EscolhaDireta {
   caminhoLinhaFria: string[];
   caminhoLinhaQuente: string[];
   escolheuQuente: boolean;
-}
-
-interface Bifurcacao {
-  logger?: LoggerDebugBot;
-  temperatura: number;
-  mao: Carta[];
-  estado: EstadoRodada;
-  fria: Carta;
-  quente: Carta;
-  motivoLinhaFria?: string;
-  motivoLinhaQuente?: string;
-  caminhoLinhaFria: string[];
-  caminhoLinhaQuente: string[];
-  sorteio: number;
+  sorteio?: number;
 }
 
 export function registrarEscolhaDireta(config: EscolhaDireta): Carta {
@@ -48,26 +35,7 @@ export function registrarEscolhaDireta(config: EscolhaDireta): Carta {
     motivoLinhaQuente: config.motivoLinhaQuente,
     carta: config.carta,
     escolheuQuente: config.escolheuQuente,
-  });
-  return config.carta;
-}
-
-export function registrarBifurcacao(config: Bifurcacao): Carta {
-  const escolheuQuente = config.sorteio < config.temperatura;
-  const carta = escolheuQuente ? config.quente : config.fria;
-  config.logger?.registrarJogada({
-    mao: config.mao,
-    estado: config.estado,
-    linhaFria: config.fria,
-    linhaQuente: config.quente,
-    contexto: criarContextoJogadaDebug(config.estado, config.mao.length),
-    fria: criarLinhaJogadaDebug(config.fria, config.motivoLinhaFria, config.caminhoLinhaFria),
-    quente: criarLinhaJogadaDebug(config.quente, config.motivoLinhaQuente, config.caminhoLinhaQuente),
-    motivoLinhaFria: config.motivoLinhaFria,
-    motivoLinhaQuente: config.motivoLinhaQuente,
-    carta,
-    escolheuQuente,
     sorteio: config.sorteio,
   });
-  return carta;
+  return config.carta;
 }
