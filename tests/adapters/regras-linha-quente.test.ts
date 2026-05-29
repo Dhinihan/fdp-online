@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { criarContextoLinhaQuente } from '@/adapters/bots/contextoLinhaQuente';
-import {
-  escolherJaCumpriuNoMeio,
-  escolherPressao,
-  escolherTravessia,
-  podeBifurcar,
-} from '@/adapters/bots/regras-linha-quente';
+import { escolherJaCumpriuNoMeio, escolherPressao, podeBifurcar } from '@/adapters/bots/regras-linha-quente';
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
 import { criarCarta, criarJogador } from '../core/rodada-fixtures';
@@ -100,21 +95,6 @@ describe('escolherJaCumpriuNoMeio', () => {
     const estado = criarEstado(config);
     const contexto = criarContextoLinhaQuente(estado, mao);
     expect(escolherJaCumpriuNoMeio(estado, contexto)).toEqual(esperado);
-  });
-});
-
-describe('escolherTravessia', () => {
-  it('deve retornar carta e motivo quando precisa com folga baixa', () => {
-    const estado = criarEstado({
-      mesa: [{ jogadorId: 'j1', carta: criarCarta('K', '♣') }],
-      declaracoes: { j1: 1, bot: 1 },
-      vazas: { j1: 0, bot: 0 },
-    });
-    const contexto = criarContextoLinhaQuente(estado, [criarCarta('A', '♦'), criarCarta('3', '♦')]);
-
-    const decisao = escolherTravessia(estado, contexto);
-    expect(decisao?.carta).toEqual(criarCarta('A', '♦'));
-    expect(decisao?.motivo).toBe('travessia: líder alta+ e urgência baixa');
   });
 });
 

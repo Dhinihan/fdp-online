@@ -8,12 +8,12 @@ import { criarDecisaoQuente, definirPosicao, type DecisaoQuente } from './debug-
 import { decidirUltimoLinhaQuente } from './decidirUltimoLinhaQuente';
 import { decidirNaoUltimoLinhaFria, decidirUltimoLinhaFria } from './DecisorJogadaLinhaFria';
 import type { LoggerDebugBot } from './logger-debug-bot';
+import { escolherTravessia } from './pode-atravessar';
 import { registrarBifurcacao, registrarEscolhaDireta } from './registrar-decisao-jogada-bot';
 import {
   cartasIguais,
   escolherJaCumpriuNoMeio,
   escolherPressao,
-  escolherTravessia,
   formatarMotivoRecusaBifurcacao,
   podeBifurcar,
 } from './regras-linha-quente';
@@ -106,17 +106,20 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
   private escolherQuenteDireta(base: BaseJogada): Carta | null {
     if (base.contexto.necessidade <= 0) {
       const jaCumpriu = escolherJaCumpriuNoMeio(base.estadoAtual, base.contexto);
-      if (jaCumpriu) return this.resolverQuenteRecomendada(base, jaCumpriu.carta, jaCumpriu.motivo);
+      if (jaCumpriu) return this.resolverQuenteRecomendada(base, jaCumpriu);
       return this.registrarSeguirFria(base);
     }
 
     const travessia = escolherTravessia(base.estadoAtual, base.contexto);
     if (!travessia) return null;
-    return this.resolverQuenteRecomendada(base, travessia.carta, `linha quente atravessou: ${travessia.motivo}`);
+    return this.resolverQuenteRecomendada(base, { ...travessia, etapa: 'atravessa' });
   }
 
-  private resolverQuenteRecomendada(base: BaseJogada, carta: Carta, motivo: string): Carta {
-    const quente = criarDecisaoQuente({ carta, motivo }, criarCaminhoJogadaDebug(base.posicao, 'quente'));
+  private resolverQuenteRecomendada(base: BaseJogada, recomendacao: RecomendacaoQuenteResolve): Carta {
+    const quente = criarDecisaoQuente(
+      { carta: recomendacao.carta, motivo: recomendacao.motivo },
+      criarCaminhoJogadaDebug(base.posicao, 'quente', recomendacao.etapa),
+    );
     return this.resolverBifurcacao(base, quente);
   }
 
@@ -156,6 +159,12 @@ interface BaseJogada {
   fria: Carta;
   motivoLinhaFria: string;
   caminhoLinhaFria: string[];
+}
+
+interface RecomendacaoQuenteResolve {
+  carta: Carta;
+  motivo: string;
+  etapa?: string;
 }
 
 interface ConfigBaseJogada {

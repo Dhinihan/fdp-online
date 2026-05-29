@@ -45,20 +45,6 @@ export function escolherPressao(contexto: ContextoJogadaQuente): DecisaoCartaQue
   };
 }
 
-export function escolherTravessia(estado: EstadoEmJogo, contexto: ContextoJogadaQuente): DecisaoCartaQuente | null {
-  if (
-    contexto.necessidade <= 0 ||
-    contexto.folga > 1 ||
-    !liderQuerVaza(estado) ||
-    !temAlvo(estado, contexto.jogadorId)
-  ) {
-    return null;
-  }
-  const candidatas = contexto.vencedoras.filter((avaliada) => !ehGarantida(avaliada));
-  if (candidatas.length === 0) return null;
-  return { carta: cartaMaisBarata(candidatas).carta, motivo: 'travessia: líder alta+ e urgência baixa' };
-}
-
 export function escolherJaCumpriuNoMeio(
   estado: EstadoEmJogo,
   contexto: ContextoJogadaQuente,
