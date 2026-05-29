@@ -81,7 +81,7 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
       return this.resolverQuenteRecomendada(base, { ...espera, etapa: 'espera oportunidade' });
     }
 
-    return this.registrarSeguirFria(base);
+    return this.registrarSeguirFria(base, 'linha quente segue fria: nenhum ramo se aplica');
   }
 
   private resolverBifurcacao(base: BaseJogada, quente: DecisaoQuente): Carta {
@@ -109,7 +109,7 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
     if (base.contexto.necessidade <= 0) {
       const jaCumpriu = escolherJaCumpriuNoMeio(base.estadoAtual, base.contexto);
       if (jaCumpriu) return this.resolverQuenteRecomendada(base, jaCumpriu);
-      return this.registrarSeguirFria(base);
+      return this.registrarSeguirFria(base, 'linha quente segue fria: sem carta que não faz');
     }
 
     const travessia = escolherTravessia(base.estadoAtual, base.contexto);
@@ -125,13 +125,10 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
     return this.resolverBifurcacao(base, quente);
   }
 
-  private registrarSeguirFria(base: BaseJogada): Carta {
+  private registrarSeguirFria(base: BaseJogada, motivo: string): Carta {
     return this.registrarSemBifurcacao(
       base,
-      criarDecisaoQuente(
-        { carta: base.fria, motivo: 'linha quente segue fria: sem carta que não faz' },
-        criarCaminhoJogadaDebug(base.posicao, 'quente', 'segue fria'),
-      ),
+      criarDecisaoQuente({ carta: base.fria, motivo }, criarCaminhoJogadaDebug(base.posicao, 'quente', 'segue fria')),
     );
   }
 
