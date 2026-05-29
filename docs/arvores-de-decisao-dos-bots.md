@@ -232,7 +232,7 @@ e (
   )
 ```
 
-O ultimo `e (... ou ...)` e avaliado como um bloco unico: as quatro primeiras condicoes precisam ser verdadeiras **e** pelo menos uma das duas alternativas finais tambem. Se as quatro primeiras forem verdadeiras mas **nenhuma** das duas alternativas existir, `pode pressionar e esperar` e **falso** e a Linha quente desce para o proximo ramo (`pode tentar com vencedora segura`). Em particular, ter `garantida_agora para depois` nao basta sozinho para entrar neste ramo.
+O ultimo `e (... ou ...)` e avaliado como um bloco unico: as cinco condicoes anteriores precisam ser verdadeiras **e** pelo menos uma das duas alternativas finais tambem. Se as cinco condicoes anteriores forem verdadeiras, mas **nenhuma** das duas alternativas existir, `pode pressionar e esperar` e **falso** e a Linha quente desce para o proximo ramo (`pode tentar com vencedora segura`). Em particular, ter `garantida_agora para depois` nao basta sozinho para entrar neste ramo.
 
 `existe carta de fuga util agora` significa que ha perdedora ou empate que nao seja segura nem garantida_agora.
 
@@ -275,7 +275,7 @@ Esse ramo existe para a Linha quente tambem poder escolher espera ativa quando n
 
 E o **coletor** dos ramos de `necessidade > 0`: tem as condicoes menos exigentes (so urgencia baixa e ao menos uma carta que nao faz a vaza). Recebe os casos em que atravessar, pressionar e vencedora segura ja falharam mas ainda sobra carta de fuga para descartar.
 
-Por consequencia, o `seguir Linha fria` final (fallback) so e alcancado quando **nao existe carta que nao faz a vaza** — ou seja, toda carta da mao vence o lider e nao ha como esperar sem fazer a vaza.
+Por consequencia, o `seguir Linha fria` final (fallback) ocorre quando **nenhum** dos ramos anteriores (`pode atravessar`, `pode pressionar e esperar`, `pode tentar com vencedora segura`, `pode esperar oportunidade`) foi satisfeito. Um caso comum e `urgencia >= 0.66` com `pode atravessar` falso (por exemplo, sem vencedora que nao seja `garantida_agora`): pressionar, vencedora segura e espera exigem `urgencia < 0.66` e tambem falham, e o fallback e alcancado **mesmo** havendo perdedora ou empate na mao. Outro caso e urgencia baixa em que toda carta vence o lider (`nao existe carta que nao faz a vaza`), de modo que `pode esperar oportunidade` tambem falha.
 
 ## Arvore: Fecha a Mesa
 
