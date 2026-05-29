@@ -5,7 +5,7 @@ import { estadoEmJogo, type EstadoEmJogo, type EstadoRodada } from '@/types/esta
 import { decidirAberturaLinhaFria, decidirAberturaLinhaQuente } from './decidirAbertura';
 import { DecisorJogadaLinhaQuente } from './DecisorJogadaLinhaQuente';
 import type { LoggerDebugBot } from './logger-debug-bot';
-import { registrarEscolhaDireta } from './registrar-decisao-jogada-bot';
+import { resolverPorTemperatura } from './resolucao-por-temperatura';
 
 interface ConfigDecisorJogadaBot {
   temperatura: number;
@@ -17,10 +17,14 @@ interface ConfigDecisorJogadaBot {
 export class DecisorJogadaBot implements DecisorJogada {
   private readonly quente: DecisorJogadaLinhaQuente;
   private readonly logger?: LoggerDebugBot;
+  private readonly temperatura: number;
+  private readonly rng: Pick<GeradorAleatorio, 'random'>;
 
   constructor(config: ConfigDecisorJogadaBot) {
     this.quente = new DecisorJogadaLinhaQuente(config);
     this.logger = config.logger;
+    this.temperatura = config.temperatura;
+    this.rng = config.rng;
   }
 
   async decidirJogada(mao: Carta[], estado: EstadoRodada): Promise<Carta> {
@@ -37,18 +41,14 @@ export class DecisorJogadaBot implements DecisorJogada {
   private decidirAbertura(mao: Carta[], estado: EstadoRodada, estadoAtual: EstadoEmJogo): Carta {
     const fria = decidirAberturaLinhaFria(mao, estadoAtual);
     const quente = decidirAberturaLinhaQuente(fria);
-    return registrarEscolhaDireta({
+    return resolverPorTemperatura({
       logger: this.logger,
+      temperatura: this.temperatura,
+      rng: this.rng,
       mao,
       estado,
-      carta: fria.carta,
-      linhaFria: fria.carta,
-      linhaQuente: quente.carta,
-      motivoLinhaFria: fria.motivo,
-      motivoLinhaQuente: quente.motivo,
-      caminhoLinhaFria: fria.caminho,
-      caminhoLinhaQuente: quente.caminho,
-      escolheuQuente: false,
+      fria,
+      quente,
     });
   }
 }

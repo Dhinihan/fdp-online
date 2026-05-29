@@ -11,8 +11,8 @@ import type { LoggerDebugBot } from './logger-debug-bot';
 import { escolherTravessia } from './pode-atravessar';
 import { escolherEsperarOportunidade } from './pode-esperar-oportunidade';
 import { escolherVencedoraSegura } from './pode-vencedora-segura';
-import { registrarBifurcacao, registrarEscolhaDireta } from './registrar-decisao-jogada-bot';
-import { cartasIguais, escolherJaCumpriuNoMeio, escolherPressao, podeBifurcar } from './regras-linha-quente';
+import { escolherJaCumpriuNoMeio, escolherPressao, podeBifurcar } from './regras-linha-quente';
+import { resolverPorTemperatura } from './resolucao-por-temperatura';
 
 interface ConfigLinhaQuente {
   temperatura: number;
@@ -85,23 +85,14 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
   }
 
   private resolverBifurcacao(base: BaseJogada, quente: DecisaoQuente): Carta {
-    if (cartasIguais(base.fria, quente.carta)) {
-      return this.registrarSemBifurcacao(base, quente);
-    }
-
-    const sorteio = this.rng.random();
-    return registrarBifurcacao({
+    return resolverPorTemperatura({
       logger: this.logger,
       temperatura: this.temperatura,
+      rng: this.rng,
       mao: base.mao,
       estado: base.estado,
-      fria: base.fria,
-      quente: quente.carta,
-      motivoLinhaFria: base.motivoLinhaFria,
-      motivoLinhaQuente: quente.motivo,
-      caminhoLinhaFria: base.caminhoLinhaFria,
-      caminhoLinhaQuente: quente.caminho,
-      sorteio,
+      fria: { carta: base.fria, motivo: base.motivoLinhaFria, caminho: base.caminhoLinhaFria },
+      quente: { carta: quente.carta, motivo: quente.motivo, caminho: quente.caminho },
     });
   }
 
@@ -126,26 +117,11 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
   }
 
   private registrarSeguirFria(base: BaseJogada, motivo: string): Carta {
-    return this.registrarSemBifurcacao(
-      base,
-      criarDecisaoQuente({ carta: base.fria, motivo }, criarCaminhoJogadaDebug(base.posicao, 'quente', 'segue fria')),
+    const quente = criarDecisaoQuente(
+      { carta: base.fria, motivo },
+      criarCaminhoJogadaDebug(base.posicao, 'quente', 'segue fria'),
     );
-  }
-
-  private registrarSemBifurcacao(base: BaseJogada, quente: DecisaoQuente): Carta {
-    return registrarEscolhaDireta({
-      logger: this.logger,
-      mao: base.mao,
-      estado: base.estado,
-      carta: quente.carta,
-      linhaFria: base.fria,
-      linhaQuente: quente.carta,
-      motivoLinhaFria: base.motivoLinhaFria,
-      motivoLinhaQuente: quente.motivo,
-      caminhoLinhaFria: base.caminhoLinhaFria,
-      caminhoLinhaQuente: quente.caminho,
-      escolheuQuente: false,
-    });
+    return this.resolverBifurcacao(base, quente);
   }
 }
 
