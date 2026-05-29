@@ -3,6 +3,8 @@ import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
 import { calcularNecessidade, liderQuerVaza, type ContextoJogadaQuente } from './contextoLinhaQuente';
 import { MOTIVOS_FUGA_MEIO, escolherFugaJaCumpriu } from './escolher-fuga-ja-cumpriu';
+import { existeGarantidaParaDepois } from './garantida-para-depois';
+import { cartaMaisBarata, cartaMaisCara } from './selecao-por-score';
 
 export interface ResultadoPodeBifurcar {
   pode: boolean;
@@ -26,10 +28,6 @@ export function podeBifurcar(
   if (!temPressaoAgora(contexto)) return { pode: false, motivoRecusa: 'sem pressão agora' };
   if (!temAlvo(estado, contexto.jogadorId)) return { pode: false, motivoRecusa: 'sem alvo na mesa' };
   return { pode: true };
-}
-
-export function formatarMotivoRecusaBifurcacao(motivoRecusa: string): string {
-  return `linha quente segue fria: ${motivoRecusa}`;
 }
 
 export function cartasIguais(a: Carta, b: Carta): boolean {
@@ -78,10 +76,8 @@ function cartasDeFuga(contexto: ContextoJogadaQuente): CartaAvaliada[] {
 }
 
 function vencedorasBaratasSemGarantida(contexto: ContextoJogadaQuente): CartaAvaliada[] {
-  const candidatas = contexto.vencedoras.filter((avaliada) => !ehGarantida(avaliada));
-  return candidatas.filter((carta) =>
-    contexto.avaliadas.some((avaliada) => avaliada !== carta && ehGarantida(avaliada)),
-  );
+  if (!existeGarantidaParaDepois(contexto)) return [];
+  return contexto.vencedoras.filter((avaliada) => !ehGarantida(avaliada));
 }
 
 function temAlvo(estado: EstadoEmJogo, jogadorId: string): boolean {
@@ -98,12 +94,4 @@ function ehSeguraOuGarantida(avaliada: CartaAvaliada): boolean {
 
 function ehGarantida(avaliada: CartaAvaliada): boolean {
   return avaliada.categoria === 'garantida_agora';
-}
-
-function cartaMaisBarata(avaliadas: CartaAvaliada[]): CartaAvaliada {
-  return [...avaliadas].sort((a, b) => a.score - b.score)[0];
-}
-
-function cartaMaisCara(avaliadas: CartaAvaliada[]): CartaAvaliada {
-  return [...avaliadas].sort((a, b) => b.score - a.score)[0];
 }

@@ -4,6 +4,7 @@ import { liderQuerVaza, urgenciaAlta } from './contexto-posicao-mesa';
 import type { ContextoJogadaQuente } from './contextoLinhaQuente';
 import { ehAltaOuMelhor } from './predicados-carta-avaliada';
 import type { DecisaoCartaQuente } from './regras-linha-quente';
+import { cartaMaisBarata } from './selecao-por-score';
 
 export function podeAtravessar(estado: EstadoEmJogo, contexto: ContextoJogadaQuente): boolean {
   return (
@@ -32,8 +33,4 @@ function vencedorasSemGarantida(contexto: ContextoJogadaQuente): CartaAvaliada[]
 function montarMotivoTravessia(contexto: ContextoJogadaQuente): string {
   const urgencia = contexto.necessidade / contexto.avaliadas.length;
   return `atravessa: urgência ${urgencia.toFixed(2)}, líder alta+ precisa, vencedora mais barata sem garantida`;
-}
-
-function cartaMaisBarata(avaliadas: CartaAvaliada[]): CartaAvaliada {
-  return [...avaliadas].sort((a, b) => a.score - b.score)[0];
 }

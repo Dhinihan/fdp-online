@@ -253,6 +253,8 @@ e lider jogou carta alta+
 e existe vencedora segura
 ```
 
+A condicao "existe jogador interessado" (comum aos ramos da Linha quente) nao aparece aqui porque `lider atual ainda precisa fazer` ja a garante: se o lider precisa fazer, existe um jogador interessado na mesa. O ramo nao exige um jogador interessado **por agir** alem do lider.
+
 `existe vencedora segura` significa que ha carta segura que vence a carta lider atual. Referencias praticas: 2, 3 ou manilha.
 
 A condicao `nao existe garantida_agora para depois` e o **eixo unico** que separa este ramo de `pode pressionar e esperar`: as duas leem o mesmo fato (`existe garantida_agora para depois`) com sinal oposto. Como `pode pressionar e esperar` e avaliado primeiro:
