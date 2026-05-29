@@ -84,6 +84,10 @@ _Avoid_: Ordem, vez
 Jogador que ainda não jogou carta no turno atual.
 _Avoid_: Próximo jogador, jogador restante
 
+**Leitura da Mesa**:
+Snapshot dos fatos derivados que uma **Decisão de Jogada do Bot** precisa para escolher a carta: **Feito** ainda necessário, urgência, cartas avaliadas, vencedoras/perdedoras/empates em relação à carta líder, a própria carta líder, **Jogadores por agir** e interessados, e se há alvo na mesa. Calculada uma vez por decisão e consumida igual pela **Linha fria** e pela **Linha quente**.
+_Avoid_: Contexto, estado do bot, ContextoJogadaQuente
+
 **Carta alta+**:
 Carta cuja categoria estratégica é **alta**, **segura** ou **garantida_agora**.
 _Avoid_: Limiar numérico de força, valor alto
@@ -106,6 +110,7 @@ _Avoid_: Lista manual de valores, carta forte absoluta
 - Uma **Árvore de Decisão do Bot** pode ter uma **Linha fria** e uma **Linha quente** para a mesma decisão.
 - Uma **Estratégia de Bot Explicável** inclui **Decisões de Declaração do Bot** e **Decisões de Jogada do Bot**.
 - Uma **Decisão de Jogada do Bot** pode usar **Escolha de vencedora por necessidade** ou **Descarte por necessidade**.
+- Uma **Decisão de Jogada do Bot** parte de uma **Leitura da Mesa** única, compartilhada pela **Linha fria** e pela **Linha quente**.
 - Uma **Decisão de Jogada do Bot** considera a **Posição na Mesa** antes de avaliar a força da carta.
 - Uma **Decisão de Jogada do Bot** no meio da mesa considera se há **Jogadores por agir** que ainda precisam fazer ou já cumpriram.
 

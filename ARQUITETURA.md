@@ -139,7 +139,7 @@ Eventos principais:
 
 | Ferramenta                     | Regra / Propósito                                                                          |
 | ------------------------------ | ------------------------------------------------------------------------------------------ |
-| **ESLint + typescript-eslint** | Complexidade máxima: 10, arquivo máx: 200 linhas, função máx: 30 linhas, parâmetros máx: 3 |
+| **ESLint + typescript-eslint** | Complexidade máxima: 10, arquivo máx: 500 linhas, função máx: 30 linhas, parâmetros máx: 3 |
 | **Prettier**                   | Formatação automática                                                                      |
 | **Knip**                       | Detecta dependências e código morto                                                        |
 | **Dependabot**                 | Atualiza dependências automaticamente (PRs)                                                |
