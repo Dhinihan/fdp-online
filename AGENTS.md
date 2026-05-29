@@ -37,7 +37,7 @@ src/
 - **Idioma do código**: Português brasileiro. Nomes de variáveis, funções, classes em PT-BR.
 - **Idioma da interface**: PT-BR, EN, ES (i18n).
 - **Complexidade máxima**: 10 (cyclomatic).
-- **Tamanho máximo**: 200 linhas/arquivo, 30 linhas/função, 3 parâmetros/função.
+- **Tamanho máximo**: 500 linhas/arquivo, 30 linhas/função, 3 parâmetros/função.
 - **Sem any implícito**. TypeScript estrito.
 
 ---
