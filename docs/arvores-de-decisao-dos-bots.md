@@ -226,27 +226,42 @@ e existe vencedora
 e urgencia < 0.66
 e existe jogador interessado
 e existe garantida_agora para depois
-e existe carta de fuga util agora
-  ou existe vencedora barata que preserva garantida_agora para depois
+e (
+    existe carta de fuga util agora
+    ou existe vencedora barata que preserva garantida_agora para depois
+  )
 ```
+
+O ultimo `e (... ou ...)` e avaliado como um bloco unico: as quatro primeiras condicoes precisam ser verdadeiras **e** pelo menos uma das duas alternativas finais tambem. Se as quatro primeiras forem verdadeiras mas **nenhuma** das duas alternativas existir, `pode pressionar e esperar` e **falso** e a Linha quente desce para o proximo ramo (`pode tentar com vencedora segura`). Em particular, ter `garantida_agora para depois` nao basta sozinho para entrar neste ramo.
 
 `existe carta de fuga util agora` significa que ha perdedora ou empate que nao seja segura nem garantida_agora.
 
 `existe vencedora barata que preserva garantida_agora para depois` significa que ha vencedora nao garantida_agora e ainda sobra carta garantida_agora para sustentar os turnos seguintes.
 
+A escolha da carta dentro do ramo segue a ordem do pseudocodigo: se `existe carta de fuga util agora`, joga a fuga mais cara; senao, joga a vencedora barata preservando a garantida_agora.
+
 `pode tentar com vencedora segura` significa:
 
 ```text
 necessidade > 0
+e existe vencedora
 e urgencia < 0.66
 e existe jogador interessado
+e nao existe garantida_agora para depois
 e lider atual ainda precisa fazer
 e lider jogou carta alta+
 e existe vencedora segura
-e nao existe garantida_agora para depois
 ```
 
 `existe vencedora segura` significa que ha carta segura que vence a carta lider atual. Referencias praticas: 2, 3 ou manilha.
+
+A condicao `nao existe garantida_agora para depois` e o **eixo unico** que separa este ramo de `pode pressionar e esperar`: as duas leem o mesmo fato (`existe garantida_agora para depois`) com sinal oposto. Como `pode pressionar e esperar` e avaliado primeiro:
+
+- Se **ha** garantida_agora para depois e existe fuga util ou vencedora barata, a Linha quente ja parou em `pode pressionar e esperar`; este ramo nem e alcancado.
+- Se **ha** garantida_agora para depois mas nao ha fuga util nem vencedora barata, `pode pressionar e esperar` falhou no fim; este ramo tambem falha aqui (em `nao existe garantida_agora para depois`) e a decisao desce para `pode esperar oportunidade`.
+- Se **nao ha** garantida_agora para depois, `pode pressionar e esperar` ja havia falhado nessa condicao; este ramo segue avaliando lider e vencedora segura.
+
+A ordem de avaliacao tambem importa: confirma-se primeiro `existe jogador interessado` (interesse generico) e so depois se especializa para o lider (`lider atual ainda precisa fazer` e `lider jogou carta alta+`).
 
 `pode esperar oportunidade` significa:
 
@@ -257,6 +272,10 @@ e existe carta que nao faz a vaza
 ```
 
 Esse ramo existe para a Linha quente tambem poder escolher espera ativa quando nao ha motivo suficiente para atravessar, pressionar ou gastar vencedora segura. A decisao relativa e `descartePorNecessidade(perdedoras + empates, necessidade)`.
+
+E o **coletor** dos ramos de `necessidade > 0`: tem as condicoes menos exigentes (so urgencia baixa e ao menos uma carta que nao faz a vaza). Recebe os casos em que atravessar, pressionar e vencedora segura ja falharam mas ainda sobra carta de fuga para descartar.
+
+Por consequencia, o `seguir Linha fria` final (fallback) so e alcancado quando **nao existe carta que nao faz a vaza** — ou seja, toda carta da mao vence o lider e nao ha como esperar sem fazer a vaza.
 
 ## Arvore: Fecha a Mesa
 
