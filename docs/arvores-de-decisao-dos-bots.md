@@ -246,6 +246,7 @@ A escolha da carta dentro do ramo segue a ordem do pseudocodigo: se `existe cart
 necessidade > 0
 e existe vencedora
 e urgencia < 0.66
+e existe jogador interessado
 e nao existe garantida_agora para depois
 e lider atual ainda precisa fazer
 e lider jogou carta alta+
@@ -261,6 +262,8 @@ A condicao `nao existe garantida_agora para depois` e o **eixo unico** que separ
 - Se **ha** garantida_agora para depois e existe fuga util ou vencedora barata, a Linha quente ja parou em `pode pressionar e esperar`; este ramo nem e alcancado.
 - Se **ha** garantida_agora para depois mas nao ha fuga util nem vencedora barata, `pode pressionar e esperar` falhou no fim; este ramo tambem falha aqui (em `nao existe garantida_agora para depois`) e a decisao desce para `pode esperar oportunidade`.
 - Se **nao ha** garantida_agora para depois, `pode pressionar e esperar` ja havia falhado nessa condicao; este ramo segue avaliando lider e vencedora segura.
+
+A ordem de avaliacao tambem importa: confirma-se primeiro `existe jogador interessado` (interesse generico) e so depois se especializa para o lider (`lider atual ainda precisa fazer` e `lider jogou carta alta+`).
 
 `pode esperar oportunidade` significa:
 
