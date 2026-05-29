@@ -1,13 +1,13 @@
 import type { CartaAvaliada } from '@/core/avaliador-carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { liderQuerVaza, urgenciaAlta } from './contexto-posicao-mesa';
-import type { ContextoJogadaQuente } from './contextoLinhaQuente';
 import { existeGarantidaParaDepois } from './garantida-para-depois';
+import type { LeituraDaMesa } from './ler-mesa';
 import { ehAltaOuMelhor } from './predicados-carta-avaliada';
 import type { DecisaoCartaQuente } from './regras-linha-quente';
 import { cartaMaisBarata } from './selecao-por-score';
 
-export function podeTentarComVencedoraSegura(estado: EstadoEmJogo, contexto: ContextoJogadaQuente): boolean {
+export function podeTentarComVencedoraSegura(estado: EstadoEmJogo, contexto: LeituraDaMesa): boolean {
   // "existe jogador interessado" (doc) é subsumido por liderQuerVaza: se o líder
   // ainda precisa fazer, já existe um jogador interessado na mesa.
   return (
@@ -21,10 +21,7 @@ export function podeTentarComVencedoraSegura(estado: EstadoEmJogo, contexto: Con
   );
 }
 
-export function escolherVencedoraSegura(
-  estado: EstadoEmJogo,
-  contexto: ContextoJogadaQuente,
-): DecisaoCartaQuente | null {
+export function escolherVencedoraSegura(estado: EstadoEmJogo, contexto: LeituraDaMesa): DecisaoCartaQuente | null {
   if (!podeTentarComVencedoraSegura(estado, contexto)) return null;
   const escolhida = cartaMaisBarata(vencedorasSeguras(contexto));
   return {
@@ -33,10 +30,10 @@ export function escolherVencedoraSegura(
   };
 }
 
-function liderEhAltaPlus(contexto: ContextoJogadaQuente): boolean {
+function liderEhAltaPlus(contexto: LeituraDaMesa): boolean {
   return contexto.lider !== null && ehAltaOuMelhor(contexto.lider);
 }
 
-function vencedorasSeguras(contexto: ContextoJogadaQuente): CartaAvaliada[] {
+function vencedorasSeguras(contexto: LeituraDaMesa): CartaAvaliada[] {
   return contexto.vencedoras.filter((avaliada) => avaliada.categoria === 'segura');
 }

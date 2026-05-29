@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { criarContextoLinhaQuente } from '@/adapters/bots/contextoLinhaQuente';
 import { decidirNaoUltimoLinhaFria } from '@/adapters/bots/DecisorJogadaLinhaFria';
 import { DecisorJogadaLinhaQuente } from '@/adapters/bots/DecisorJogadaLinhaQuente';
+import { lerMesa } from '@/adapters/bots/ler-mesa';
 import type { DecisaoJogadaDebug, LoggerDebugBot } from '@/adapters/bots/logger-debug-bot';
 import { podeAtravessar, escolherTravessia } from '@/adapters/bots/pode-atravessar';
 import { criarCarta } from '../core/rodada-fixtures';
@@ -9,18 +9,18 @@ import { criarEstadoAtravessia, cenariosRecusaAtravessia, maoAtravessia } from '
 
 describe('podeAtravessar recusa', () => {
   it.each(cenariosRecusaAtravessia)('deve recusar quando $nome', ({ estado, mao }) => {
-    const contexto = criarContextoLinhaQuente(estado, mao);
-    expect(podeAtravessar(estado, contexto)).toBe(false);
+    const leitura = lerMesa(estado, mao);
+    expect(podeAtravessar(estado, leitura)).toBe(false);
   });
 });
 
 describe('podeAtravessar permite', () => {
   it('deve permitir quando todos os critérios passam', () => {
     const estado = criarEstadoAtravessia();
-    const contexto = criarContextoLinhaQuente(estado, maoAtravessia());
+    const leitura = lerMesa(estado, maoAtravessia());
 
-    expect(podeAtravessar(estado, contexto)).toBe(true);
-    expect(escolherTravessia(estado, contexto)).toEqual({
+    expect(podeAtravessar(estado, leitura)).toBe(true);
+    expect(escolherTravessia(estado, leitura)).toEqual({
       carta: criarCarta('4', '♦'),
       motivo: 'atravessa: urgência 1.00, líder alta+ precisa, vencedora mais barata sem garantida',
     });
@@ -32,8 +32,8 @@ describe('escolherTravessia na linha fria', () => {
     const estado = criarEstadoAtravessia();
     const mao = maoAtravessia();
 
-    expect(escolherTravessia(estado, criarContextoLinhaQuente(estado, mao))?.carta).toEqual(criarCarta('4', '♦'));
-    expect(decidirNaoUltimoLinhaFria(mao, estado).carta).toEqual(criarCarta('3', '♦'));
+    expect(escolherTravessia(estado, lerMesa(estado, mao))?.carta).toEqual(criarCarta('4', '♦'));
+    expect(decidirNaoUltimoLinhaFria(lerMesa(estado, mao), estado).carta).toEqual(criarCarta('3', '♦'));
   });
 });
 

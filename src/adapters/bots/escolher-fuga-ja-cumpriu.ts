@@ -2,14 +2,10 @@ import type { CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { cartaMaisForte } from './escolhas-por-necessidade';
+import type { LeituraDaMesa } from './ler-mesa';
 import { ehAltaOuMelhor } from './predicados-carta-avaliada';
 
-export interface ContextoFugaJaCumpriu {
-  perdedoras: CartaAvaliada[];
-  empates: CartaAvaliada[];
-  lider: CartaAvaliada | null;
-  avaliadas: CartaAvaliada[];
-}
+export type ContextoFugaJaCumpriu = Pick<LeituraDaMesa, 'perdedoras' | 'empates' | 'lider' | 'avaliadas'>;
 
 export interface DecisaoFugaJaCumpriu {
   carta: Carta;

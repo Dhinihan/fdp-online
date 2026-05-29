@@ -1,36 +1,35 @@
 import type { CartaAvaliada } from '@/core/avaliador-carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
-import { liderQuerVaza, urgenciaAlta } from './contexto-posicao-mesa';
-import type { ContextoJogadaQuente } from './contextoLinhaQuente';
+import type { LeituraDaMesa } from './ler-mesa';
 import { ehAltaOuMelhor } from './predicados-carta-avaliada';
 import type { DecisaoCartaQuente } from './regras-linha-quente';
 import { cartaMaisBarata } from './selecao-por-score';
 
-export function podeAtravessar(estado: EstadoEmJogo, contexto: ContextoJogadaQuente): boolean {
+export function podeAtravessar(estado: EstadoEmJogo, leitura: LeituraDaMesa): boolean {
+  void estado;
   return (
-    contexto.necessidade > 0 &&
-    urgenciaAlta(contexto.necessidade, contexto.avaliadas.length) &&
-    liderQuerVaza(estado) &&
-    liderEhAltaPlus(contexto) &&
-    vencedorasSemGarantida(contexto).length > 0
+    leitura.necessidade > 0 &&
+    leitura.urgenciaAlta &&
+    leitura.liderQuerVaza &&
+    liderEhAltaPlus(leitura) &&
+    vencedorasSemGarantida(leitura).length > 0
   );
 }
 
-export function escolherTravessia(estado: EstadoEmJogo, contexto: ContextoJogadaQuente): DecisaoCartaQuente | null {
-  if (!podeAtravessar(estado, contexto)) return null;
-  const escolhida = cartaMaisBarata(vencedorasSemGarantida(contexto));
-  return { carta: escolhida.carta, motivo: montarMotivoTravessia(contexto) };
+export function escolherTravessia(estado: EstadoEmJogo, leitura: LeituraDaMesa): DecisaoCartaQuente | null {
+  if (!podeAtravessar(estado, leitura)) return null;
+  const escolhida = cartaMaisBarata(vencedorasSemGarantida(leitura));
+  return { carta: escolhida.carta, motivo: montarMotivoTravessia(leitura) };
 }
 
-function liderEhAltaPlus(contexto: ContextoJogadaQuente): boolean {
-  return contexto.lider !== null && ehAltaOuMelhor(contexto.lider);
+function liderEhAltaPlus(leitura: LeituraDaMesa): boolean {
+  return leitura.lider !== null && ehAltaOuMelhor(leitura.lider);
 }
 
-function vencedorasSemGarantida(contexto: ContextoJogadaQuente): CartaAvaliada[] {
-  return contexto.vencedoras.filter((avaliada) => avaliada.categoria !== 'garantida_agora');
+function vencedorasSemGarantida(leitura: LeituraDaMesa): CartaAvaliada[] {
+  return leitura.vencedoras.filter((avaliada) => avaliada.categoria !== 'garantida_agora');
 }
 
-function montarMotivoTravessia(contexto: ContextoJogadaQuente): string {
-  const urgencia = contexto.necessidade / contexto.avaliadas.length;
-  return `atravessa: urgência ${urgencia.toFixed(2)}, líder alta+ precisa, vencedora mais barata sem garantida`;
+function montarMotivoTravessia(leitura: LeituraDaMesa): string {
+  return `atravessa: urgência ${leitura.urgencia.toFixed(2)}, líder alta+ precisa, vencedora mais barata sem garantida`;
 }

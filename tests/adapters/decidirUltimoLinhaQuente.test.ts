@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { criarContextoLinhaQuente } from '@/adapters/bots/contextoLinhaQuente';
 import { decidirUltimoLinhaQuente } from '@/adapters/bots/decidirUltimoLinhaQuente';
+import { lerMesa } from '@/adapters/bots/ler-mesa';
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
 import { criarCarta, criarJogador } from '../core/rodada-fixtures';
@@ -61,8 +61,8 @@ const cenarios: {
 
 describe('decidirUltimoLinhaQuente', () => {
   it.each(cenarios)('$nome', ({ mao, estado, esperado }) => {
-    const contexto = criarContextoLinhaQuente(estado, mao);
-    expect(decidirUltimoLinhaQuente(estado, contexto)).toEqual(esperado);
+    const leitura = lerMesa(estado, mao);
+    expect(decidirUltimoLinhaQuente(estado, leitura)).toEqual(esperado);
   });
 });
 

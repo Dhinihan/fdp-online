@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { criarContextoLinhaQuente } from '@/adapters/bots/contextoLinhaQuente';
+import { lerMesa } from '@/adapters/bots/ler-mesa';
 import { escolherJaCumpriuNoMeio, escolherPressao, podeBifurcar } from '@/adapters/bots/regras-linha-quente';
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
@@ -8,9 +8,9 @@ import { criarCarta, criarJogador } from '../core/rodada-fixtures';
 describe('podeBifurcar', () => {
   it('deve recusar quando não há necessidade', () => {
     const estado = criarEstado({ mesa: mesaComBaixa(), declaracoes: { j2: 1, bot: 1 }, vazas: { j2: 1, bot: 1 } });
-    const contexto = criarContextoLinhaQuente(estado, [criarCarta('A', '♦'), criarCarta('3', '♦')]);
+    const leitura = lerMesa(estado, [criarCarta('A', '♦'), criarCarta('3', '♦')]);
 
-    expect(podeBifurcar(estado, contexto, 8)).toEqual({ pode: false, motivoRecusa: 'sem necessidade' });
+    expect(podeBifurcar(estado, leitura, 8)).toEqual({ pode: false, motivoRecusa: 'sem necessidade' });
   });
 
   it('deve recusar quando não há vencedoras', () => {
@@ -19,16 +19,16 @@ describe('podeBifurcar', () => {
       declaracoes: { j1: 1, bot: 2 },
       vazas: { j1: 0, bot: 0 },
     });
-    const contexto = criarContextoLinhaQuente(estado, [criarCarta('4', '♦'), criarCarta('6', '♦')]);
+    const leitura = lerMesa(estado, [criarCarta('4', '♦'), criarCarta('6', '♦')]);
 
-    expect(podeBifurcar(estado, contexto, 8)).toEqual({ pode: false, motivoRecusa: 'sem vencedoras' });
+    expect(podeBifurcar(estado, leitura, 8)).toEqual({ pode: false, motivoRecusa: 'sem vencedoras' });
   });
 
   it('deve permitir bifurcação quando todas as condições passam', () => {
     const estado = criarEstado(cenarioBifurcacao());
-    const contexto = criarContextoLinhaQuente(estado, [criarCarta('3', '♦'), criarCarta('4', '♦')]);
+    const leitura = lerMesa(estado, [criarCarta('3', '♦'), criarCarta('4', '♦')]);
 
-    expect(podeBifurcar(estado, contexto, 8)).toEqual({ pode: true });
+    expect(podeBifurcar(estado, leitura, 8)).toEqual({ pode: true });
   });
 });
 
@@ -93,17 +93,17 @@ const cenariosJaCumpriuNoMeio: {
 describe('escolherJaCumpriuNoMeio', () => {
   it.each(cenariosJaCumpriuNoMeio)('deve $nome', ({ estado: config, mao, esperado }) => {
     const estado = criarEstado(config);
-    const contexto = criarContextoLinhaQuente(estado, mao);
-    expect(escolherJaCumpriuNoMeio(estado, contexto)).toEqual(esperado);
+    const leitura = lerMesa(estado, mao);
+    expect(escolherJaCumpriuNoMeio(estado, leitura)).toEqual(esperado);
   });
 });
 
 describe('escolherPressao', () => {
   it('deve preferir fuga mais cara quando há cartas de fuga', () => {
     const estado = criarEstado(cenarioBifurcacao());
-    const contexto = criarContextoLinhaQuente(estado, [criarCarta('3', '♦'), criarCarta('4', '♦')]);
+    const leitura = lerMesa(estado, [criarCarta('3', '♦'), criarCarta('4', '♦')]);
 
-    expect(escolherPressao(contexto).motivo).toBe('pressão: fuga mais cara');
+    expect(escolherPressao(leitura).motivo).toBe('pressão: fuga mais cara');
   });
 });
 
