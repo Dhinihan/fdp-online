@@ -65,8 +65,8 @@ describe('lerMesa posição e urgência', () => {
   });
 });
 
-describe('lerMesa avaliação única', () => {
-  it('deve incluir o líder no mesmo lote de avaliação da mão', () => {
+describe('lerMesa avaliação da mão', () => {
+  it('deve avaliar a mão com tamanho real sem misturar o líder no lote', () => {
     const estado = criarEstadoComUmPorAgir({
       mesa: [{ jogadorId: 'j1', carta: criarCarta('K', '♣') }],
       manilha: '5',

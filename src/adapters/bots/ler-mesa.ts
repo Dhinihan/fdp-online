@@ -58,13 +58,12 @@ function avaliarMaoELider(
   estado: EstadoEmJogo,
   mao: Carta[],
 ): { avaliadas: CartaAvaliada[]; lider: CartaAvaliada | null } {
+  const avaliadas = avaliarCartas(mao, estado.manilha, estado.cartasReveladas, estado.maos.length);
   const cartaLider = melhorCartaMesa(estado.mesa, estado.manilha);
-  const cartasAvaliar = cartaLider ? [...mao, cartaLider] : mao;
-  const todasAvaliadas = avaliarCartas(cartasAvaliar, estado.manilha, estado.cartasReveladas, estado.maos.length);
-  return {
-    avaliadas: cartaLider ? todasAvaliadas.slice(0, mao.length) : todasAvaliadas,
-    lider: cartaLider ? todasAvaliadas[mao.length] : null,
-  };
+  const lider = cartaLider
+    ? avaliarCartas([cartaLider], estado.manilha, estado.cartasReveladas, estado.maos.length)[0]
+    : null;
+  return { avaliadas, lider };
 }
 
 function classificarCartas(avaliadas: CartaAvaliada[], lider: CartaAvaliada | null, manilha: Carta['valor']) {

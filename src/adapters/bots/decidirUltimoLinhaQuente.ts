@@ -1,10 +1,9 @@
-import type { CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
 import { cartasEmpatam, cartaVence } from '@/core/comparador-carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { cartaMaisForte, descartePorNecessidade, escolherVencedoraPorNecessidade } from './escolhas-por-necessidade';
 import { MOTIVOS_FUGA_FECHA, escolherFugaJaCumpriu } from './escolher-fuga-ja-cumpriu';
-import type { LeituraDaMesa } from './ler-mesa';
+import { cartasQueNaoFazemVaza, type LeituraDaMesa } from './ler-mesa';
 import { ehAltaOuMelhor } from './predicados-carta-avaliada';
 
 export interface DecisaoUltimoLinhaQuente {
@@ -24,7 +23,7 @@ export function cartaPerde(carta: Carta, lider: Carta, manilha: Carta['valor']):
 function decidirQuandoPrecisaFazer(estado: EstadoEmJogo, leitura: LeituraDaMesa): DecisaoUltimoLinhaQuente {
   if (leitura.vencedoras.length === 0) {
     return {
-      carta: descartePorNecessidade(cartasQueNaoVencem(leitura), estado.manilha, leitura.necessidade).carta,
+      carta: descartePorNecessidade(cartasQueNaoFazemVaza(leitura), estado.manilha, leitura.necessidade).carta,
       motivo: 'precisa fazer, sem carta que vence; P[N-X]',
     };
   }
@@ -64,8 +63,4 @@ function deveFazerAgora(leitura: LeituraDaMesa): boolean {
   if (!leitura.lider) return true;
   if (leitura.liderQuerVaza && ehAltaOuMelhor(leitura.lider)) return true;
   return leitura.urgenciaAlta;
-}
-
-function cartasQueNaoVencem(leitura: LeituraDaMesa): CartaAvaliada[] {
-  return [...leitura.perdedoras, ...leitura.empates];
 }
