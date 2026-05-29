@@ -1,7 +1,31 @@
+import { DecisorJogadaLinhaQuente } from '@/adapters/bots/DecisorJogadaLinhaQuente';
+import type { DecisaoJogadaDebug, LoggerDebugBot } from '@/adapters/bots/logger-debug-bot';
 import type { Carta } from '@/core/Carta';
 import type { Jogador } from '@/types/entidades';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
 import { criarCarta, criarJogador } from '../core/rodada-fixtures';
+
+export function criarBotLinhaQuente(
+  temperatura: number,
+  valorRng: number,
+  logger?: LoggerDebugBot,
+): DecisorJogadaLinhaQuente {
+  return new DecisorJogadaLinhaQuente({
+    temperatura,
+    rng: { random: () => valorRng },
+    logger,
+  });
+}
+
+export function decisaoSorteadaLinhaQuente(): Partial<DecisaoJogadaDebug> {
+  return {
+    carta: criarCarta('4', '♦'),
+    linhaFria: criarCarta('3', '♦'),
+    linhaQuente: criarCarta('4', '♦'),
+    sorteio: 0,
+    escolheuQuente: true,
+  };
+}
 
 export function criarEstado(config: Partial<EstadoEmJogo>): EstadoEmJogo {
   const jogadores = criarJogadores();

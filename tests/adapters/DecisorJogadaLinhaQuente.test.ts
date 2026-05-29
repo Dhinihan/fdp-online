@@ -1,12 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import { DecisorJogadaLinhaFria } from '@/adapters/bots/DecisorJogadaLinhaFria';
 import { DecisorJogadaLinhaQuente } from '@/adapters/bots/DecisorJogadaLinhaQuente';
-import type { DecisaoJogadaDebug, LoggerDebugBot } from '@/adapters/bots/logger-debug-bot';
+import type { DecisaoJogadaDebug } from '@/adapters/bots/logger-debug-bot';
 import { criarCarta } from '../core/rodada-fixtures';
 import {
   cenarioBifurcacao,
   cenarioBifurcacaoAntesDoFim,
+  criarBotLinhaQuente,
   criarEstado,
+  decisaoSorteadaLinhaQuente,
   maoBifurcacao,
   mesaComBaixa,
   mesaComQuatro,
@@ -29,19 +31,19 @@ describe('DecisorJogadaLinhaQuente', () => {
 
 async function escolheLinhaQuente(): Promise<void> {
   const estado = criarEstado(cenarioBifurcacaoAntesDoFim());
-  const bot = criarBot(1, 0);
+  const bot = criarBotLinhaQuente(1, 0);
 
   await expect(bot.decidirJogada(maoBifurcacao(), estado)).resolves.toEqual(criarCarta('4', '♦'));
 }
 async function escolheLinhaFria(): Promise<void> {
   const estado = criarEstado(cenarioBifurcacao());
-  const bot = criarBot(0, 0);
+  const bot = criarBotLinhaQuente(0, 0);
 
   await expect(bot.decidirJogada(maoBifurcacao(), estado)).resolves.toEqual(criarCarta('3', '♦'));
 }
 async function usaPosicionamentoDeterministico(): Promise<void> {
   const estado = criarEstado({ mesa: mesaComQuatro(), declaracoes: { j1: 1, bot: 2 }, vazas: { j1: 0, bot: 0 } });
-  const bot = criarBot(1, 0);
+  const bot = criarBotLinhaQuente(1, 0);
 
   await expect(
     bot.decidirJogada([criarCarta('6', '♦'), criarCarta('8', '♦'), criarCarta('K', '♦')], estado),
@@ -50,7 +52,7 @@ async function usaPosicionamentoDeterministico(): Promise<void> {
 async function registraPosicionamentoDeterministico(): Promise<void> {
   const estado = criarEstado({ mesa: mesaComQuatro(), declaracoes: { j1: 1, bot: 2 }, vazas: { j1: 0, bot: 0 } });
   const jogadas: DecisaoJogadaDebug[] = [];
-  const bot = criarBot(1, 0, {
+  const bot = criarBotLinhaQuente(1, 0, {
     registrarDeclaracao: () => undefined,
     registrarJogada: (jogada) => jogadas.push(jogada),
   });
@@ -64,7 +66,7 @@ async function registraPosicionamentoDeterministico(): Promise<void> {
 async function registraContratoExplicavel(): Promise<void> {
   const estado = criarEstado(cenarioBifurcacaoAntesDoFim());
   const jogadas: DecisaoJogadaDebug[] = [];
-  const bot = criarBot(1, 0, {
+  const bot = criarBotLinhaQuente(1, 0, {
     registrarDeclaracao: () => undefined,
     registrarJogada: (jogada) => jogadas.push(jogada),
   });
@@ -87,7 +89,7 @@ async function registraContratoExplicavel(): Promise<void> {
     motivo: 'guarda de posição permitiu; jogadores por agir já cumpriram; precisa fazer; regra G[N-X]',
     caminho: ['jogada', 'joga no meio', 'linha fria', 'guarda de posição permitiu'],
   });
-  expect(jogadas[0]?.quente?.caminho).toEqual(['jogada', 'joga no meio', 'linha quente']);
+  expect(jogadas[0]?.quente?.caminho).toEqual(['jogada', 'joga no meio', 'linha quente', 'pressiona']);
   expect(jogadas[0]).toMatchObject(decisaoSorteadaLinhaQuente());
 }
 
@@ -100,7 +102,7 @@ async function empataAltaCumprido(): Promise<void> {
     declaracoes: { j1: 1, bot: 1 },
     vazas: { j1: 0, bot: 1 },
   });
-  const bot = criarBot(1, 0);
+  const bot = criarBotLinhaQuente(1, 0);
 
   await expect(bot.decidirJogada([criarCarta('2', '♦'), criarCarta('4', '♦')], estado)).resolves.toEqual(
     criarCarta('2', '♦'),
@@ -117,7 +119,7 @@ async function perdedoraComLiderMedia(): Promise<void> {
     vazas: { j1: 0, bot: 1 },
   });
   const mao = [criarCarta('9', '♦'), criarCarta('7', '♦')];
-  const bot = criarBot(1, 0);
+  const bot = criarBotLinhaQuente(1, 0);
   const fria = new DecisorJogadaLinhaFria();
 
   await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('7', '♦'));
@@ -134,7 +136,7 @@ async function respeitaTemperaturaZeroJaCumpriu(): Promise<void> {
     vazas: { j1: 0, bot: 1 },
   });
   const mao = [criarCarta('9', '♦'), criarCarta('7', '♦')];
-  const bot = criarBot(0, 0);
+  const bot = criarBotLinhaQuente(0, 0);
 
   await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('9', '♦'));
 }
@@ -151,7 +153,7 @@ async function registraSeguirFriaSemFuga(): Promise<void> {
   });
   const mao = [criarCarta('5', '♦'), criarCarta('8', '♦'), criarCarta('K', '♦')];
   const jogadas: DecisaoJogadaDebug[] = [];
-  const bot = criarBot(1, 0, {
+  const bot = criarBotLinhaQuente(1, 0, {
     registrarDeclaracao: () => undefined,
     registrarJogada: (jogada) => jogadas.push(jogada),
   });
@@ -165,7 +167,7 @@ async function registraSeguirFriaSemFuga(): Promise<void> {
 async function convergeSemPressao(): Promise<void> {
   const estado = criarEstado({ mesa: mesaComBaixa(), declaracoes: { j2: 1, bot: 1 }, vazas: { j2: 0, bot: 0 } });
   const mao = [criarCarta('A', '♦'), criarCarta('3', '♦')];
-  const bot = criarBot(1, 0);
+  const bot = criarBotLinhaQuente(1, 0);
   const fria = new DecisorJogadaLinhaFria();
 
   await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(await fria.decidirJogada(mao, estado));
@@ -184,31 +186,13 @@ async function naoSorteiaSemBifurcacao(): Promise<void> {
   await bot.decidirJogada([criarCarta('A', '♦'), criarCarta('3', '♦')], estado);
 
   expect(random).not.toHaveBeenCalled();
-  expect(jogadas[0]?.quente?.caminho).toEqual(['jogada', 'joga no meio', 'linha quente']);
+  expect(jogadas[0]?.quente?.caminho).toEqual(['jogada', 'joga no meio', 'linha quente', 'segue fria']);
 }
 
 async function repeteEscolhaDeterministica(): Promise<void> {
   const estado = criarEstado(cenarioBifurcacao());
-  const primeiro = await criarBot(0.5, 0.4).decidirJogada(maoBifurcacao(), estado);
-  const segundo = await criarBot(0.5, 0.4).decidirJogada(maoBifurcacao(), estado);
+  const primeiro = await criarBotLinhaQuente(0.5, 0.4).decidirJogada(maoBifurcacao(), estado);
+  const segundo = await criarBotLinhaQuente(0.5, 0.4).decidirJogada(maoBifurcacao(), estado);
 
   expect(primeiro).toEqual(segundo);
-}
-
-function criarBot(temperatura: number, valorRng: number, logger?: LoggerDebugBot): DecisorJogadaLinhaQuente {
-  return new DecisorJogadaLinhaQuente({
-    temperatura,
-    rng: { random: () => valorRng },
-    logger,
-  });
-}
-
-function decisaoSorteadaLinhaQuente(): Partial<DecisaoJogadaDebug> {
-  return {
-    carta: criarCarta('4', '♦'),
-    linhaFria: criarCarta('3', '♦'),
-    linhaQuente: criarCarta('4', '♦'),
-    sorteio: 0,
-    escolheuQuente: true,
-  };
 }

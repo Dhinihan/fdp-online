@@ -3,6 +3,7 @@ import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
 import { calcularNecessidade, liderQuerVaza, type ContextoJogadaQuente } from './contextoLinhaQuente';
 import { MOTIVOS_FUGA_MEIO, escolherFugaJaCumpriu } from './escolher-fuga-ja-cumpriu';
+import { existeGarantidaParaDepois } from './garantida-para-depois';
 
 export interface ResultadoPodeBifurcar {
   pode: boolean;
@@ -78,10 +79,8 @@ function cartasDeFuga(contexto: ContextoJogadaQuente): CartaAvaliada[] {
 }
 
 function vencedorasBaratasSemGarantida(contexto: ContextoJogadaQuente): CartaAvaliada[] {
-  const candidatas = contexto.vencedoras.filter((avaliada) => !ehGarantida(avaliada));
-  return candidatas.filter((carta) =>
-    contexto.avaliadas.some((avaliada) => avaliada !== carta && ehGarantida(avaliada)),
-  );
+  if (!existeGarantidaParaDepois(contexto)) return [];
+  return contexto.vencedoras.filter((avaliada) => !ehGarantida(avaliada));
 }
 
 function temAlvo(estado: EstadoEmJogo, jogadorId: string): boolean {

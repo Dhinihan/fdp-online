@@ -9,14 +9,10 @@ import { decidirUltimoLinhaQuente } from './decidirUltimoLinhaQuente';
 import { decidirNaoUltimoLinhaFria, decidirUltimoLinhaFria } from './DecisorJogadaLinhaFria';
 import type { LoggerDebugBot } from './logger-debug-bot';
 import { escolherTravessia } from './pode-atravessar';
+import { escolherEsperarOportunidade } from './pode-esperar-oportunidade';
+import { escolherVencedoraSegura } from './pode-vencedora-segura';
 import { registrarBifurcacao, registrarEscolhaDireta } from './registrar-decisao-jogada-bot';
-import {
-  cartasIguais,
-  escolherJaCumpriuNoMeio,
-  escolherPressao,
-  formatarMotivoRecusaBifurcacao,
-  podeBifurcar,
-} from './regras-linha-quente';
+import { cartasIguais, escolherJaCumpriuNoMeio, escolherPressao, podeBifurcar } from './regras-linha-quente';
 
 interface ConfigLinhaQuente {
   temperatura: number;
@@ -68,18 +64,24 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
     if (direta) return direta;
 
     const bifurcacao = podeBifurcar(base.estadoAtual, base.contexto, this.liderBaixa);
-    if (!bifurcacao.pode) {
-      const motivo = bifurcacao.motivoRecusa
-        ? formatarMotivoRecusaBifurcacao(bifurcacao.motivoRecusa)
-        : base.motivoLinhaFria;
-      return this.registrarSemBifurcacao(
-        base,
-        criarDecisaoQuente({ carta: base.fria, motivo }, criarCaminhoJogadaDebug(base.posicao, 'quente')),
-      );
+    if (bifurcacao.pode) {
+      return this.resolverQuenteRecomendada(base, {
+        ...escolherPressao(base.contexto),
+        etapa: 'pressiona',
+      });
     }
 
-    const quente = criarDecisaoQuente(escolherPressao(base.contexto), criarCaminhoJogadaDebug(base.posicao, 'quente'));
-    return this.resolverBifurcacao(base, quente);
+    const vencedoraSegura = escolherVencedoraSegura(base.estadoAtual, base.contexto);
+    if (vencedoraSegura) {
+      return this.resolverQuenteRecomendada(base, { ...vencedoraSegura, etapa: 'vencedora segura' });
+    }
+
+    const espera = escolherEsperarOportunidade(base.estadoAtual, base.contexto);
+    if (espera) {
+      return this.resolverQuenteRecomendada(base, { ...espera, etapa: 'espera oportunidade' });
+    }
+
+    return this.registrarSeguirFria(base);
   }
 
   private resolverBifurcacao(base: BaseJogada, quente: DecisaoQuente): Carta {
