@@ -3,7 +3,6 @@ import type { Carta } from '@/core/Carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import { estadoEmJogo, type EstadoEmJogo, type EstadoRodada } from '@/types/estado-rodada';
 import { ehUltimoDaMesa } from './contexto-posicao-mesa';
-import { criarCaminhoJogadaDebug } from './debug-jogada-bot';
 import { decidirAberturaLinhaFria } from './decidirAbertura';
 import { cartaMaisForte, descartePorNecessidade, escolherVencedoraPorNecessidade } from './escolhas-por-necessidade';
 import { avaliarGuardaDePosicao, type GuardaPosicao } from './guarda-posicao';
@@ -12,10 +11,8 @@ import { cartasQueNaoFazemVaza, lerMesa, type LeituraDaMesa } from './ler-mesa';
 export interface DecisaoLinhaFria {
   carta: Carta;
   motivo: string;
-  caminho?: string[];
+  etapa: string;
 }
-
-const CAMINHO_MEIO = ['jogada', 'joga no meio', 'linha fria'] as const;
 
 export class DecisorJogadaLinhaFria implements DecisorJogada {
   decidirJogada(mao: Carta[], estado: EstadoRodada): Promise<Carta> {
@@ -38,12 +35,19 @@ export function decidirNaoUltimoLinhaFria(leitura: LeituraDaMesa, estado: Estado
 }
 
 function fugirNaoUltimo(leitura: LeituraDaMesa): DecisaoLinhaFria {
-  const caminho = criarCaminhoJogadaDebug('meio', 'fria', 'já cumpriu');
   const naoFazem = cartasQueNaoFazemVaza(leitura);
   if (naoFazem.length === 0) {
-    return { carta: cartaMaisBarata(leitura.avaliadas).carta, motivo: 'já cumpriu; fuga impossível', caminho };
+    return {
+      carta: cartaMaisBarata(leitura.avaliadas).carta,
+      motivo: 'já cumpriu; fuga impossível',
+      etapa: 'já cumpriu',
+    };
   }
-  return { carta: cartaMaisCara(naoFazem).carta, motivo: 'já cumpriu; carta mais alta que não faz', caminho };
+  return {
+    carta: cartaMaisCara(naoFazem).carta,
+    motivo: 'já cumpriu; carta mais alta que não faz',
+    etapa: 'já cumpriu',
+  };
 }
 
 function buscarVazaNaoUltimo(leitura: LeituraDaMesa, estado: EstadoEmJogo): DecisaoLinhaFria {
@@ -61,12 +65,12 @@ interface ContextoBuscaVaza {
 
 function decidirComGuardaPermitida(contexto: ContextoBuscaVaza): DecisaoLinhaFria {
   const { estado, leitura, guarda } = contexto;
-  const caminho = [...CAMINHO_MEIO, 'guarda de posição permitiu'];
+  const etapa = 'guarda de posição permitiu';
   if (leitura.vencedoras.length > 0) {
     return {
       carta: escolherVencedoraPorNecessidade(leitura.vencedoras, estado.manilha, leitura.necessidade).carta,
       motivo: motivoGuardaPermitiu(guarda.motivo, 'precisa fazer; regra G[N-X]'),
-      caminho,
+      etapa,
     };
   }
 
@@ -75,31 +79,31 @@ function decidirComGuardaPermitida(contexto: ContextoBuscaVaza): DecisaoLinhaFri
     return {
       carta: descartePorNecessidade(naoFazem, estado.manilha, leitura.necessidade).carta,
       motivo: motivoGuardaPermitiu(guarda.motivo, 'precisa fazer; regra P[N-X]'),
-      caminho,
+      etapa,
     };
   }
   return {
     carta: cartaMaisBarata(leitura.avaliadas).carta,
     motivo: motivoGuardaPermitiu(guarda.motivo, 'precisa fazer; carta mais barata'),
-    caminho,
+    etapa,
   };
 }
 
 function descartarComGuardaBloqueada(contexto: ContextoBuscaVaza): DecisaoLinhaFria {
   const { estado, leitura, guarda } = contexto;
-  const caminho = [...CAMINHO_MEIO, 'guarda de posição bloqueou'];
+  const etapa = 'guarda de posição bloqueou';
   const naoFazem = cartasQueNaoFazemVaza(leitura);
   if (naoFazem.length > 0) {
     return {
       carta: descartePorNecessidade(naoFazem, estado.manilha, leitura.necessidade).carta,
       motivo: motivoGuardaBloqueou(guarda.motivo),
-      caminho,
+      etapa,
     };
   }
   return {
     carta: cartaMaisBarata(leitura.avaliadas).carta,
     motivo: `${motivoGuardaBloqueou(guarda.motivo)}; fuga impossível`,
-    caminho,
+    etapa,
   };
 }
 
@@ -117,37 +121,35 @@ export function decidirUltimoLinhaFria(leitura: LeituraDaMesa, estado: EstadoEmJ
 }
 
 function decidirUltimoQuandoPrecisaFazer(leitura: LeituraDaMesa, estado: EstadoEmJogo): DecisaoLinhaFria {
-  const caminho = criarCaminhoJogadaDebug('fecha', 'fria', 'precisa fazer');
   if (leitura.vencedoras.length > 0) {
     return {
       carta: escolherVencedoraPorNecessidade(leitura.vencedoras, estado.manilha, leitura.necessidade).carta,
       motivo: 'precisa fazer; regra G[N-X]',
-      caminho,
+      etapa: 'precisa fazer',
     };
   }
 
   return {
     carta: descartePorNecessidade(cartasQueNaoFazemVaza(leitura), estado.manilha, leitura.necessidade).carta,
     motivo: 'precisa fazer sem carta que vence; regra P[N-X]',
-    caminho,
+    etapa: 'precisa fazer',
   };
 }
 
 function decidirUltimoQuandoJaCumpriu(leitura: LeituraDaMesa, estado: EstadoEmJogo): DecisaoLinhaFria {
-  const caminho = criarCaminhoJogadaDebug('fecha', 'fria', 'já cumpriu');
   const naoFazem = cartasQueNaoFazemVaza(leitura);
   if (naoFazem.length > 0) {
     return {
       carta: cartaMaisForte(naoFazem, estado.manilha).carta,
       motivo: 'já cumpriu; carta mais forte que não faz',
-      caminho,
+      etapa: 'já cumpriu',
     };
   }
 
   return {
     carta: cartaMaisForte(leitura.avaliadas, estado.manilha).carta,
     motivo: 'já cumpriu; fuga impossível',
-    caminho,
+    etapa: 'já cumpriu',
   };
 }
 

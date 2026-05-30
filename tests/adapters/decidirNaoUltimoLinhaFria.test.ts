@@ -5,10 +5,10 @@ import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { criarCarta } from '../core/rodada-fixtures';
 import {
-  CAMINHO_GUARDA_PERMITIU,
-  CAMINHO_JA_CUMPRIU,
   cartasQueGarantemTresDeOuros,
   criarEstadoLinhaFria,
+  ETAPA_GUARDA_PERMITIU,
+  ETAPA_JA_CUMPRIU,
   mesaComK,
   mesaComQuatro,
 } from './fixtures-linha-fria';
@@ -17,7 +17,7 @@ const cenarios: {
   nome: string;
   mao: Carta[];
   estado: EstadoEmJogo;
-  esperado: { carta: Carta; motivo: string; caminho?: string[] };
+  esperado: { carta: Carta; motivo: string; etapa: string };
 }[] = [
   {
     nome: 'deve abrir com ordem cautelosa quando já cumpriu',
@@ -31,7 +31,7 @@ const cenarios: {
     esperado: {
       carta: criarCarta('7', '♦'),
       motivo: 'abertura: já cumpriu; ordem baixa-média-alta-segura-garantida_agora',
-      caminho: ['jogada', 'abre a mesa', 'linha fria', 'já cumpriu'],
+      etapa: 'já cumpriu',
     },
   },
   {
@@ -41,7 +41,7 @@ const cenarios: {
     esperado: {
       carta: criarCarta('7', '♦'),
       motivo: 'abertura: precisa sem urgência alta; ordem baixa-média-alta-segura-garantida_agora',
-      caminho: ['jogada', 'abre a mesa', 'linha fria', 'precisa sem urgência alta'],
+      etapa: 'precisa sem urgência alta',
     },
   },
   {
@@ -51,7 +51,7 @@ const cenarios: {
     esperado: {
       carta: criarCarta('2', '♦'),
       motivo: 'abertura: urgência alta; ordem alta-média-segura-baixa-garantida_agora',
-      caminho: ['jogada', 'abre a mesa', 'linha fria', 'urgência alta'],
+      etapa: 'urgência alta',
     },
   },
   {
@@ -61,7 +61,7 @@ const cenarios: {
     esperado: {
       carta: criarCarta('K', '♦'),
       motivo: 'já cumpriu; carta mais alta que não faz',
-      caminho: [...CAMINHO_JA_CUMPRIU],
+      etapa: ETAPA_JA_CUMPRIU,
     },
   },
   {
@@ -75,7 +75,7 @@ const cenarios: {
     esperado: {
       carta: criarCarta('K', '♦'),
       motivo: 'já cumpriu; carta mais alta que não faz',
-      caminho: [...CAMINHO_JA_CUMPRIU],
+      etapa: ETAPA_JA_CUMPRIU,
     },
   },
   {
@@ -85,7 +85,7 @@ const cenarios: {
     esperado: {
       carta: criarCarta('5', '♦'),
       motivo: 'já cumpriu; fuga impossível',
-      caminho: [...CAMINHO_JA_CUMPRIU],
+      etapa: ETAPA_JA_CUMPRIU,
     },
   },
   {
@@ -95,7 +95,7 @@ const cenarios: {
     esperado: {
       carta: criarCarta('8', '♦'),
       motivo: 'guarda de posição permitiu; urgência alta; precisa fazer; regra G[N-X]',
-      caminho: [...CAMINHO_GUARDA_PERMITIU],
+      etapa: ETAPA_GUARDA_PERMITIU,
     },
   },
   {
@@ -105,7 +105,7 @@ const cenarios: {
     esperado: {
       carta: criarCarta('9', '♦'),
       motivo: 'guarda de posição permitiu; jogadores por agir já cumpriram; precisa fazer; regra P[N-X]',
-      caminho: [...CAMINHO_GUARDA_PERMITIU],
+      etapa: ETAPA_GUARDA_PERMITIU,
     },
   },
 ];
