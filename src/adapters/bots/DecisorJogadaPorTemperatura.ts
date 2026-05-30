@@ -31,8 +31,8 @@ export class DecisorJogadaPorTemperatura implements DecisorJogada {
     this.logger = config.logger;
   }
 
-  async decidirJogada(mao: Carta[], estado: EstadoRodada): Promise<Carta> {
-    if (mao.length === 0) throw new Error('Mão vazia');
+  decidirJogada(mao: Carta[], estado: EstadoRodada): Promise<Carta> {
+    if (mao.length === 0) return Promise.reject(new Error('Mão vazia'));
 
     const estadoAtual = estadoEmJogo(estado);
     const leitura = lerMesa(estadoAtual, mao);
@@ -45,7 +45,7 @@ export class DecisorJogadaPorTemperatura implements DecisorJogada {
       recomendacaoFria,
     );
 
-    return await Promise.resolve(
+    return Promise.resolve(
       resolverPorTemperatura({
         logger: this.logger,
         temperatura: this.temperatura,
@@ -72,12 +72,12 @@ function decidirLinhaFriaPorPosicao(
 function montarRecomendacaoLinha(
   posicao: PosicaoMesaJogadaDebug,
   linha: 'fria' | 'quente',
-  decisao: { carta: Carta; motivo: string; etapa: string },
+  decisao: { carta: Carta; motivo: string; etapa?: string },
 ): RecomendacaoLinha {
   return {
     carta: decisao.carta,
     motivo: decisao.motivo,
-    caminho: criarCaminhoJogadaDebug(posicao, linha, etapaOpcional(decisao.etapa)),
+    caminho: criarCaminhoJogadaDebug(posicao, linha, decisao.etapa),
   };
 }
 
@@ -95,8 +95,4 @@ function montarRecomendacaoQuente(
   }
 
   return montarRecomendacaoLinha(posicao, 'quente', resultado);
-}
-
-function etapaOpcional(etapa: string): string | undefined {
-  return etapa || undefined;
 }

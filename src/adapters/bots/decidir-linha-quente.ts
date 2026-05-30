@@ -12,7 +12,7 @@ import { escolherJaCumpriuNoMeio, escolherPressao, podeBifurcar } from './regras
 export const ETAPA_SEGUE_FRIA = 'segue fria';
 
 export type ResultadoQuente =
-  | { tipo: 'recomenda'; carta: Carta; motivo: string; etapa: string }
+  | { tipo: 'recomenda'; carta: Carta; motivo: string; etapa?: string }
   | { tipo: 'segue-fria'; motivo: string; etapa: string };
 
 export interface EntradaDecidirLinhaQuente {
@@ -32,7 +32,7 @@ export function decidirLinhaQuente(entrada: EntradaDecidirLinhaQuente): Resultad
 
 function decidirFecha(estado: EstadoEmJogo, leitura: LeituraDaMesa): ResultadoQuente {
   const decisao = decidirUltimoLinhaQuente(estado, leitura);
-  return { tipo: 'recomenda', carta: decisao.carta, motivo: decisao.motivo, etapa: '' };
+  return { tipo: 'recomenda', carta: decisao.carta, motivo: decisao.motivo };
 }
 
 function decidirMeio(estado: EstadoEmJogo, leitura: LeituraDaMesa, liderBaixa: number): ResultadoQuente {
@@ -67,6 +67,6 @@ function tentarRamoDiretoMeio(estado: EstadoEmJogo, leitura: LeituraDaMesa): Res
 
 function tentarJaCumpriuNoMeio(estado: EstadoEmJogo, leitura: LeituraDaMesa): ResultadoQuente {
   const jaCumpriu = escolherJaCumpriuNoMeio(estado, leitura);
-  if (jaCumpriu) return { tipo: 'recomenda', ...jaCumpriu, etapa: '' };
+  if (jaCumpriu) return { tipo: 'recomenda', ...jaCumpriu };
   return { tipo: 'segue-fria', motivo: 'linha quente segue fria: sem carta que não faz', etapa: ETAPA_SEGUE_FRIA };
 }

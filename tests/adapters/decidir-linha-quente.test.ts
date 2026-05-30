@@ -166,7 +166,6 @@ const cenariosMeio: {
       tipo: 'recomenda',
       carta: criarCarta('2', '♦'),
       motivo: 'já cumpriu; empate contra líder alta+',
-      etapa: '',
     },
   },
   {
@@ -184,7 +183,6 @@ const cenariosMeio: {
       tipo: 'recomenda',
       carta: criarCarta('7', '♦'),
       motivo: 'já cumpriu; perdedora mais forte',
-      etapa: '',
     },
   },
   {
@@ -227,7 +225,6 @@ const cenariosFecha: {
       tipo: 'recomenda',
       carta: criarCarta('8', '♦'),
       motivo: 'precisa fazer; regra G[N-X]',
-      etapa: '',
     },
   },
   {
@@ -238,7 +235,6 @@ const cenariosFecha: {
       tipo: 'recomenda',
       carta: criarCarta('9', '♦'),
       motivo: 'precisa fazer, sem carta que vence; P[N-X]',
-      etapa: '',
     },
   },
   {
@@ -249,7 +245,6 @@ const cenariosFecha: {
       tipo: 'recomenda',
       carta: criarCarta('6', '♦'),
       motivo: 'precisa fazer; adiou; P[N-X]',
-      etapa: '',
     },
   },
   {
@@ -264,7 +259,6 @@ const cenariosFecha: {
       tipo: 'recomenda',
       carta: criarCarta('K', '♦'),
       motivo: 'já cumpriu; carta mais alta que não faz',
-      etapa: '',
     },
   },
 ];
