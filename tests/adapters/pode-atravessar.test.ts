@@ -10,7 +10,7 @@ import { criarEstadoAtravessia, cenariosRecusaAtravessia, maoAtravessia } from '
 describe('podeAtravessar recusa', () => {
   it.each(cenariosRecusaAtravessia)('deve recusar quando $nome', ({ estado, mao }) => {
     const leitura = lerMesa(estado, mao);
-    expect(podeAtravessar(estado, leitura)).toBe(false);
+    expect(podeAtravessar(leitura)).toBe(false);
   });
 });
 
@@ -19,8 +19,8 @@ describe('podeAtravessar permite', () => {
     const estado = criarEstadoAtravessia();
     const leitura = lerMesa(estado, maoAtravessia());
 
-    expect(podeAtravessar(estado, leitura)).toBe(true);
-    expect(escolherTravessia(estado, leitura)).toEqual({
+    expect(podeAtravessar(leitura)).toBe(true);
+    expect(escolherTravessia(leitura)).toEqual({
       carta: criarCarta('4', '♦'),
       motivo: 'atravessa: urgência 1.00, líder alta+ precisa, vencedora mais barata sem garantida',
     });
@@ -32,7 +32,7 @@ describe('escolherTravessia na linha fria', () => {
     const estado = criarEstadoAtravessia();
     const mao = maoAtravessia();
 
-    expect(escolherTravessia(estado, lerMesa(estado, mao))?.carta).toEqual(criarCarta('4', '♦'));
+    expect(escolherTravessia(lerMesa(estado, mao))?.carta).toEqual(criarCarta('4', '♦'));
     expect(decidirNaoUltimoLinhaFria(lerMesa(estado, mao), estado).carta).toEqual(criarCarta('3', '♦'));
   });
 });

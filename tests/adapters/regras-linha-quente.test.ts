@@ -10,7 +10,7 @@ describe('podeBifurcar', () => {
     const estado = criarEstado({ mesa: mesaComBaixa(), declaracoes: { j2: 1, bot: 1 }, vazas: { j2: 1, bot: 1 } });
     const leitura = lerMesa(estado, [criarCarta('A', '♦'), criarCarta('3', '♦')]);
 
-    expect(podeBifurcar(estado, leitura, 8)).toEqual({ pode: false, motivoRecusa: 'sem necessidade' });
+    expect(podeBifurcar(leitura, 8)).toEqual({ pode: false, motivoRecusa: 'sem necessidade' });
   });
 
   it('deve recusar quando não há vencedoras', () => {
@@ -21,14 +21,14 @@ describe('podeBifurcar', () => {
     });
     const leitura = lerMesa(estado, [criarCarta('4', '♦'), criarCarta('6', '♦')]);
 
-    expect(podeBifurcar(estado, leitura, 8)).toEqual({ pode: false, motivoRecusa: 'sem vencedoras' });
+    expect(podeBifurcar(leitura, 8)).toEqual({ pode: false, motivoRecusa: 'sem vencedoras' });
   });
 
   it('deve permitir bifurcação quando todas as condições passam', () => {
     const estado = criarEstado(cenarioBifurcacao());
     const leitura = lerMesa(estado, [criarCarta('3', '♦'), criarCarta('4', '♦')]);
 
-    expect(podeBifurcar(estado, leitura, 8)).toEqual({ pode: true });
+    expect(podeBifurcar(leitura, 8)).toEqual({ pode: true });
   });
 });
 

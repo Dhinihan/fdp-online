@@ -64,7 +64,7 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
     const direta = this.escolherQuenteDireta(base);
     if (direta) return direta;
 
-    const bifurcacao = podeBifurcar(base.estadoAtual, base.leitura, this.liderBaixa);
+    const bifurcacao = podeBifurcar(base.leitura, this.liderBaixa);
     if (bifurcacao.pode) {
       return this.resolverQuenteRecomendada(base, {
         ...escolherPressao(base.leitura),
@@ -72,7 +72,7 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
       });
     }
 
-    const vencedoraSegura = escolherVencedoraSegura(base.estadoAtual, base.leitura);
+    const vencedoraSegura = escolherVencedoraSegura(base.leitura);
     if (vencedoraSegura) {
       return this.resolverQuenteRecomendada(base, { ...vencedoraSegura, etapa: 'vencedora segura' });
     }
@@ -104,7 +104,7 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
       return this.registrarSeguirFria(base, 'linha quente segue fria: sem carta que não faz');
     }
 
-    const travessia = escolherTravessia(base.estadoAtual, base.leitura);
+    const travessia = escolherTravessia(base.leitura);
     if (!travessia) return null;
     return this.resolverQuenteRecomendada(base, { ...travessia, etapa: 'atravessa' });
   }

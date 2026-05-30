@@ -26,6 +26,7 @@ export interface LeituraDaMesa {
   interessadosPorAgir: string[];
   liderQuerVaza: boolean;
   temAlvo: boolean;
+  mesaTemQuemNaoQuerVaza: boolean;
 }
 
 export function cartasQueNaoFazemVaza(leitura: LeituraDaMesa): CartaAvaliada[] {
@@ -51,6 +52,7 @@ export function lerMesa(estado: EstadoEmJogo, mao: Carta[]): LeituraDaMesa {
     interessadosPorAgir: jogadoresInteressadosPorAgir(estado),
     liderQuerVaza: mesaLiderQuerVaza(estado),
     temAlvo: existeAlvoNaMesa(estado, jogadorId),
+    mesaTemQuemNaoQuerVaza: mesaTemQuemNaoQuerVaza(estado),
   };
 }
 
@@ -79,6 +81,10 @@ function classificarCartas(avaliadas: CartaAvaliada[], lider: CartaAvaliada | nu
 
 function existeAlvoNaMesa(estado: EstadoEmJogo, jogadorId: string): boolean {
   return Object.keys(estado.declaracoes).some((id) => id !== jogadorId && calcularNecessidade(estado, id) > 0);
+}
+
+function mesaTemQuemNaoQuerVaza(estado: EstadoEmJogo): boolean {
+  return estado.mesa.some((item) => calcularNecessidade(estado, item.jogadorId) <= 0);
 }
 
 function melhorCartaMesa(mesa: MesaItem[], manilha: Carta['valor']): Carta | null {

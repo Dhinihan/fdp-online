@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { lerMesa } from '@/adapters/bots/ler-mesa';
 import { criarCarta } from '../core/rodada-fixtures';
+import { criarEstadoAtravessia, maoAtravessia } from './fixtures-atravessia';
 import { criarEstadoComDoisPorAgir, criarEstadoComUmPorAgir, criarEstadoLinhaFria } from './fixtures-linha-fria';
 
 const maoBasica = [criarCarta('4', '♦'), criarCarta('7', '♦'), criarCarta('A', '♦')];
@@ -62,6 +63,40 @@ describe('lerMesa posição e urgência', () => {
     expect(leitura.necessidade).toBe(2);
     expect(leitura.urgenciaAlta).toBe(true);
     expect(leitura.folga).toBe(1);
+  });
+});
+
+describe('lerMesa líder e mesa', () => {
+  it('deve marcar liderQuerVaza quando o líder ainda precisa fazer', () => {
+    const estado = criarEstadoAtravessia();
+    const leitura = lerMesa(estado, maoAtravessia());
+
+    expect(leitura.liderQuerVaza).toBe(true);
+  });
+
+  it('deve classificar empates em relação ao líder', () => {
+    const estado = criarEstadoComUmPorAgir({
+      mesa: [{ jogadorId: 'j1', carta: criarCarta('8', '♣') }],
+      manilha: '5',
+    });
+    const leitura = lerMesa(estado, [criarCarta('8', '♦'), criarCarta('3', '♦')]);
+
+    expect(leitura.empates).toHaveLength(1);
+    expect(leitura.empates[0].carta).toEqual(criarCarta('8', '♦'));
+  });
+
+  it('deve marcar mesaTemQuemNaoQuerVaza quando alguém na mesa já cumpriu', () => {
+    const estado = criarEstadoComUmPorAgir({
+      declaracoes: { j2: 1, j3: 0 },
+      vazas: { j2: 0, j3: 1 },
+      mesa: [
+        { jogadorId: 'j1', carta: criarCarta('8', '♣') },
+        { jogadorId: 'bot', carta: criarCarta('6', '♣') },
+      ],
+    });
+    const leitura = lerMesa(estado, [criarCarta('5', '♦'), criarCarta('9', '♦')]);
+
+    expect(leitura.mesaTemQuemNaoQuerVaza).toBe(true);
   });
 });
 

@@ -1,12 +1,10 @@
 import type { CartaAvaliada } from '@/core/avaliador-carta';
-import type { EstadoEmJogo } from '@/types/estado-rodada';
 import type { LeituraDaMesa } from './ler-mesa';
 import { ehAltaOuMelhor } from './predicados-carta-avaliada';
 import type { DecisaoCartaQuente } from './regras-linha-quente';
 import { cartaMaisBarata } from './selecao-por-score';
 
-export function podeAtravessar(estado: EstadoEmJogo, leitura: LeituraDaMesa): boolean {
-  void estado;
+export function podeAtravessar(leitura: LeituraDaMesa): boolean {
   return (
     leitura.necessidade > 0 &&
     leitura.urgenciaAlta &&
@@ -16,8 +14,8 @@ export function podeAtravessar(estado: EstadoEmJogo, leitura: LeituraDaMesa): bo
   );
 }
 
-export function escolherTravessia(estado: EstadoEmJogo, leitura: LeituraDaMesa): DecisaoCartaQuente | null {
-  if (!podeAtravessar(estado, leitura)) return null;
+export function escolherTravessia(leitura: LeituraDaMesa): DecisaoCartaQuente | null {
+  if (!podeAtravessar(leitura)) return null;
   const escolhida = cartaMaisBarata(vencedorasSemGarantida(leitura));
   return { carta: escolhida.carta, motivo: montarMotivoTravessia(leitura) };
 }

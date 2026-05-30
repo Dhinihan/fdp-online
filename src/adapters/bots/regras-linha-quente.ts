@@ -1,7 +1,6 @@
 import type { CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
-import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
-import { calcularNecessidade } from './contexto-posicao-mesa';
+import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { MOTIVOS_FUGA_MEIO, escolherFugaJaCumpriu } from './escolher-fuga-ja-cumpriu';
 import { existeGarantidaParaDepois } from './garantida-para-depois';
 import type { LeituraDaMesa } from './ler-mesa';
@@ -17,10 +16,10 @@ export interface DecisaoCartaQuente {
   motivo: string;
 }
 
-export function podeBifurcar(estado: EstadoEmJogo, leitura: LeituraDaMesa, liderBaixa: number): ResultadoPodeBifurcar {
+export function podeBifurcar(leitura: LeituraDaMesa, liderBaixa: number): ResultadoPodeBifurcar {
   if (leitura.necessidade <= 0) return { pode: false, motivoRecusa: 'sem necessidade' };
   if (leitura.vencedoras.length === 0) return { pode: false, motivoRecusa: 'sem vencedoras' };
-  if (!mesaPodePunir(estado, leitura, liderBaixa)) return { pode: false, motivoRecusa: 'mesa não pode punir' };
+  if (!mesaPodePunir(leitura, liderBaixa)) return { pode: false, motivoRecusa: 'mesa não pode punir' };
   if (!temSegurancaParaDepois(leitura)) return { pode: false, motivoRecusa: 'sem segurança para depois' };
   if (!temPressaoAgora(leitura)) return { pode: false, motivoRecusa: 'sem pressão agora' };
   if (!leitura.temAlvo) return { pode: false, motivoRecusa: 'sem alvo na mesa' };
@@ -49,10 +48,8 @@ export function escolherJaCumpriuNoMeio(estado: EstadoEmJogo, leitura: LeituraDa
   });
 }
 
-function mesaPodePunir(estado: EstadoEmJogo, leitura: LeituraDaMesa, liderBaixa: number): boolean {
-  return Boolean(
-    leitura.lider && leitura.lider.score <= liderBaixa && estado.mesa.some((item) => jogadorNaoQuerVaza(estado, item)),
-  );
+function mesaPodePunir(leitura: LeituraDaMesa, liderBaixa: number): boolean {
+  return Boolean(leitura.lider && leitura.lider.score <= liderBaixa && leitura.mesaTemQuemNaoQuerVaza);
 }
 
 function temSegurancaParaDepois(leitura: LeituraDaMesa): boolean {
@@ -70,10 +67,6 @@ function cartasDeFuga(leitura: LeituraDaMesa): CartaAvaliada[] {
 function vencedorasBaratasSemGarantida(leitura: LeituraDaMesa): CartaAvaliada[] {
   if (!existeGarantidaParaDepois(leitura)) return [];
   return leitura.vencedoras.filter((avaliada) => !ehGarantida(avaliada));
-}
-
-function jogadorNaoQuerVaza(estado: EstadoEmJogo, item: MesaItem): boolean {
-  return calcularNecessidade(estado, item.jogadorId) <= 0;
 }
 
 function ehSeguraOuGarantida(avaliada: CartaAvaliada): boolean {

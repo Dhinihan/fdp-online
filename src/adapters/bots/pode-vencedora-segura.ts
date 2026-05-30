@@ -1,15 +1,11 @@
 import type { CartaAvaliada } from '@/core/avaliador-carta';
-import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { existeGarantidaParaDepois } from './garantida-para-depois';
 import type { LeituraDaMesa } from './ler-mesa';
 import { ehAltaOuMelhor } from './predicados-carta-avaliada';
 import type { DecisaoCartaQuente } from './regras-linha-quente';
 import { cartaMaisBarata } from './selecao-por-score';
 
-export function podeTentarComVencedoraSegura(estado: EstadoEmJogo, leitura: LeituraDaMesa): boolean {
-  void estado;
-  // "existe jogador interessado" (doc) é subsumido por liderQuerVaza: se o líder
-  // ainda precisa fazer, já existe um jogador interessado na mesa.
+export function podeTentarComVencedoraSegura(leitura: LeituraDaMesa): boolean {
   return (
     leitura.necessidade > 0 &&
     leitura.vencedoras.length > 0 &&
@@ -21,8 +17,8 @@ export function podeTentarComVencedoraSegura(estado: EstadoEmJogo, leitura: Leit
   );
 }
 
-export function escolherVencedoraSegura(estado: EstadoEmJogo, leitura: LeituraDaMesa): DecisaoCartaQuente | null {
-  if (!podeTentarComVencedoraSegura(estado, leitura)) return null;
+export function escolherVencedoraSegura(leitura: LeituraDaMesa): DecisaoCartaQuente | null {
+  if (!podeTentarComVencedoraSegura(leitura)) return null;
   const escolhida = cartaMaisBarata(vencedorasSeguras(leitura));
   return {
     carta: escolhida.carta,

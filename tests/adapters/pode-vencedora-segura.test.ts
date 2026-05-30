@@ -32,7 +32,7 @@ describe('existeGarantidaParaDepois', () => {
 
 describe('podeTentarComVencedoraSegura recusa', () => {
   it.each(cenarioRecusaVencedoraSegura)('deve recusar quando $nome', ({ estado, mao }) => {
-    expect(podeTentarComVencedoraSegura(estado, lerMesa(estado, mao))).toBe(false);
+    expect(podeTentarComVencedoraSegura(lerMesa(estado, mao))).toBe(false);
   });
 });
 
@@ -41,8 +41,8 @@ describe('podeTentarComVencedoraSegura permite', () => {
     const estado = cenarioVencedoraSegura();
     const leitura = lerMesa(estado, maoVencedoraSegura());
 
-    expect(podeTentarComVencedoraSegura(estado, leitura)).toBe(true);
-    expect(escolherVencedoraSegura(estado, leitura)).toEqual({
+    expect(podeTentarComVencedoraSegura(leitura)).toBe(true);
+    expect(escolherVencedoraSegura(leitura)).toEqual({
       carta: criarCarta('3', '♦'),
       motivo: 'vencedora segura: líder alta+ precisa, sem garantida para depois',
     });
