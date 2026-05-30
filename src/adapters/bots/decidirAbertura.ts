@@ -1,17 +1,17 @@
 import type { CategoriaCarta } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
-import { criarCaminhoJogadaDebug } from './debug-jogada-bot';
 import type { LeituraDaMesa } from './ler-mesa';
 
 export interface DecisaoAbertura {
   carta: Carta;
   motivo: string;
-  caminho: string[];
+  etapa: string;
 }
 
 export type DecisaoAberturaLinhaFria = DecisaoAbertura;
 
 export const MOTIVO_ABERTURA_LINHA_QUENTE = 'abertura: segue linha fria';
+export const ETAPA_ABERTURA_SEGUE_FRIA = 'segue linha fria';
 
 export function decidirAberturaLinhaFria(leitura: LeituraDaMesa): DecisaoAberturaLinhaFria {
   if (leitura.avaliadas.length === 0) throw new Error('decidirAbertura: mão vazia');
@@ -49,6 +49,6 @@ function criarDecisaoAbertura(
   return {
     carta,
     motivo: `abertura: ${ramo}; ordem ${ordemCategorias.join('-')}`,
-    caminho: criarCaminhoJogadaDebug('abre', 'fria', ramo),
+    etapa: ramo,
   };
 }

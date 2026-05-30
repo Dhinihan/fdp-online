@@ -5,18 +5,18 @@ import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { criarCarta } from '../core/rodada-fixtures';
 import {
-  CAMINHO_GUARDA_BLOQUEOU,
-  CAMINHO_GUARDA_PERMITIU,
   cartasQueGarantemTresDeOuros,
   criarEstadoComDoisPorAgir,
   criarEstadoComUmPorAgir,
+  ETAPA_GUARDA_BLOQUEOU,
+  ETAPA_GUARDA_PERMITIU,
 } from './fixtures-linha-fria';
 
 interface CenarioGuarda {
   nome: string;
   mao: Carta[];
   estado: EstadoEmJogo;
-  esperado: { carta: Carta; motivo: string; caminho?: string[] };
+  esperado: { carta: Carta; motivo: string; etapa: string };
 }
 
 const cenarios: CenarioGuarda[] = [
@@ -88,7 +88,7 @@ function decisaoBloqueada(carta: Carta): CenarioGuarda['esperado'] {
   return {
     carta,
     motivo: 'guarda de posição bloqueou; jogador por agir ainda precisa',
-    caminho: [...CAMINHO_GUARDA_BLOQUEOU],
+    etapa: ETAPA_GUARDA_BLOQUEOU,
   };
 }
 
@@ -96,6 +96,6 @@ function decisaoGanhadora(carta: Carta, motivoGuarda: string): CenarioGuarda['es
   return {
     carta,
     motivo: `guarda de posição permitiu; ${motivoGuarda}; precisa fazer; regra G[N-X]`,
-    caminho: [...CAMINHO_GUARDA_PERMITIU],
+    etapa: ETAPA_GUARDA_PERMITIU,
   };
 }

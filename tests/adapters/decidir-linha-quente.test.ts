@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { decidirLinhaQuente, type ResultadoQuente } from '@/adapters/bots/decidir-linha-quente';
-import { MOTIVO_ABERTURA_LINHA_QUENTE } from '@/adapters/bots/decidirAbertura';
+import { ETAPA_SEGUE_FRIA } from '@/adapters/bots/decidir-linha-quente';
+import { ETAPA_ABERTURA_SEGUE_FRIA, MOTIVO_ABERTURA_LINHA_QUENTE } from '@/adapters/bots/decidirAbertura';
 import { DecisorJogadaPorTemperatura } from '@/adapters/bots/DecisorJogadaPorTemperatura';
 import { existeGarantidaParaDepois } from '@/adapters/bots/garantida-para-depois';
 import { lerMesa } from '@/adapters/bots/ler-mesa';
@@ -33,6 +34,7 @@ describe('decidirLinhaQuente na abertura', () => {
     expect(decidirLinhaQuente({ posicao: 'abre', estado, leitura, liderBaixa: LIDER_BAIXA })).toEqual({
       tipo: 'segue-fria',
       motivo: MOTIVO_ABERTURA_LINHA_QUENTE,
+      etapa: ETAPA_ABERTURA_SEGUE_FRIA,
     });
   });
 
@@ -197,7 +199,7 @@ const cenariosMeio: {
       manilha: '6',
     },
     mao: [criarCarta('5', '♦'), criarCarta('8', '♦'), criarCarta('K', '♦')],
-    esperado: { tipo: 'segue-fria', motivo: 'linha quente segue fria: sem carta que não faz' },
+    esperado: { tipo: 'segue-fria', motivo: 'linha quente segue fria: sem carta que não faz', etapa: ETAPA_SEGUE_FRIA },
   },
   {
     nome: 'deve seguir fria com urgência alta e nenhum ramo aplicável',
@@ -207,7 +209,7 @@ const cenariosMeio: {
       vazas: { j1: 0, bot: 0 },
     },
     mao: [criarCarta('7', '♦'), criarCarta('K', '♦')],
-    esperado: { tipo: 'segue-fria', motivo: 'linha quente segue fria: nenhum ramo se aplica' },
+    esperado: { tipo: 'segue-fria', motivo: 'linha quente segue fria: nenhum ramo se aplica', etapa: ETAPA_SEGUE_FRIA },
   },
 ];
 

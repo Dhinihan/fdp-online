@@ -5,10 +5,10 @@ import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { criarCarta } from '../core/rodada-fixtures';
 import {
-  CAMINHO_FECHA_JA_CUMPRIU,
-  CAMINHO_FECHA_PRECISA,
   cartasQueGarantemTresDeOuros,
   criarEstadoLinhaFria,
+  ETAPA_FECHA_JA_CUMPRIU,
+  ETAPA_FECHA_PRECISA,
   mesaComK,
   mesaComQuatro,
 } from './fixtures-linha-fria';
@@ -17,7 +17,7 @@ const cenariosDeUltimo: {
   nome: string;
   mao: Carta[];
   estado: EstadoEmJogo;
-  esperado: { carta: Carta; motivo: string; caminho: string[] };
+  esperado: { carta: Carta; motivo: string; etapa: string };
 }[] = [
   {
     nome: 'deve escolher G[N-X] no último quando precisa fazer e tem ganhadoras',
@@ -26,7 +26,7 @@ const cenariosDeUltimo: {
     esperado: {
       carta: criarCarta('8', '♦'),
       motivo: 'precisa fazer; regra G[N-X]',
-      caminho: [...CAMINHO_FECHA_PRECISA],
+      etapa: ETAPA_FECHA_PRECISA,
     },
   },
   {
@@ -36,7 +36,7 @@ const cenariosDeUltimo: {
     esperado: {
       carta: criarCarta('9', '♦'),
       motivo: 'precisa fazer sem carta que vence; regra P[N-X]',
-      caminho: [...CAMINHO_FECHA_PRECISA],
+      etapa: ETAPA_FECHA_PRECISA,
     },
   },
   {
@@ -46,7 +46,7 @@ const cenariosDeUltimo: {
     esperado: {
       carta: criarCarta('K', '♦'),
       motivo: 'já cumpriu; carta mais forte que não faz',
-      caminho: [...CAMINHO_FECHA_JA_CUMPRIU],
+      etapa: ETAPA_FECHA_JA_CUMPRIU,
     },
   },
   {
@@ -60,7 +60,7 @@ const cenariosDeUltimo: {
     esperado: {
       carta: criarCarta('K', '♦'),
       motivo: 'já cumpriu; carta mais forte que não faz',
-      caminho: [...CAMINHO_FECHA_JA_CUMPRIU],
+      etapa: ETAPA_FECHA_JA_CUMPRIU,
     },
   },
   {
@@ -70,7 +70,7 @@ const cenariosDeUltimo: {
     esperado: {
       carta: criarCarta('K', '♦'),
       motivo: 'já cumpriu; fuga impossível',
-      caminho: [...CAMINHO_FECHA_JA_CUMPRIU],
+      etapa: ETAPA_FECHA_JA_CUMPRIU,
     },
   },
 ];

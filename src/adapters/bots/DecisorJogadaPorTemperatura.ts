@@ -38,7 +38,7 @@ export class DecisorJogadaPorTemperatura implements DecisorJogada {
     const leitura = lerMesa(estadoAtual, mao);
     const posicao = definirPosicao(estadoAtual);
     const fria = decidirLinhaFriaPorPosicao(posicao, leitura, estadoAtual);
-    const recomendacaoFria = montarRecomendacaoFria(posicao, fria);
+    const recomendacaoFria = montarRecomendacaoLinha(posicao, 'fria', fria);
     const quente = montarRecomendacaoQuente(
       posicao,
       decidirLinhaQuente({ posicao, estado: estadoAtual, leitura, liderBaixa: this.liderBaixa }),
@@ -69,11 +69,15 @@ function decidirLinhaFriaPorPosicao(
   return decidirNaoUltimoLinhaFria(leitura, estadoAtual);
 }
 
-function montarRecomendacaoFria(posicao: PosicaoMesaJogadaDebug, fria: DecisaoLinhaFria): RecomendacaoLinha {
+function montarRecomendacaoLinha(
+  posicao: PosicaoMesaJogadaDebug,
+  linha: 'fria' | 'quente',
+  decisao: { carta: Carta; motivo: string; etapa: string },
+): RecomendacaoLinha {
   return {
-    carta: fria.carta,
-    motivo: fria.motivo,
-    caminho: fria.caminho ?? criarCaminhoJogadaDebug(posicao, 'fria'),
+    carta: decisao.carta,
+    motivo: decisao.motivo,
+    caminho: criarCaminhoJogadaDebug(posicao, linha, etapaOpcional(decisao.etapa)),
   };
 }
 
@@ -83,18 +87,16 @@ function montarRecomendacaoQuente(
   fria: RecomendacaoLinha,
 ): RecomendacaoLinha {
   if (resultado.tipo === 'segue-fria') {
-    const etapaAbertura = posicao === 'abre' ? 'segue linha fria' : 'segue fria';
-    return {
+    return montarRecomendacaoLinha(posicao, 'quente', {
       carta: fria.carta,
       motivo: resultado.motivo,
-      caminho: criarCaminhoJogadaDebug(posicao, 'quente', etapaAbertura),
-    };
+      etapa: resultado.etapa,
+    });
   }
 
-  const etapa = resultado.etapa || undefined;
-  return {
-    carta: resultado.carta,
-    motivo: resultado.motivo,
-    caminho: criarCaminhoJogadaDebug(posicao, 'quente', etapa),
-  };
+  return montarRecomendacaoLinha(posicao, 'quente', resultado);
+}
+
+function etapaOpcional(etapa: string): string | undefined {
+  return etapa || undefined;
 }

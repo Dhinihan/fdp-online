@@ -70,12 +70,23 @@ export function cartasQueGarantemTresDeOuros(): Carta[] {
   ];
 }
 
-export const CAMINHO_GUARDA_BLOQUEOU = ['jogada', 'joga no meio', 'linha fria', 'guarda de posição bloqueou'] as const;
+export const ETAPA_GUARDA_BLOQUEOU = 'guarda de posição bloqueou';
 
-export const CAMINHO_GUARDA_PERMITIU = ['jogada', 'joga no meio', 'linha fria', 'guarda de posição permitiu'] as const;
+export const ETAPA_GUARDA_PERMITIU = 'guarda de posição permitiu';
 
-export const CAMINHO_JA_CUMPRIU = ['jogada', 'joga no meio', 'linha fria', 'já cumpriu'] as const;
+export const ETAPA_JA_CUMPRIU = 'já cumpriu';
 
-export const CAMINHO_FECHA_PRECISA = ['jogada', 'fecha a mesa', 'linha fria', 'precisa fazer'] as const;
+export const ETAPA_FECHA_PRECISA = 'precisa fazer';
 
-export const CAMINHO_FECHA_JA_CUMPRIU = ['jogada', 'fecha a mesa', 'linha fria', 'já cumpriu'] as const;
+export const ETAPA_FECHA_JA_CUMPRIU = 'já cumpriu';
+
+/** Caminhos completos para testes de integração via DecisorJogadaPorTemperatura. */
+export const CAMINHO_GUARDA_BLOQUEOU = ['jogada', 'joga no meio', 'linha fria', ETAPA_GUARDA_BLOQUEOU] as const;
+
+export const CAMINHO_GUARDA_PERMITIU = ['jogada', 'joga no meio', 'linha fria', ETAPA_GUARDA_PERMITIU] as const;
+
+export const CAMINHO_JA_CUMPRIU = ['jogada', 'joga no meio', 'linha fria', ETAPA_JA_CUMPRIU] as const;
+
+export const CAMINHO_FECHA_PRECISA = ['jogada', 'fecha a mesa', 'linha fria', ETAPA_FECHA_PRECISA] as const;
+
+export const CAMINHO_FECHA_JA_CUMPRIU = ['jogada', 'fecha a mesa', 'linha fria', ETAPA_FECHA_JA_CUMPRIU] as const;

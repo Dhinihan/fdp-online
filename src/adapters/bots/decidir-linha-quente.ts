@@ -1,7 +1,7 @@
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
 import type { PosicaoMesaJogadaDebug } from './debug-jogada-bot';
-import { MOTIVO_ABERTURA_LINHA_QUENTE } from './decidirAbertura';
+import { ETAPA_ABERTURA_SEGUE_FRIA, MOTIVO_ABERTURA_LINHA_QUENTE } from './decidirAbertura';
 import { decidirUltimoLinhaQuente } from './decidirUltimoLinhaQuente';
 import type { LeituraDaMesa } from './ler-mesa';
 import { escolherTravessia } from './pode-atravessar';
@@ -9,9 +9,11 @@ import { escolherEsperarOportunidade } from './pode-esperar-oportunidade';
 import { escolherVencedoraSegura } from './pode-vencedora-segura';
 import { escolherJaCumpriuNoMeio, escolherPressao, podeBifurcar } from './regras-linha-quente';
 
+export const ETAPA_SEGUE_FRIA = 'segue fria';
+
 export type ResultadoQuente =
   | { tipo: 'recomenda'; carta: Carta; motivo: string; etapa: string }
-  | { tipo: 'segue-fria'; motivo: string };
+  | { tipo: 'segue-fria'; motivo: string; etapa: string };
 
 export interface EntradaDecidirLinhaQuente {
   posicao: PosicaoMesaJogadaDebug;
@@ -21,7 +23,9 @@ export interface EntradaDecidirLinhaQuente {
 }
 
 export function decidirLinhaQuente(entrada: EntradaDecidirLinhaQuente): ResultadoQuente {
-  if (entrada.posicao === 'abre') return { tipo: 'segue-fria', motivo: MOTIVO_ABERTURA_LINHA_QUENTE };
+  if (entrada.posicao === 'abre') {
+    return { tipo: 'segue-fria', motivo: MOTIVO_ABERTURA_LINHA_QUENTE, etapa: ETAPA_ABERTURA_SEGUE_FRIA };
+  }
   if (entrada.posicao === 'fecha') return decidirFecha(entrada.estado, entrada.leitura);
   return decidirMeio(entrada.estado, entrada.leitura, entrada.liderBaixa);
 }
@@ -51,7 +55,7 @@ function decidirMeio(estado: EstadoEmJogo, leitura: LeituraDaMesa, liderBaixa: n
     return { tipo: 'recomenda', ...espera, etapa: 'espera oportunidade' };
   }
 
-  return { tipo: 'segue-fria', motivo: 'linha quente segue fria: nenhum ramo se aplica' };
+  return { tipo: 'segue-fria', motivo: 'linha quente segue fria: nenhum ramo se aplica', etapa: ETAPA_SEGUE_FRIA };
 }
 
 function tentarRamoDiretoMeio(estado: EstadoEmJogo, leitura: LeituraDaMesa): ResultadoQuente | null {
@@ -64,5 +68,5 @@ function tentarRamoDiretoMeio(estado: EstadoEmJogo, leitura: LeituraDaMesa): Res
 function tentarJaCumpriuNoMeio(estado: EstadoEmJogo, leitura: LeituraDaMesa): ResultadoQuente {
   const jaCumpriu = escolherJaCumpriuNoMeio(estado, leitura);
   if (jaCumpriu) return { tipo: 'recomenda', ...jaCumpriu, etapa: '' };
-  return { tipo: 'segue-fria', motivo: 'linha quente segue fria: sem carta que não faz' };
+  return { tipo: 'segue-fria', motivo: 'linha quente segue fria: sem carta que não faz', etapa: ETAPA_SEGUE_FRIA };
 }
