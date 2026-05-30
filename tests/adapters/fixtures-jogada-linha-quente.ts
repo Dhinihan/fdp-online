@@ -1,4 +1,4 @@
-import { DecisorJogadaLinhaQuente } from '@/adapters/bots/DecisorJogadaLinhaQuente';
+import { DecisorJogadaPorTemperatura } from '@/adapters/bots/DecisorJogadaPorTemperatura';
 import type { DecisaoJogadaDebug, LoggerDebugBot } from '@/adapters/bots/logger-debug-bot';
 import type { Carta } from '@/core/Carta';
 import type { Jogador } from '@/types/entidades';
@@ -9,8 +9,8 @@ export function criarBotLinhaQuente(
   temperatura: number,
   valorRng: number,
   logger?: LoggerDebugBot,
-): DecisorJogadaLinhaQuente {
-  return new DecisorJogadaLinhaQuente({
+): DecisorJogadaPorTemperatura {
+  return new DecisorJogadaPorTemperatura({
     temperatura,
     rng: { random: () => valorRng },
     logger,

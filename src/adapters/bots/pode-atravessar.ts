@@ -4,7 +4,7 @@ import { ehAltaOuMelhor } from './predicados-carta-avaliada';
 import type { DecisaoCartaQuente } from './regras-linha-quente';
 import { cartaMaisBarata } from './selecao-por-score';
 
-export function podeAtravessar(leitura: LeituraDaMesa): boolean {
+function podeAtravessar(leitura: LeituraDaMesa): boolean {
   return (
     leitura.necessidade > 0 &&
     leitura.urgenciaAlta &&
