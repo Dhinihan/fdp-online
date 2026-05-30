@@ -28,7 +28,7 @@ export function decidirLinhaQuente(entrada: EntradaDecidirLinhaQuente): Resultad
 
 function decidirFecha(estado: EstadoEmJogo, leitura: LeituraDaMesa): ResultadoQuente {
   const decisao = decidirUltimoLinhaQuente(estado, leitura);
-  return { tipo: 'recomenda', carta: decisao.carta, motivo: decisao.motivo, etapa: 'fecha' };
+  return { tipo: 'recomenda', carta: decisao.carta, motivo: decisao.motivo, etapa: '' };
 }
 
 function decidirMeio(estado: EstadoEmJogo, leitura: LeituraDaMesa, liderBaixa: number): ResultadoQuente {
@@ -63,6 +63,6 @@ function tentarRamoDiretoMeio(estado: EstadoEmJogo, leitura: LeituraDaMesa): Res
 
 function tentarJaCumpriuNoMeio(estado: EstadoEmJogo, leitura: LeituraDaMesa): ResultadoQuente {
   const jaCumpriu = escolherJaCumpriuNoMeio(estado, leitura);
-  if (jaCumpriu) return { tipo: 'recomenda', ...jaCumpriu, etapa: 'já cumpriu' };
+  if (jaCumpriu) return { tipo: 'recomenda', ...jaCumpriu, etapa: '' };
   return { tipo: 'segue-fria', motivo: 'linha quente segue fria: sem carta que não faz' };
 }

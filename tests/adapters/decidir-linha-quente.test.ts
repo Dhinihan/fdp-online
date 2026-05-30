@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { decidirLinhaQuente, type ResultadoQuente } from '@/adapters/bots/decidir-linha-quente';
 import { MOTIVO_ABERTURA_LINHA_QUENTE } from '@/adapters/bots/decidirAbertura';
+import { DecisorJogadaPorTemperatura } from '@/adapters/bots/DecisorJogadaPorTemperatura';
 import { existeGarantidaParaDepois } from '@/adapters/bots/garantida-para-depois';
 import { lerMesa } from '@/adapters/bots/ler-mesa';
+import type { DecisaoJogadaDebug } from '@/adapters/bots/logger-debug-bot';
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
 import { criarCarta } from '../core/rodada-fixtures';
@@ -32,6 +34,24 @@ describe('decidirLinhaQuente na abertura', () => {
       tipo: 'segue-fria',
       motivo: MOTIVO_ABERTURA_LINHA_QUENTE,
     });
+  });
+
+  it('deve montar caminho de seguir linha fria via DecisorJogadaPorTemperatura', async () => {
+    const mao = [criarCarta('7', '♦'), criarCarta('2', '♦'), criarCarta('8', '♦')];
+    const estado = criarEstado({ mesa: [], declaracoes: { bot: 2 }, vazas: { bot: 0 } });
+    const jogadas: DecisaoJogadaDebug[] = [];
+    const decisor = new DecisorJogadaPorTemperatura({
+      temperatura: 1,
+      rng: { random: () => 0 },
+      logger: {
+        registrarDeclaracao: () => undefined,
+        registrarJogada: (jogada) => jogadas.push(jogada),
+      },
+    });
+
+    await decisor.decidirJogada(mao, estado);
+
+    expect(jogadas[0]?.quente?.caminho).toEqual(['jogada', 'abre a mesa', 'linha quente', 'segue linha fria']);
   });
 });
 
@@ -144,7 +164,7 @@ const cenariosMeio: {
       tipo: 'recomenda',
       carta: criarCarta('2', '♦'),
       motivo: 'já cumpriu; empate contra líder alta+',
-      etapa: 'já cumpriu',
+      etapa: '',
     },
   },
   {
@@ -162,7 +182,7 @@ const cenariosMeio: {
       tipo: 'recomenda',
       carta: criarCarta('7', '♦'),
       motivo: 'já cumpriu; perdedora mais forte',
-      etapa: 'já cumpriu',
+      etapa: '',
     },
   },
   {
@@ -205,7 +225,7 @@ const cenariosFecha: {
       tipo: 'recomenda',
       carta: criarCarta('8', '♦'),
       motivo: 'precisa fazer; regra G[N-X]',
-      etapa: 'fecha',
+      etapa: '',
     },
   },
   {
@@ -216,7 +236,7 @@ const cenariosFecha: {
       tipo: 'recomenda',
       carta: criarCarta('9', '♦'),
       motivo: 'precisa fazer, sem carta que vence; P[N-X]',
-      etapa: 'fecha',
+      etapa: '',
     },
   },
   {
@@ -227,7 +247,7 @@ const cenariosFecha: {
       tipo: 'recomenda',
       carta: criarCarta('6', '♦'),
       motivo: 'precisa fazer; adiou; P[N-X]',
-      etapa: 'fecha',
+      etapa: '',
     },
   },
   {
@@ -242,7 +262,7 @@ const cenariosFecha: {
       tipo: 'recomenda',
       carta: criarCarta('K', '♦'),
       motivo: 'já cumpriu; carta mais alta que não faz',
-      etapa: 'fecha',
+      etapa: '',
     },
   },
 ];
