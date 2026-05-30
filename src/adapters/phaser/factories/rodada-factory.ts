@@ -1,5 +1,5 @@
 import { DecisorDeclaracaoBot } from '@/adapters/bots/DecisorDeclaracaoBot';
-import { DecisorJogadaBot } from '@/adapters/bots/DecisorJogadaBot';
+import { DecisorJogadaPorTemperatura } from '@/adapters/bots/DecisorJogadaPorTemperatura';
 import { criarLoggerDebugBot } from '@/adapters/bots/logger-debug-bot';
 import { aplicarPerfisBots, sortearPerfisBots } from '@/adapters/bots/perfil-bot';
 import { Partida } from '@/core/Partida';
@@ -32,7 +32,10 @@ function criarDecisores(config: ConfigDecisores): {
   config.jogadores.forEach((jogador) => {
     if (!jogador.id.startsWith('bot') || jogador.temperatura === undefined) return;
     const logger = config.modoDebug ? criarLoggerDebugBot(jogador.nome, jogador.temperatura) : undefined;
-    jogada.set(jogador.id, new DecisorJogadaBot({ temperatura: jogador.temperatura, rng: config.rng, logger }));
+    jogada.set(
+      jogador.id,
+      new DecisorJogadaPorTemperatura({ temperatura: jogador.temperatura, rng: config.rng, logger }),
+    );
     declaracao.set(jogador.id, new DecisorDeclaracaoBot(jogador.temperatura, config.rng, { ...parametros(logger) }));
   });
   return { jogada, declaracao };

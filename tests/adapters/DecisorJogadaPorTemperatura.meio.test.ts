@@ -6,7 +6,7 @@ import { cenarioEsperaOportunidade, maoEsperaOportunidade } from './fixtures-esp
 import { criarBotLinhaQuente, criarEstado } from './fixtures-jogada-linha-quente';
 import { cenarioVencedoraSegura, maoVencedoraSegura } from './fixtures-vencedora-segura';
 
-describe('DecisorJogadaLinhaQuente no meio', () => {
+describe('DecisorJogadaPorTemperatura no meio', () => {
   it('deve escolher vencedora segura quando pressão não casa', escolheVencedoraSegura);
   it('deve esperar oportunidade quando pressão e vencedora segura falham', esperaOportunidade);
   it('deve descer para espera quando há garantida mas pressão falha', pressaoFalhaDesceParaEspera);

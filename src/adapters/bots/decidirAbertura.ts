@@ -10,7 +10,6 @@ export interface DecisaoAbertura {
 }
 
 export type DecisaoAberturaLinhaFria = DecisaoAbertura;
-export type DecisaoAberturaLinhaQuente = DecisaoAbertura;
 
 export const MOTIVO_ABERTURA_LINHA_QUENTE = 'abertura: segue linha fria';
 
@@ -27,14 +26,6 @@ export function decidirAberturaLinhaFria(leitura: LeituraDaMesa): DecisaoAbertur
   }
 
   return criarDecisaoAbertura(leitura.avaliadas[0].carta, ramo, ordemCategorias);
-}
-
-export function decidirAberturaLinhaQuente(fria: DecisaoAberturaLinhaFria): DecisaoAberturaLinhaQuente {
-  return {
-    carta: fria.carta,
-    motivo: MOTIVO_ABERTURA_LINHA_QUENTE,
-    caminho: criarCaminhoJogadaDebug('abre', 'quente', 'segue linha fria'),
-  };
 }
 
 type RamoAbertura = 'já cumpriu' | 'urgência alta' | 'precisa sem urgência alta';

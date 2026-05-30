@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { DecisorJogadaLinhaFria } from '@/adapters/bots/DecisorJogadaLinhaFria';
-import { DecisorJogadaLinhaQuente } from '@/adapters/bots/DecisorJogadaLinhaQuente';
+import { DecisorJogadaPorTemperatura } from '@/adapters/bots/DecisorJogadaPorTemperatura';
 import type { DecisaoJogadaDebug } from '@/adapters/bots/logger-debug-bot';
 import { criarCarta } from '../core/rodada-fixtures';
 import {
@@ -14,7 +14,7 @@ import {
   mesaComQuatro,
 } from './fixtures-jogada-linha-quente';
 
-describe('DecisorJogadaLinhaQuente', () => {
+describe('DecisorJogadaPorTemperatura', () => {
   it('deve escolher linha quente com segurança quando o RNG cai abaixo da temperatura', escolheLinhaQuente);
   it('deve escolher linha fria com segurança quando a temperatura é zero', escolheLinhaFria);
   it('deve usar posicionamento determinístico quando é o último e precisa fazer', usaPosicionamentoDeterministico);
@@ -177,7 +177,7 @@ async function naoSorteiaSemBifurcacao(): Promise<void> {
   const estado = criarEstado({ mesa: [{ jogadorId: 'j1', carta: criarCarta('8', '♣') }], declaracoes: { bot: 1 } });
   const jogadas: DecisaoJogadaDebug[] = [];
   const random = vi.fn(() => 0);
-  const bot = new DecisorJogadaLinhaQuente({
+  const bot = new DecisorJogadaPorTemperatura({
     temperatura: 1,
     rng: { random },
     logger: { registrarDeclaracao: () => undefined, registrarJogada: (jogada) => jogadas.push(jogada) },

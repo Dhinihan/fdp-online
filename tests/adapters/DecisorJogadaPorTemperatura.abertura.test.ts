@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { decidirAberturaLinhaFria } from '@/adapters/bots/decidirAbertura';
-import { DecisorJogadaBot } from '@/adapters/bots/DecisorJogadaBot';
+import { DecisorJogadaPorTemperatura } from '@/adapters/bots/DecisorJogadaPorTemperatura';
 import { lerMesa } from '@/adapters/bots/ler-mesa';
 import type { DecisaoJogadaDebug } from '@/adapters/bots/logger-debug-bot';
 import type { Carta } from '@/core/Carta';
@@ -8,7 +8,7 @@ import type { Jogador } from '@/types/entidades';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { criarCarta, criarJogador } from '../core/rodada-fixtures';
 
-describe('DecisorJogadaBot', () => {
+describe('DecisorJogadaPorTemperatura', () => {
   it('deve delegar a jogada de reação para o decisor quente', deveDelegarReacao);
   it('deve abrir com baixa quando urgência é baixa', abrirUrgenciaBaixa);
   it('deve abrir forte quando bot é frio e urgência é alta', abrirFrioUrgenciaAlta);
@@ -56,7 +56,7 @@ async function abrirFrioUrgenciaAlta(): Promise<void> {
     vazas: { bot: 0 },
     cartasReveladas: [],
   });
-  const bot = new DecisorJogadaBot({ temperatura: 0, rng: { random: () => 0 } });
+  const bot = new DecisorJogadaPorTemperatura({ temperatura: 0, rng: { random: () => 0 } });
   const mao = [criarCarta('3', '♠'), criarCarta('8', '♦')];
 
   await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('3', '♠'));
@@ -69,7 +69,7 @@ async function abrirQuenteUrgenciaAlta(): Promise<void> {
     vazas: { bot: 0 },
     cartasReveladas: cartasQueGarantemTresDeOuros(),
   });
-  const bot = new DecisorJogadaBot({ temperatura: 0.5, rng: { random: () => 0 } });
+  const bot = new DecisorJogadaPorTemperatura({ temperatura: 0.5, rng: { random: () => 0 } });
   const mao = [criarCarta('3', '♦'), criarCarta('8', '♦')];
 
   await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('8', '♦'));
@@ -108,7 +108,7 @@ async function abrirFolgaNegativa(): Promise<void> {
     vazas: { bot: 0 },
     cartasReveladas: [],
   });
-  const bot = new DecisorJogadaBot({ temperatura: 0.5, rng: { random: () => 0 } });
+  const bot = new DecisorJogadaPorTemperatura({ temperatura: 0.5, rng: { random: () => 0 } });
   const mao = [criarCarta('2', '♠'), criarCarta('8', '♦'), criarCarta('A', '♣')];
 
   // A urgência deve ser alta (quebra de cautela) e escolher a carta '2' de Espadas (alta)
@@ -123,7 +123,7 @@ async function registraContextoAbertura(): Promise<void> {
   });
   const rng = vi.fn(() => 0);
   const jogadas: DecisaoJogadaDebug[] = [];
-  const bot = new DecisorJogadaBot({
+  const bot = new DecisorJogadaPorTemperatura({
     temperatura: 1,
     rng: { random: rng },
     logger: {
@@ -169,8 +169,8 @@ function deveFalharMaoVaziaAbertura(): void {
   expect(() => decidirAberturaLinhaFria(lerMesa(estado, []))).toThrow('decidirAbertura: mão vazia');
 }
 
-function criarBot(temperatura: number, valorRng: number): DecisorJogadaBot {
-  return new DecisorJogadaBot({ temperatura, rng: { random: () => valorRng }, liderBaixa: 8 });
+function criarBot(temperatura: number, valorRng: number): DecisorJogadaPorTemperatura {
+  return new DecisorJogadaPorTemperatura({ temperatura, rng: { random: () => valorRng }, liderBaixa: 8 });
 }
 
 function criarEstado(config: Partial<EstadoEmJogo>): EstadoEmJogo {

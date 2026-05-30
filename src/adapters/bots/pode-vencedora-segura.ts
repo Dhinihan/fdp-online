@@ -5,7 +5,7 @@ import { ehAltaOuMelhor } from './predicados-carta-avaliada';
 import type { DecisaoCartaQuente } from './regras-linha-quente';
 import { cartaMaisBarata } from './selecao-por-score';
 
-export function podeTentarComVencedoraSegura(leitura: LeituraDaMesa): boolean {
+function podeTentarComVencedoraSegura(leitura: LeituraDaMesa): boolean {
   return (
     leitura.necessidade > 0 &&
     leitura.vencedoras.length > 0 &&

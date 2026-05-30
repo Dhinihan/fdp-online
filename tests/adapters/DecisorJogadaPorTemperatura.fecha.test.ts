@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { DecisorJogadaLinhaQuente } from '@/adapters/bots/DecisorJogadaLinhaQuente';
+import { DecisorJogadaPorTemperatura } from '@/adapters/bots/DecisorJogadaPorTemperatura';
 import type { DecisaoJogadaDebug } from '@/adapters/bots/logger-debug-bot';
 import type { Carta } from '@/core/Carta';
 import type { Jogador } from '@/types/entidades';
 import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
 import { criarCarta, criarJogador } from '../core/rodada-fixtures';
 
-describe('DecisorJogadaLinhaQuente no fim da mesa', () => {
+describe('DecisorJogadaPorTemperatura no fim da mesa', () => {
   it('deve atravessar quando líder precisa e carta líder é alta', atravessaLiderAlta);
   it('deve adiar quando líder precisa, carta líder é média e urgência é baixa', adiaLiderMedia);
   it('deve fazer quando líder precisa, carta líder é média e urgência é alta', fazLiderMediaUrgente);
@@ -76,7 +76,7 @@ async function jogaMaisForteSemFuga(): Promise<void> {
 async function sorteiaQuandoLinhasDiferem(): Promise<void> {
   const estado = criarEstado({ mesa: mesaComK(), declaracoes: { j1: 0, bot: 1 }, vazas: { j1: 0, bot: 0 } });
   const random = vi.fn(() => 0);
-  const decisor = new DecisorJogadaLinhaQuente({ temperatura: 1, rng: { random }, liderBaixa: 8 });
+  const decisor = new DecisorJogadaPorTemperatura({ temperatura: 1, rng: { random }, liderBaixa: 8 });
 
   await expect(decisor.decidirJogada([criarCarta('Q', '♦'), criarCarta('A', '♦')], estado)).resolves.toEqual(
     criarCarta('Q', '♦'),
@@ -88,7 +88,7 @@ async function registraSemBifurcacaoQuandoConverge(): Promise<void> {
   const estado = criarEstado({ mesa: mesaComQuatro(), declaracoes: { j1: 1, bot: 2 }, vazas: { j1: 0, bot: 0 } });
   const random = vi.fn(() => 0);
   const jogadas: DecisaoJogadaDebug[] = [];
-  const decisor = new DecisorJogadaLinhaQuente({
+  const decisor = new DecisorJogadaPorTemperatura({
     temperatura: 1,
     rng: { random },
     liderBaixa: 8,
@@ -116,8 +116,8 @@ function jogarContraNove(estado: EstadoEmJogo): Promise<Carta> {
   return bot().decidirJogada(mao, estado);
 }
 
-function bot(): DecisorJogadaLinhaQuente {
-  return new DecisorJogadaLinhaQuente({ temperatura: 1, rng: { random: () => 0 }, liderBaixa: 8 });
+function bot(): DecisorJogadaPorTemperatura {
+  return new DecisorJogadaPorTemperatura({ temperatura: 1, rng: { random: () => 0 }, liderBaixa: 8 });
 }
 
 function criarEstado(config: Partial<EstadoEmJogo>): EstadoEmJogo {
