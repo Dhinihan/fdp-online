@@ -1,5 +1,5 @@
-import type { ContextoJogadaQuente } from './contextoLinhaQuente';
+import type { LeituraDaMesa } from './ler-mesa';
 
-export function existeGarantidaParaDepois(contexto: ContextoJogadaQuente): boolean {
-  return contexto.avaliadas.some((avaliada) => avaliada.categoria === 'garantida_agora');
+export function existeGarantidaParaDepois(leitura: LeituraDaMesa): boolean {
+  return leitura.avaliadas.some((avaliada) => avaliada.categoria === 'garantida_agora');
 }

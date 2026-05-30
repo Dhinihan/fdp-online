@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { decidirNaoUltimoLinhaFria } from '@/adapters/bots/DecisorJogadaLinhaFria';
+import { lerMesa } from '@/adapters/bots/ler-mesa';
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { criarCarta } from '../core/rodada-fixtures';
@@ -79,7 +80,7 @@ const cenarios: CenarioGuarda[] = [
 
 describe('guarda de posição da linha fria', () => {
   it.each(cenarios)('$nome', ({ mao, estado, esperado }) => {
-    expect(decidirNaoUltimoLinhaFria(mao, estado)).toEqual(esperado);
+    expect(decidirNaoUltimoLinhaFria(lerMesa(estado, mao), estado)).toEqual(esperado);
   });
 });
 

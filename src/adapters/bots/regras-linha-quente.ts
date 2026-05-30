@@ -1,9 +1,9 @@
 import type { CartaAvaliada } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
-import type { EstadoEmJogo, MesaItem } from '@/types/estado-rodada';
-import { calcularNecessidade, liderQuerVaza, type ContextoJogadaQuente } from './contextoLinhaQuente';
+import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { MOTIVOS_FUGA_MEIO, escolherFugaJaCumpriu } from './escolher-fuga-ja-cumpriu';
 import { existeGarantidaParaDepois } from './garantida-para-depois';
+import type { LeituraDaMesa } from './ler-mesa';
 import { cartaMaisBarata, cartaMaisCara } from './selecao-por-score';
 
 export interface ResultadoPodeBifurcar {
@@ -16,17 +16,13 @@ export interface DecisaoCartaQuente {
   motivo: string;
 }
 
-export function podeBifurcar(
-  estado: EstadoEmJogo,
-  contexto: ContextoJogadaQuente,
-  liderBaixa: number,
-): ResultadoPodeBifurcar {
-  if (contexto.necessidade <= 0) return { pode: false, motivoRecusa: 'sem necessidade' };
-  if (contexto.vencedoras.length === 0) return { pode: false, motivoRecusa: 'sem vencedoras' };
-  if (!mesaPodePunir(estado, contexto, liderBaixa)) return { pode: false, motivoRecusa: 'mesa não pode punir' };
-  if (!temSegurancaParaDepois(contexto)) return { pode: false, motivoRecusa: 'sem segurança para depois' };
-  if (!temPressaoAgora(contexto)) return { pode: false, motivoRecusa: 'sem pressão agora' };
-  if (!temAlvo(estado, contexto.jogadorId)) return { pode: false, motivoRecusa: 'sem alvo na mesa' };
+export function podeBifurcar(leitura: LeituraDaMesa, liderBaixa: number): ResultadoPodeBifurcar {
+  if (leitura.necessidade <= 0) return { pode: false, motivoRecusa: 'sem necessidade' };
+  if (leitura.vencedoras.length === 0) return { pode: false, motivoRecusa: 'sem vencedoras' };
+  if (!mesaPodePunir(leitura, liderBaixa)) return { pode: false, motivoRecusa: 'mesa não pode punir' };
+  if (!temSegurancaParaDepois(leitura)) return { pode: false, motivoRecusa: 'sem segurança para depois' };
+  if (!temPressaoAgora(leitura)) return { pode: false, motivoRecusa: 'sem pressão agora' };
+  if (!leitura.temAlvo) return { pode: false, motivoRecusa: 'sem alvo na mesa' };
   return { pode: true };
 }
 
@@ -34,58 +30,43 @@ export function cartasIguais(a: Carta, b: Carta): boolean {
   return a.valor === b.valor && a.naipe === b.naipe;
 }
 
-export function escolherPressao(contexto: ContextoJogadaQuente): DecisaoCartaQuente {
-  const fuga = cartasDeFuga(contexto);
+export function escolherPressao(leitura: LeituraDaMesa): DecisaoCartaQuente {
+  const fuga = cartasDeFuga(leitura);
   if (fuga.length > 0) return { carta: cartaMaisCara(fuga).carta, motivo: 'pressão: fuga mais cara' };
   return {
-    carta: cartaMaisBarata(vencedorasBaratasSemGarantida(contexto)).carta,
+    carta: cartaMaisBarata(vencedorasBaratasSemGarantida(leitura)).carta,
     motivo: 'pressão: vencedora barata sem garantida',
   };
 }
 
-export function escolherJaCumpriuNoMeio(
-  estado: EstadoEmJogo,
-  contexto: ContextoJogadaQuente,
-): DecisaoCartaQuente | null {
-  if (contexto.necessidade > 0) return null;
-  return escolherFugaJaCumpriu(estado, contexto, {
-    liderInteressado: liderQuerVaza(estado),
+export function escolherJaCumpriuNoMeio(estado: EstadoEmJogo, leitura: LeituraDaMesa): DecisaoCartaQuente | null {
+  if (leitura.necessidade > 0) return null;
+  return escolherFugaJaCumpriu(estado, leitura, {
+    liderInteressado: leitura.liderQuerVaza,
     fallbackSemFuga: 'null',
     motivos: MOTIVOS_FUGA_MEIO,
   });
 }
 
-function mesaPodePunir(estado: EstadoEmJogo, contexto: ContextoJogadaQuente, liderBaixa: number): boolean {
-  return Boolean(
-    contexto.lider &&
-    contexto.lider.score <= liderBaixa &&
-    estado.mesa.some((item) => jogadorNaoQuerVaza(estado, item)),
-  );
+function mesaPodePunir(leitura: LeituraDaMesa, liderBaixa: number): boolean {
+  return Boolean(leitura.lider && leitura.lider.score <= liderBaixa && leitura.mesaTemQuemNaoQuerVaza);
 }
 
-function temSegurancaParaDepois(contexto: ContextoJogadaQuente): boolean {
-  return contexto.necessidade <= 1 && contexto.folga >= 1 && contexto.avaliadas.some(ehSeguraOuGarantida);
+function temSegurancaParaDepois(leitura: LeituraDaMesa): boolean {
+  return leitura.necessidade <= 1 && leitura.folga >= 1 && leitura.avaliadas.some(ehSeguraOuGarantida);
 }
 
-function temPressaoAgora(contexto: ContextoJogadaQuente): boolean {
-  return cartasDeFuga(contexto).length > 0 || vencedorasBaratasSemGarantida(contexto).length > 0;
+function temPressaoAgora(leitura: LeituraDaMesa): boolean {
+  return cartasDeFuga(leitura).length > 0 || vencedorasBaratasSemGarantida(leitura).length > 0;
 }
 
-function cartasDeFuga(contexto: ContextoJogadaQuente): CartaAvaliada[] {
-  return [...contexto.perdedoras, ...contexto.empates].filter((avaliada) => !ehSeguraOuGarantida(avaliada));
+function cartasDeFuga(leitura: LeituraDaMesa): CartaAvaliada[] {
+  return [...leitura.perdedoras, ...leitura.empates].filter((avaliada) => !ehSeguraOuGarantida(avaliada));
 }
 
-function vencedorasBaratasSemGarantida(contexto: ContextoJogadaQuente): CartaAvaliada[] {
-  if (!existeGarantidaParaDepois(contexto)) return [];
-  return contexto.vencedoras.filter((avaliada) => !ehGarantida(avaliada));
-}
-
-function temAlvo(estado: EstadoEmJogo, jogadorId: string): boolean {
-  return Object.keys(estado.declaracoes).some((id) => id !== jogadorId && calcularNecessidade(estado, id) > 0);
-}
-
-function jogadorNaoQuerVaza(estado: EstadoEmJogo, item: MesaItem): boolean {
-  return calcularNecessidade(estado, item.jogadorId) <= 0;
+function vencedorasBaratasSemGarantida(leitura: LeituraDaMesa): CartaAvaliada[] {
+  if (!existeGarantidaParaDepois(leitura)) return [];
+  return leitura.vencedoras.filter((avaliada) => !ehGarantida(avaliada));
 }
 
 function ehSeguraOuGarantida(avaliada: CartaAvaliada): boolean {

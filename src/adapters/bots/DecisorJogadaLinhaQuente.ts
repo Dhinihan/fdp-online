@@ -2,11 +2,12 @@ import type { Carta } from '@/core/Carta';
 import type { DecisorJogada } from '@/core/portas/DecisorJogada';
 import type { GeradorAleatorio } from '@/core/RngComSeed';
 import { estadoEmJogo, type EstadoEmJogo, type EstadoRodada } from '@/types/estado-rodada';
-import { criarContextoLinhaQuente, ehUltimoDaMesa, type ContextoJogadaQuente } from './contextoLinhaQuente';
+import { ehUltimoDaMesa } from './contexto-posicao-mesa';
 import { criarCaminhoJogadaDebug, type PosicaoMesaJogadaDebug } from './debug-jogada-bot';
 import { criarDecisaoQuente, definirPosicao, type DecisaoQuente } from './debug-linha-quente';
 import { decidirUltimoLinhaQuente } from './decidirUltimoLinhaQuente';
 import { decidirNaoUltimoLinhaFria, decidirUltimoLinhaFria } from './DecisorJogadaLinhaFria';
+import { lerMesa, type LeituraDaMesa } from './ler-mesa';
 import type { LoggerDebugBot } from './logger-debug-bot';
 import { escolherTravessia } from './pode-atravessar';
 import { escolherEsperarOportunidade } from './pode-esperar-oportunidade';
@@ -38,22 +39,22 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
     if (mao.length === 0) return Promise.reject(new Error('Mão vazia'));
 
     const estadoAtual = estadoEmJogo(estado);
-    const contexto = criarContextoLinhaQuente(estadoAtual, mao);
+    const leitura = lerMesa(estadoAtual, mao);
 
     if (ehUltimoDaMesa(estadoAtual)) {
-      const decisaoFria = decidirUltimoLinhaFria(mao, estadoAtual);
-      const base = criarBaseJogada({ mao, estado, estadoAtual, contexto, decisaoFria });
+      const decisaoFria = decidirUltimoLinhaFria(leitura, estadoAtual);
+      const base = criarBaseJogada({ mao, estado, estadoAtual, leitura, decisaoFria });
       return this.decidirUltimaJogada(base);
     }
 
-    const decisaoFria = decidirNaoUltimoLinhaFria(mao, estadoAtual);
-    const base = criarBaseJogada({ mao, estado, estadoAtual, contexto, decisaoFria });
+    const decisaoFria = decidirNaoUltimoLinhaFria(leitura, estadoAtual);
+    const base = criarBaseJogada({ mao, estado, estadoAtual, leitura, decisaoFria });
     return this.decidirAntesDoFim(base);
   }
 
   private decidirUltimaJogada(base: BaseJogada): Carta {
     const quente = criarDecisaoQuente(
-      decidirUltimoLinhaQuente(base.estadoAtual, base.contexto),
+      decidirUltimoLinhaQuente(base.estadoAtual, base.leitura),
       criarCaminhoJogadaDebug(base.posicao, 'quente'),
     );
     return this.resolverBifurcacao(base, quente);
@@ -63,20 +64,20 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
     const direta = this.escolherQuenteDireta(base);
     if (direta) return direta;
 
-    const bifurcacao = podeBifurcar(base.estadoAtual, base.contexto, this.liderBaixa);
+    const bifurcacao = podeBifurcar(base.leitura, this.liderBaixa);
     if (bifurcacao.pode) {
       return this.resolverQuenteRecomendada(base, {
-        ...escolherPressao(base.contexto),
+        ...escolherPressao(base.leitura),
         etapa: 'pressiona',
       });
     }
 
-    const vencedoraSegura = escolherVencedoraSegura(base.estadoAtual, base.contexto);
+    const vencedoraSegura = escolherVencedoraSegura(base.leitura);
     if (vencedoraSegura) {
       return this.resolverQuenteRecomendada(base, { ...vencedoraSegura, etapa: 'vencedora segura' });
     }
 
-    const espera = escolherEsperarOportunidade(base.estadoAtual, base.contexto);
+    const espera = escolherEsperarOportunidade(base.estadoAtual, base.leitura);
     if (espera) {
       return this.resolverQuenteRecomendada(base, { ...espera, etapa: 'espera oportunidade' });
     }
@@ -97,13 +98,13 @@ export class DecisorJogadaLinhaQuente implements DecisorJogada {
   }
 
   private escolherQuenteDireta(base: BaseJogada): Carta | null {
-    if (base.contexto.necessidade <= 0) {
-      const jaCumpriu = escolherJaCumpriuNoMeio(base.estadoAtual, base.contexto);
+    if (base.leitura.necessidade <= 0) {
+      const jaCumpriu = escolherJaCumpriuNoMeio(base.estadoAtual, base.leitura);
       if (jaCumpriu) return this.resolverQuenteRecomendada(base, jaCumpriu);
       return this.registrarSeguirFria(base, 'linha quente segue fria: sem carta que não faz');
     }
 
-    const travessia = escolherTravessia(base.estadoAtual, base.contexto);
+    const travessia = escolherTravessia(base.leitura);
     if (!travessia) return null;
     return this.resolverQuenteRecomendada(base, { ...travessia, etapa: 'atravessa' });
   }
@@ -129,7 +130,7 @@ interface BaseJogada {
   mao: Carta[];
   estado: EstadoRodada;
   estadoAtual: EstadoEmJogo;
-  contexto: ContextoJogadaQuente;
+  leitura: LeituraDaMesa;
   posicao: PosicaoMesaJogadaDebug;
   fria: Carta;
   motivoLinhaFria: string;
@@ -146,7 +147,7 @@ interface ConfigBaseJogada {
   mao: Carta[];
   estado: EstadoRodada;
   estadoAtual: EstadoEmJogo;
-  contexto: ContextoJogadaQuente;
+  leitura: LeituraDaMesa;
   decisaoFria: { carta: Carta; motivo: string; caminho?: string[] };
 }
 
@@ -156,7 +157,7 @@ function criarBaseJogada(config: ConfigBaseJogada): BaseJogada {
     mao: config.mao,
     estado: config.estado,
     estadoAtual: config.estadoAtual,
-    contexto: config.contexto,
+    leitura: config.leitura,
     posicao,
     fria: config.decisaoFria.carta,
     motivoLinhaFria: config.decisaoFria.motivo,

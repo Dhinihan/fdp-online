@@ -4,6 +4,7 @@ import {
   decidirAberturaLinhaQuente,
   MOTIVO_ABERTURA_LINHA_QUENTE,
 } from '@/adapters/bots/decidirAbertura';
+import { lerMesa } from '@/adapters/bots/ler-mesa';
 import { criarCarta } from '../core/rodada-fixtures';
 import { criarEstadoLinhaFria } from './fixtures-linha-fria';
 
@@ -11,7 +12,7 @@ describe('decidirAberturaLinhaQuente', () => {
   it('deve espelhar carta, motivo e caminho da decisão fria', () => {
     const mao = [criarCarta('7', '♦'), criarCarta('2', '♦'), criarCarta('8', '♦')];
     const estado = criarEstadoLinhaFria({ mesa: [], declaracoes: { bot: 2 }, vazas: { bot: 0 } });
-    const fria = decidirAberturaLinhaFria(mao, estado);
+    const fria = decidirAberturaLinhaFria(lerMesa(estado, mao));
     const quente = decidirAberturaLinhaQuente(fria);
 
     expect(quente.carta).toEqual(fria.carta);

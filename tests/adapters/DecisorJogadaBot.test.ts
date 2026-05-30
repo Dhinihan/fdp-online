@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { decidirAberturaLinhaFria } from '@/adapters/bots/decidirAbertura';
 import { DecisorJogadaBot } from '@/adapters/bots/DecisorJogadaBot';
+import { lerMesa } from '@/adapters/bots/ler-mesa';
 import type { DecisaoJogadaDebug } from '@/adapters/bots/logger-debug-bot';
 import type { Carta } from '@/core/Carta';
 import type { Jogador } from '@/types/entidades';
@@ -165,7 +166,7 @@ function deveFalharMaoVaziaAbertura(): void {
     vazas: { bot: 0 },
   });
 
-  expect(() => decidirAberturaLinhaFria([], estado)).toThrow('decidirAbertura: mão vazia');
+  expect(() => decidirAberturaLinhaFria(lerMesa(estado, []))).toThrow('decidirAbertura: mão vazia');
 }
 
 function criarBot(temperatura: number, valorRng: number): DecisorJogadaBot {

@@ -4,6 +4,7 @@ import type { GeradorAleatorio } from '@/core/RngComSeed';
 import { estadoEmJogo, type EstadoEmJogo, type EstadoRodada } from '@/types/estado-rodada';
 import { decidirAberturaLinhaFria, decidirAberturaLinhaQuente } from './decidirAbertura';
 import { DecisorJogadaLinhaQuente } from './DecisorJogadaLinhaQuente';
+import { lerMesa } from './ler-mesa';
 import type { LoggerDebugBot } from './logger-debug-bot';
 import { resolverPorTemperatura } from './resolucao-por-temperatura';
 
@@ -39,7 +40,8 @@ export class DecisorJogadaBot implements DecisorJogada {
   }
 
   private decidirAbertura(mao: Carta[], estado: EstadoRodada, estadoAtual: EstadoEmJogo): Carta {
-    const fria = decidirAberturaLinhaFria(mao, estadoAtual);
+    const leitura = lerMesa(estadoAtual, mao);
+    const fria = decidirAberturaLinhaFria(leitura);
     const quente = decidirAberturaLinhaQuente(fria);
     return resolverPorTemperatura({
       logger: this.logger,

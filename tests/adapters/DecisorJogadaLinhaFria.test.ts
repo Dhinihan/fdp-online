@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DecisorJogadaLinhaFria, decidirUltimoLinhaFria } from '@/adapters/bots/DecisorJogadaLinhaFria';
+import { lerMesa } from '@/adapters/bots/ler-mesa';
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
 import { criarCarta } from '../core/rodada-fixtures';
@@ -82,7 +83,7 @@ describe('DecisorJogadaLinhaFria', () => {
   it('não deve tratar empate como carta que faz a vaza', deveRejeitarEmpateComoVitoria);
   it('deve ordenar ganhadoras por força real com manilha e desempate por naipe', deveOrdenarPorForcaReal);
   it.each(cenariosDeUltimo)('$nome', ({ mao, estado, esperado }) => {
-    expect(decidirUltimoLinhaFria(mao, estado)).toEqual(esperado);
+    expect(decidirUltimoLinhaFria(lerMesa(estado, mao), estado)).toEqual(esperado);
   });
   it('deve fazer sem desperdiçar carta garantida quando ainda não é o último', devePreservarGarantida);
   it('deve seguir fuga do fim sem considerar necessidade do líder', deveIgnorarNecessidadeDoLiderNoFim);

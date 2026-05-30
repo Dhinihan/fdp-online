@@ -1,8 +1,7 @@
-import { avaliarCartas, type CategoriaCarta } from '@/core/avaliador-carta';
+import type { CategoriaCarta } from '@/core/avaliador-carta';
 import type { Carta } from '@/core/Carta';
-import type { EstadoEmJogo } from '@/types/estado-rodada';
-import { calcularNecessidade, urgenciaAlta } from './contexto-posicao-mesa';
 import { criarCaminhoJogadaDebug } from './debug-jogada-bot';
+import type { LeituraDaMesa } from './ler-mesa';
 
 export interface DecisaoAbertura {
   carta: Carta;
@@ -15,23 +14,19 @@ export type DecisaoAberturaLinhaQuente = DecisaoAbertura;
 
 export const MOTIVO_ABERTURA_LINHA_QUENTE = 'abertura: segue linha fria';
 
-export function decidirAberturaLinhaFria(mao: Carta[], estado: EstadoEmJogo): DecisaoAberturaLinhaFria {
-  if (mao.length === 0) throw new Error('decidirAbertura: mão vazia');
-  const jogadorId = estado.maos[estado.jogadorAtual].jogador.id;
-  const necessidade = calcularNecessidade(estado, jogadorId);
-  const ramo = definirRamoAbertura(necessidade, urgenciaAlta(necessidade, mao.length));
+export function decidirAberturaLinhaFria(leitura: LeituraDaMesa): DecisaoAberturaLinhaFria {
+  if (leitura.avaliadas.length === 0) throw new Error('decidirAbertura: mão vazia');
+  const ramo = definirRamoAbertura(leitura.necessidade, leitura.urgenciaAlta);
   const ordemCategorias = definirOrdemCategorias(ramo);
 
-  const avaliadas = avaliarCartas(mao, estado.manilha, estado.cartasReveladas, estado.maos.length);
-
   for (const cat of ordemCategorias) {
-    const daCategoria = avaliadas.filter((a) => a.categoria === cat);
+    const daCategoria = leitura.avaliadas.filter((a) => a.categoria === cat);
     if (daCategoria.length > 0) {
       return criarDecisaoAbertura([...daCategoria].sort((a, b) => a.score - b.score)[0].carta, ramo, ordemCategorias);
     }
   }
 
-  return criarDecisaoAbertura(mao[0], ramo, ordemCategorias);
+  return criarDecisaoAbertura(leitura.avaliadas[0].carta, ramo, ordemCategorias);
 }
 
 export function decidirAberturaLinhaQuente(fria: DecisaoAberturaLinhaFria): DecisaoAberturaLinhaQuente {

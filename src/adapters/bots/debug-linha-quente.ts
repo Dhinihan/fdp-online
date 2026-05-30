@@ -1,6 +1,6 @@
 import type { Carta } from '@/core/Carta';
 import type { EstadoEmJogo } from '@/types/estado-rodada';
-import { ehUltimoDaMesa } from './contextoLinhaQuente';
+import { ehUltimoDaMesa } from './contexto-posicao-mesa';
 import type { PosicaoMesaJogadaDebug } from './debug-jogada-bot';
 
 export interface DecisaoQuente {

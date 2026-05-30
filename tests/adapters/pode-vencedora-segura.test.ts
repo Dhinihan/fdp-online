@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { criarContextoLinhaQuente } from '@/adapters/bots/contextoLinhaQuente';
 import { existeGarantidaParaDepois } from '@/adapters/bots/garantida-para-depois';
+import { lerMesa } from '@/adapters/bots/ler-mesa';
 import { escolherVencedoraSegura, podeTentarComVencedoraSegura } from '@/adapters/bots/pode-vencedora-segura';
 import { criarCarta } from '../core/rodada-fixtures';
 import {
@@ -17,32 +17,32 @@ describe('existeGarantidaParaDepois', () => {
       manilha: '8',
       cartasReveladas: cartasReveladasGarantidaTres(),
     });
-    const contexto = criarContextoLinhaQuente(estado, [criarCarta('3', '♦'), criarCarta('7', '♦')]);
+    const leitura = lerMesa(estado, [criarCarta('3', '♦'), criarCarta('7', '♦')]);
 
-    expect(existeGarantidaParaDepois(contexto)).toBe(true);
+    expect(existeGarantidaParaDepois(leitura)).toBe(true);
   });
 
   it('deve retornar false sem garantida_agora na mão', () => {
     const estado = criarEstadoVencedoraSegura({ cartasReveladas: [] });
-    const contexto = criarContextoLinhaQuente(estado, maoVencedoraSegura());
+    const leitura = lerMesa(estado, maoVencedoraSegura());
 
-    expect(existeGarantidaParaDepois(contexto)).toBe(false);
+    expect(existeGarantidaParaDepois(leitura)).toBe(false);
   });
 });
 
 describe('podeTentarComVencedoraSegura recusa', () => {
   it.each(cenarioRecusaVencedoraSegura)('deve recusar quando $nome', ({ estado, mao }) => {
-    expect(podeTentarComVencedoraSegura(estado, criarContextoLinhaQuente(estado, mao))).toBe(false);
+    expect(podeTentarComVencedoraSegura(lerMesa(estado, mao))).toBe(false);
   });
 });
 
 describe('podeTentarComVencedoraSegura permite', () => {
   it('deve permitir quando todos os critérios passam', () => {
     const estado = cenarioVencedoraSegura();
-    const contexto = criarContextoLinhaQuente(estado, maoVencedoraSegura());
+    const leitura = lerMesa(estado, maoVencedoraSegura());
 
-    expect(podeTentarComVencedoraSegura(estado, contexto)).toBe(true);
-    expect(escolherVencedoraSegura(estado, contexto)).toEqual({
+    expect(podeTentarComVencedoraSegura(leitura)).toBe(true);
+    expect(escolherVencedoraSegura(leitura)).toEqual({
       carta: criarCarta('3', '♦'),
       motivo: 'vencedora segura: líder alta+ precisa, sem garantida para depois',
     });
