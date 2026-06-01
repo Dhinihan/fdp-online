@@ -5,6 +5,7 @@ import type { EstadoRodada, EstadoEmJogo } from '@/types/estado-rodada';
 import { estadoEmJogo } from '@/types/estado-rodada';
 import { escalar, escalarFonte } from '../escala';
 import type { LayoutPainel, Retangulo } from '../layout';
+import { calcularAreaManilha } from '../layout-manilha';
 import { limparObjetos } from './limpar-objetos';
 import { desenharManilhaNoPainel } from './painel-manilha-renderer';
 
@@ -97,14 +98,7 @@ function calcularLayoutTabela(
     feito: tabelaX + Math.round(larguraTabela * 0.58),
     pontos: tabelaX + Math.round(larguraTabela * 0.74),
   };
-  const areaManilha = ehPaisagem
-    ? area
-    : {
-        x: area.x + Math.round(area.largura * 0.65),
-        y: area.y,
-        largura: Math.round(area.largura * 0.35),
-        altura: area.altura,
-      };
+  const areaManilha = calcularAreaManilha(area, ehPaisagem);
   return { colunas, areaManilha };
 }
 
