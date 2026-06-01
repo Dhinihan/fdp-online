@@ -174,7 +174,16 @@ export class Partida {
     this.emissor.emit({
       ...criarEventoBase(),
       tipo: 'JOGO_ENCERRADO',
-      classificacao: [...this.jogadores, ...this.eliminados].sort((a, b) => b.pontos - a.pontos),
+      classificacao: [...this.jogadores, ...this.eliminados].sort(compararClassificacao),
     });
   }
+}
+
+function compararClassificacao(a: Jogador, b: Jogador): number {
+  if (a.pontos !== b.pontos) return b.pontos - a.pontos;
+  return ehHumano(b) - ehHumano(a);
+}
+
+function ehHumano(jogador: Jogador): number {
+  return jogador.id === 'humano' ? 1 : 0;
 }

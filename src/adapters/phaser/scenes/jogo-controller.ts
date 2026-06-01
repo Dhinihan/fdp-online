@@ -1,5 +1,6 @@
 import type { Scene } from 'phaser';
 import type { Partida } from '@/core/Partida';
+import { registrarPartidaNoArmazenamento } from '@/store/ranking/gravar-ranking';
 import type { Jogador } from '@/types/entidades';
 import { ehFaseDeclaracao, estadoEmJogo } from '@/types/estado-rodada';
 import { DecisorDeclaracaoHumano } from '../DecisorDeclaracaoHumano';
@@ -86,6 +87,7 @@ export class JogoController {
         this.deps.atualizarPainel();
       },
       onJogoEncerrado: (classificacao: Jogador[]) => {
+        registrarPartidaNoArmazenamento(window.localStorage, classificacao);
         this.deps.desativarResize();
         this.deps.mostrarFimJogo(classificacao);
       },

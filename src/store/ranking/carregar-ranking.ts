@@ -1,61 +1,73 @@
 /**
- * Caminho de leitura do Ranking persistido.
+ * Boundary de leitura do Ranking persistido (`fdp.ranking.v1`).
  *
- * Esta fatia (#244) só distingue ranking vazio de populado. A gravação e a
- * renderização do ranking populado (pódio + tabela) entram no #245.
- *
- * A leitura é uma boundary estrita: qualquer conteúdo que não seja um snapshot
- * `versao: 1` com uma lista de participantes íntegros é tratado como vazio, para
- * não entregar dados corrompidos como se fossem confiáveis.
+ * O snapshot guarda somatórios brutos por participante num `Record` chaveado
+ * pela identidade de Ranking (`humano`, `bot:bras`). A leitura é estrita:
+ * qualquer conteúdo que não seja um snapshot `versao: 1` com participantes
+ * íntegros é tratado como vazio, para nunca entregar dado corrompido como
+ * confiável. Para a tela, o `Record` é materializado numa lista com a chave e o
+ * flag humano; as métricas e a ordem são calculadas em `ordenarRanking`.
  */
 
-export const CHAVE_RANKING = 'fdp.ranking.v1';
+import { CHAVE_RANKING, SNAPSHOT_VAZIO } from './tipos';
+import type { ParticipanteRanking, ParticipantePersistido, SnapshotRanking } from './tipos';
 
-export interface ParticipanteRanking {
-  nome: string;
-  humano: boolean;
-  vitorias: number;
-  partidas: number;
-  somaPosicoes: number;
-}
+export { CHAVE_RANKING } from './tipos';
+export type { ParticipanteRanking } from './tipos';
 
 export type RankingPersistido = { tipo: 'vazio' } | { tipo: 'populado'; participantes: ParticipanteRanking[] };
 
 const VAZIO: RankingPersistido = { tipo: 'vazio' };
 
 export function carregarRanking(armazenamento: Pick<Storage, 'getItem'>): RankingPersistido {
-  const bruto = armazenamento.getItem(CHAVE_RANKING);
-  if (bruto === null) return VAZIO;
-  return interpretar(bruto);
-}
-
-function interpretar(bruto: string): RankingPersistido {
-  try {
-    return classificar(JSON.parse(bruto));
-  } catch {
-    return VAZIO;
-  }
-}
-
-function classificar(conteudo: unknown): RankingPersistido {
-  if (!ehSnapshotV1(conteudo)) return VAZIO;
-  const participantes = conteudo.participantes.filter(ehParticipante);
-  if (participantes.length === 0 || participantes.length !== conteudo.participantes.length) return VAZIO;
+  const participantes = materializar(lerSnapshot(armazenamento));
+  if (participantes.length === 0) return VAZIO;
   return { tipo: 'populado', participantes };
 }
 
-function ehSnapshotV1(conteudo: unknown): conteudo is { versao: 1; participantes: unknown[] } {
-  if (typeof conteudo !== 'object' || conteudo === null) return false;
-  const registro = conteudo as Record<string, unknown>;
-  return registro.versao === 1 && Array.isArray(registro.participantes);
+/** Lê o snapshot bruto; qualquer conteúdo inválido vira o snapshot vazio. */
+export function lerSnapshot(armazenamento: Pick<Storage, 'getItem'>): SnapshotRanking {
+  const bruto = armazenamento.getItem(CHAVE_RANKING);
+  if (bruto === null) return SNAPSHOT_VAZIO;
+  try {
+    return validar(JSON.parse(bruto));
+  } catch {
+    return SNAPSHOT_VAZIO;
+  }
 }
 
-function ehParticipante(valor: unknown): valor is ParticipanteRanking {
+function materializar(snapshot: SnapshotRanking): ParticipanteRanking[] {
+  return Object.entries(snapshot.participantes).map(([chave, p]) => ({
+    ...p,
+    chave,
+    humano: chave === 'humano',
+  }));
+}
+
+function validar(conteudo: unknown): SnapshotRanking {
+  if (!ehSnapshotV1(conteudo)) return SNAPSHOT_VAZIO;
+  const entradas = Object.entries(conteudo.participantes);
+  if (!entradas.every(([chave, valor]) => chave !== '' && ehParticipante(valor))) return SNAPSHOT_VAZIO;
+  return conteudo as SnapshotRanking;
+}
+
+function ehSnapshotV1(conteudo: unknown): conteudo is { versao: 1; participantes: Record<string, unknown> } {
+  if (typeof conteudo !== 'object' || conteudo === null) return false;
+  const registro = conteudo as Record<string, unknown>;
+  const participantes = registro.participantes;
+  return (
+    registro.versao === 1 &&
+    typeof participantes === 'object' &&
+    participantes !== null &&
+    !Array.isArray(participantes)
+  );
+}
+
+function ehParticipante(valor: unknown): valor is ParticipantePersistido {
   if (typeof valor !== 'object' || valor === null) return false;
   const p = valor as Record<string, unknown>;
   return (
-    typeof p.nome === 'string' &&
-    typeof p.humano === 'boolean' &&
+    typeof p.nomeExibicao === 'string' &&
     ehNumeroFinito(p.vitorias) &&
     ehNumeroFinito(p.partidas) &&
     ehNumeroFinito(p.somaPosicoes)

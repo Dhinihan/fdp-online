@@ -2,6 +2,7 @@ import { Scene } from 'phaser';
 import { carregarRanking, type RankingPersistido } from '@/store/ranking/carregar-ranking';
 import { escalar, escalarFonte } from '../escala';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
+import { desenharTabelaRanking } from './desenhar-tabela-ranking';
 
 const COR_FUNDO = 0x1a1a2e;
 const COR_TITULO = '#e8ecf5';
@@ -12,10 +13,10 @@ const COR_BORDA = 0x2a3550;
 /**
  * Tela cheia do Ranking, aberta sobre a JogoScene (que fica pausada).
  *
- * Nesta fatia (#244) só renderiza o estado vazio. O snapshot é lido pela
- * boundary estrita `carregarRanking`, mas, enquanto o pódio/tabela não
- * existem, qualquer ranking (inclusive populado) é exibido como vazio — sem
- * uma tela só com título/fechar. O caso populado entra a partir do #245.
+ * Lê o snapshot pela boundary estrita `carregarRanking`: ranking vazio mostra a
+ * mensagem de tela vazia; ranking populado renderiza a tabela de participantes
+ * ordenada por Vitórias (#245). O pódio (#247) e os controles de ordenação
+ * (#246) entram nas próximas fatias.
  */
 export class RankingScene extends Scene {
   private objetos: Phaser.GameObjects.GameObject[] = [];
@@ -48,8 +49,8 @@ export class RankingScene extends Scene {
 
   private desenharConteudo(ranking: RankingPersistido): void {
     if (ranking.tipo === 'populado') {
-      // #245: renderizar pódio + tabela a partir de `ranking.participantes`.
-      // Até lá, qualquer snapshot cai no estado vazio.
+      this.objetos.push(...desenharTabelaRanking(this, ranking.participantes));
+      return;
     }
     this.desenharVazio();
   }
