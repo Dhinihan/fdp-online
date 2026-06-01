@@ -34,6 +34,8 @@ export class JogoScene extends Scene {
   private centrosMaos: { x: number; y: number }[] = [];
   private tweenVez?: Phaser.Tweens.Tween;
   private controller?: JogoController;
+  private resumoAtivo?: PontuacaoRodada;
+  private aoContinuarResumo?: () => void;
 
   constructor() {
     super({ key: 'JogoScene' });
@@ -56,8 +58,8 @@ export class JogoScene extends Scene {
       atualizarIndicadorVez: this.atualizarIndicadorVez.bind(this),
       atualizarPainel: this.atualizarPainel.bind(this),
       animarRecolhimentoTurno: this.animarRecolhimentoTurno.bind(this),
-      mostrarResumoRodada: (payload, onContinuar) => {
-        this.exibirResumoRodada(payload, onContinuar);
+      mostrarResumoRodada: (resumoRodada, onContinuar) => {
+        this.exibirResumoRodada(resumoRodada, onContinuar);
       },
       mostrarFimJogo: (classificacao) => {
         mostrarFimJogoDaCena(this, classificacao);
@@ -84,17 +86,32 @@ export class JogoScene extends Scene {
     return this.obterLayout().gameArea;
   }
 
-  private exibirResumoRodada(payload: PontuacaoRodada, onContinuar: () => void): void {
+  private exibirResumoRodada(resumoRodada: PontuacaoRodada, onContinuar: () => void): void {
+    this.resumoAtivo = resumoRodada;
+    this.aoContinuarResumo = onContinuar;
+    this.renderizarResumoRodada();
+  }
+
+  private renderizarResumoRodada(): void {
+    if (!this.resumoAtivo || !this.aoContinuarResumo) return;
+    limparObjetos(this.resumoObjetos);
     mostrarResumoRodada({
       cena: this,
-      numeroRodada: payload.numeroRodada,
-      jogadores: payload.jogadores,
-      placar: payload.placar,
-      penalidades: payload.penalidades,
+      numeroRodada: this.resumoAtivo.numeroRodada,
+      jogadores: this.resumoAtivo.jogadores,
+      placar: this.resumoAtivo.placar,
+      penalidades: this.resumoAtivo.penalidades,
       objetos: this.resumoObjetos,
-      onContinuar,
+      onContinuar: this.continuarResumoRodada,
     });
   }
+
+  private continuarResumoRodada = (): void => {
+    const onContinuar = this.aoContinuarResumo;
+    this.resumoAtivo = undefined;
+    this.aoContinuarResumo = undefined;
+    onContinuar?.();
+  };
 
   private atualizarPainel(): void {
     this.layout = this.obterLayout();
@@ -128,6 +145,7 @@ export class JogoScene extends Scene {
     this.controller?.redesenharDeclaracaoAtual();
     this.sincronizarBadges();
     this.atualizarIndicadorVez();
+    this.renderizarResumoRodada();
   };
 
   private desenharMaos(maos: Parameters<typeof desenharMaosJogo>[0]['maos'], gameArea: Retangulo): void {
@@ -178,6 +196,8 @@ export class JogoScene extends Scene {
   private aoEncerrar = (): void => {
     this.limparBadges();
     limparObjetos(this.resumoObjetos);
+    this.resumoAtivo = undefined;
+    this.aoContinuarResumo = undefined;
     aoEncerrarCena({
       cena: this,
       redesenhar: this.redesenhar,

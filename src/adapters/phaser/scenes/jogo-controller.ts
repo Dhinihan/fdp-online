@@ -27,7 +27,7 @@ export interface DependenciasCena {
   atualizarIndicadorVez: () => void;
   atualizarPainel: () => void;
   animarRecolhimentoTurno: () => void;
-  mostrarResumoRodada: (payload: PontuacaoRodada, onContinuar: () => void) => void;
+  mostrarResumoRodada: (resumoRodada: PontuacaoRodada, onContinuar: () => void) => void;
   mostrarFimJogo: (classificacao: Jogador[]) => void;
   desativarResize: () => void;
   getGameArea: () => Retangulo;
@@ -94,9 +94,9 @@ export class JogoController {
   }
 
   private aoRodadaEncerrada(): void {
-    const aguardarCleanup = this.processamentoTurno ?? Promise.resolve();
+    const aguardarLimpeza = this.processamentoTurno ?? Promise.resolve();
     this.deps.mostrarResumoRodada(this.montarResumoRodada(), () => {
-      void this.continuarAposResumo(aguardarCleanup);
+      void this.continuarAposResumo(aguardarLimpeza);
     });
   }
 
@@ -106,8 +106,8 @@ export class JogoController {
     return { ...this.ultimaPontuacao, numeroRodada: this.partida?.estado.numeroRodada ?? 0, jogadores };
   }
 
-  private async continuarAposResumo(aguardarCleanup: Promise<void>): Promise<void> {
-    await aguardarCleanup;
+  private async continuarAposResumo(aguardarLimpeza: Promise<void>): Promise<void> {
+    await aguardarLimpeza.catch(() => undefined);
     this.iniciarNovaRodada();
   }
 
@@ -182,7 +182,10 @@ export class JogoController {
       atualizarPainel: this.deps.atualizarPainel,
     });
     this.processamentoTurno = processamento;
-    await processamento;
-    this.processamentoTurno = undefined;
+    try {
+      await processamento;
+    } finally {
+      this.processamentoTurno = undefined;
+    }
   }
 }
