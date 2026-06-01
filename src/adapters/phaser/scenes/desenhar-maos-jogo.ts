@@ -7,7 +7,7 @@ import { criarFundoInterativo } from '../input/input-humano';
 import type { Retangulo } from '../layout';
 import type { EstadoDestaque } from '../renderers/destaque-renderer';
 import { desenharMaoNaCena } from '../renderers/mao-scene-renderer';
-import { calcularPosicoes } from '../renderers/posicoes-mao';
+import { calcularCentroMao, calcularPosicoes } from '../renderers/posicoes-mao';
 
 interface ConfigMaosJogo {
   cena: Scene;
@@ -22,10 +22,12 @@ interface ConfigMaosJogo {
 export function desenharMaosJogo(config: ConfigMaosJogo): {
   labels: Phaser.GameObjects.Text[];
   direcoes: ('horizontal' | 'vertical')[];
+  centrosMaos: { x: number; y: number }[];
 } {
   const labels: Phaser.GameObjects.Text[] = [];
   const quantidadesCartas = config.maos.map((mao) => mao.cartas.length);
   const posicoes = calcularPosicoesMaos(config.cena, config.gameArea, quantidadesCartas);
+  const centrosMaos = posicoes.map((p, i) => calcularCentroMao(p.mao, quantidadesCartas[i] ?? 0));
   config.maos.forEach((mao, i) => {
     desenharMaoNaCena({
       cena: config.cena,
@@ -45,7 +47,7 @@ export function desenharMaosJogo(config: ConfigMaosJogo): {
     decisorHumano: config.decisorHumano,
     destaque: config.destaque,
   });
-  return { labels, direcoes: posicoes.map((p) => p.mao.direcao) };
+  return { labels, direcoes: posicoes.map((p) => p.mao.direcao), centrosMaos };
 }
 
 function calcularPosicoesMaos(

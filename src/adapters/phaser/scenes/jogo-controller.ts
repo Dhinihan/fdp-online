@@ -1,7 +1,7 @@
 import type { Scene } from 'phaser';
 import type { Partida } from '@/core/Partida';
 import type { Jogador } from '@/types/entidades';
-import { estadoEmJogo } from '@/types/estado-rodada';
+import { ehFaseDeclaracao, estadoEmJogo } from '@/types/estado-rodada';
 import { DecisorDeclaracaoHumano } from '../DecisorDeclaracaoHumano';
 import type { DecisorHumano } from '../DecisorHumano';
 import { fabricarPartida } from '../factories/rodada-factory';
@@ -25,6 +25,8 @@ export interface DependenciasCena {
   getLabels: () => Phaser.GameObjects.Text[];
   getDirecoesLabels: () => ('horizontal' | 'vertical')[];
   modoDebug: boolean;
+  renderizarBadges: (jogadorIdAnimar?: string) => void;
+  limparBadges: () => void;
 }
 
 export class JogoController {
@@ -86,7 +88,7 @@ export class JogoController {
     const rodada = this.partida?.rodadaAtual;
     if (!rodada) return;
     const estado = rodada.estado;
-    if (estado.fase !== 'aguardandoDeclaracao' && estado.fase !== 'processandoDeclaracao') return;
+    if (!ehFaseDeclaracao(estado.fase)) return;
     const emJogo = estadoEmJogo(estado);
     const maoAtual = emJogo.maos[emJogo.jogadorAtual];
     if (maoAtual.jogador.id !== 'humano') return;
@@ -121,6 +123,8 @@ export class JogoController {
       onAlterarDeclaracao: this.atualizarValorDeclaracao,
       atualizarIndicadorVez: this.deps.atualizarIndicadorVez,
       atualizarPainel: this.deps.atualizarPainel,
+      renderizarBadges: this.deps.renderizarBadges,
+      limparBadges: this.deps.limparBadges,
       iniciarTurnos: this.iniciarFluxoTurno.bind(this),
     }).catch(() => undefined);
   }

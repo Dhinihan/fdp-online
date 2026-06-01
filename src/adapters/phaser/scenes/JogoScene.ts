@@ -1,10 +1,11 @@
 import { Scene } from 'phaser';
 import { VALOR_MINIMO } from '@/core/Carta';
 import { Rodada } from '@/core/Rodada';
-import { estadoEmJogo } from '@/types/estado-rodada';
+import { ehFaseDeclaracao, estadoEmJogo } from '@/types/estado-rodada';
 import { DecisorHumano } from '../DecisorHumano';
 import { calcularLayout, type LayoutPainel, type Retangulo } from '../layout';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
+import { renderizarBadgesDeclaradoTurno0 } from '../renderers/declarado-turno0-renderer';
 import { destruirDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
 import { limparObjetos } from '../renderers/limpar-objetos';
 import { renderizarMesa } from '../renderers/mesa-renderer';
@@ -19,6 +20,7 @@ export class JogoScene extends Scene {
   objetos: Phaser.GameObjects.GameObject[] = [];
   mesaObjetos: Phaser.GameObjects.GameObject[] = [];
   objetosDeclaracao: Phaser.GameObjects.GameObject[] = [];
+  objetosDeclaradoTurno0: Phaser.GameObjects.GameObject[] = [];
   destaque: EstadoDestaque = {};
   painelObjetos: Phaser.GameObjects.GameObject[] = [];
   fimJogoObjetos: Phaser.GameObjects.GameObject[] = [];
@@ -27,6 +29,7 @@ export class JogoScene extends Scene {
   private decisorHumano = new DecisorHumano();
   private labels: Phaser.GameObjects.Text[] = [];
   private direcoesLabels: ('horizontal' | 'vertical')[] = [];
+  private centrosMaos: { x: number; y: number }[] = [];
   private tweenVez?: Phaser.Tweens.Tween;
   private controller?: JogoController;
 
@@ -65,6 +68,8 @@ export class JogoScene extends Scene {
       getLabels: () => this.labels,
       getDirecoesLabels: () => this.direcoesLabels,
       modoDebug: Boolean(this.game.registry.get('modoDebug')),
+      renderizarBadges: this.renderizarBadges.bind(this),
+      limparBadges: this.limparBadges.bind(this),
     };
   }
 
@@ -107,6 +112,7 @@ export class JogoScene extends Scene {
     const cartas = estado.mesa.map((m) => m.carta);
     renderizarMesa({ cena: this, mesa: cartas, objetos: this.mesaObjetos, gameArea });
     this.controller?.redesenharDeclaracaoAtual();
+    this.sincronizarBadges();
     this.atualizarIndicadorVez();
   };
 
@@ -123,9 +129,40 @@ export class JogoScene extends Scene {
     });
     this.labels = resultado.labels;
     this.direcoesLabels = resultado.direcoes;
+    this.centrosMaos = resultado.centrosMaos;
+  }
+
+  private renderizarBadges(jogadorIdAnimar?: string): void {
+    const estado = this.controller?.partida?.estado;
+    if (!estado || estado.fase === 'distribuindo') return;
+    const emJogo = estadoEmJogo(estado);
+    renderizarBadgesDeclaradoTurno0({
+      cena: this,
+      jogadores: emJogo.maos.map((m) => m.jogador),
+      declaracoes: emJogo.declaracoes,
+      centrosMaos: this.centrosMaos,
+      objetos: this.objetosDeclaradoTurno0,
+      gameArea: this.obterGameArea(),
+      jogadorIdAnimar,
+    });
+  }
+
+  private limparBadges(): void {
+    limparObjetos(this.objetosDeclaradoTurno0);
+  }
+
+  private sincronizarBadges(): void {
+    const estado = this.controller?.partida?.estado;
+    if (!estado) return;
+    if (ehFaseDeclaracao(estado.fase)) {
+      this.renderizarBadges();
+      return;
+    }
+    this.limparBadges();
   }
 
   private aoEncerrar = (): void => {
+    this.limparBadges();
     aoEncerrarCena({
       cena: this,
       redesenhar: this.redesenhar,

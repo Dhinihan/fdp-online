@@ -1,7 +1,7 @@
 import type { Scene } from 'phaser';
 import type { Rodada } from '@/core/Rodada';
 import type { Jogador } from '@/types/entidades';
-import { estadoEmJogo } from '@/types/estado-rodada';
+import { ehFaseDeclaracao, estadoEmJogo } from '@/types/estado-rodada';
 import type { DecisorDeclaracaoHumano } from '../DecisorDeclaracaoHumano';
 import type { Retangulo } from '../layout';
 import { desenharBotoesDeclaracao, limparObjetosDeclaracao } from '../renderers/declaracao-renderer';
@@ -17,8 +17,14 @@ interface ConfigDeclaracoes {
   onAlterarDeclaracao: (valor: number) => void;
   atualizarIndicadorVez: () => void;
   atualizarPainel: () => void;
+  renderizarBadges: (jogadorIdAnimar?: string) => void;
+  limparBadges: () => void;
   iniciarTurnos: () => Promise<void>;
 }
+
+const ESPERA_APOS_DECLARACAO_BOT_MS = 650;
+/** Pausa com todos os badges visíveis antes do turno 1 de jogada. */
+const ESPERA_ANTES_PRIMEIRO_TURNO_MS = 1400;
 
 interface ConfigTurnos {
   cena: Scene;
@@ -35,15 +41,23 @@ interface ConfigTurnos {
 
 export async function processarDeclaracoes(config: ConfigDeclaracoes): Promise<void> {
   const { rodada } = config;
-  while (faseDeclaracao(rodada)) {
+  while (ehFaseDeclaracao(rodada.estado.fase)) {
     await prepararDeclaracaoAtual(config);
+    const declaradorId = obterJogadorAtualId(rodada);
     const declarou = await tentarDeclarar(rodada);
     if (!declarou) return;
     limparObjetosDeclaracao(config.objetos);
+    const fimDeclaracao = rodada.estado.fase === 'aguardandoJogada';
+    config.renderizarBadges(declaradorId);
     config.atualizarPainel();
     config.atualizarIndicadorVez();
+    if (declaradorId !== 'humano' || fimDeclaracao) {
+      await esperar(config.cena, ESPERA_APOS_DECLARACAO_BOT_MS);
+    }
   }
   if (rodada.estado.fase === 'aguardandoJogada') {
+    await esperar(config.cena, ESPERA_ANTES_PRIMEIRO_TURNO_MS);
+    config.limparBadges();
     void config.iniciarTurnos().catch(() => undefined);
   }
 }
@@ -105,8 +119,9 @@ async function atualizarFimDeTurno(config: ConfigTurnos): Promise<void> {
   });
 }
 
-function faseDeclaracao(rodada: Rodada): boolean {
-  return rodada.estado.fase === 'aguardandoDeclaracao' || rodada.estado.fase === 'processandoDeclaracao';
+function obterJogadorAtualId(rodada: Rodada): string {
+  const emJogo = estadoEmJogo(rodada.estado);
+  return emJogo.maos[emJogo.jogadorAtual].jogador.id;
 }
 
 async function tentarDeclarar(rodada: Rodada): Promise<boolean> {

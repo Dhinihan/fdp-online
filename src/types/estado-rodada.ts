@@ -66,3 +66,7 @@ export function estadoEmJogo(estado: EstadoRodada): EstadoEmJogo {
   }
   return estado;
 }
+
+export function ehFaseDeclaracao(fase: FaseRodada): boolean {
+  return fase === 'aguardandoDeclaracao' || fase === 'processandoDeclaracao';
+}

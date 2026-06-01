@@ -160,3 +160,13 @@ function calcularInicioCentralizado(cx: number, quantidadeCartas: number, espaca
   const larguraMao = Math.max(0, quantidadeCartas - 1) * espacamento;
   return Math.round(cx - larguraMao / 2);
 }
+
+/** Centro da mão na tela — mesmo ponto usado para ancorar a carta do meio. */
+export function calcularCentroMao(mao: PosicaoMao, quantidadeCartas: number): { x: number; y: number } {
+  if (quantidadeCartas <= 0) return { x: mao.x, y: mao.y };
+  const deslocamentoTotal = (quantidadeCartas - 1) * mao.espacamento;
+  if (mao.direcao === 'horizontal') {
+    return { x: Math.round(mao.x + deslocamentoTotal / 2), y: mao.y };
+  }
+  return { x: mao.x, y: Math.round(mao.y + deslocamentoTotal / 2) };
+}
