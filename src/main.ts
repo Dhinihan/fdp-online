@@ -1,6 +1,7 @@
 import { Game } from 'phaser';
 import { JogoScene } from './adapters/phaser/scenes/JogoScene';
 import { MenuScene } from './adapters/phaser/scenes/MenuScene';
+import { RankingScene } from './adapters/phaser/scenes/RankingScene';
 import './style.css';
 
 let jogo: Game | null = null;
@@ -23,7 +24,7 @@ function criarConfiguracaoJogo(containerId?: string): Phaser.Types.Core.GameConf
     height: window.innerHeight * dpr,
     parent: containerId,
     zoom: 1 / dpr,
-    scene: [MenuScene, JogoScene],
+    scene: [MenuScene, JogoScene, RankingScene],
     scale: {
       mode: Phaser.Scale.NONE,
     },
