@@ -128,8 +128,14 @@ export class JogoScene extends Scene {
       cartaVirada: emJogo?.cartaVirada ?? null,
       layout: this.layout,
       objetos: this.painelObjetos,
+      aoAbrirRanking: this.abrirRanking,
     });
   }
+
+  private abrirRanking = (): void => {
+    this.scene.launch('RankingScene');
+    this.scene.pause();
+  };
 
   private redesenharTela = (): void => {
     destruirDestaque(this.destaque);

@@ -18,6 +18,7 @@ export interface ConfigPainelInfo {
   cartaVirada: Carta | null;
   layout: LayoutPainel;
   objetos: Phaser.GameObjects.GameObject[];
+  aoAbrirRanking?: () => void;
 }
 
 interface ConfigDesenho {
@@ -42,6 +43,7 @@ export function desenharPainelInfo(config: ConfigPainelInfo): void {
 
   desenharFundo(base);
   desenharCabecalhoRodada(base, config.numeroRodada);
+  if (config.aoAbrirRanking) desenharBotaoTrofeu(base, config.aoAbrirRanking);
   const { colunas, areaManilha } = calcularLayoutTabela(cena, infoArea, ehPaisagem);
   desenharTabela(base, config, colunas);
   if (config.cartaVirada) {
@@ -83,6 +85,20 @@ function desenharCabecalhoRodada(config: ConfigDesenho, numero: number): void {
     .setOrigin(0.5, 0)
     .setDepth(81);
   objetos.push(texto);
+}
+
+function desenharBotaoTrofeu(config: ConfigDesenho, aoAbrir: () => void): void {
+  const { cena, objetos, area } = config;
+  const x = area.x + escalar(16, cena);
+  const y = area.y + escalar(22, cena);
+  const trofeu = cena.add
+    .text(x, y, '🏆', { fontSize: escalarFonte(18, cena), fontFamily: 'Arial' })
+    .setOrigin(0, 0.5)
+    .setDepth(82);
+  const alvo = escalar(36, cena);
+  const zona = cena.add.zone(x, y, alvo, alvo).setOrigin(0, 0.5).setDepth(82).setInteractive({ useHandCursor: true });
+  zona.on('pointerdown', aoAbrir);
+  objetos.push(trofeu, zona);
 }
 
 function calcularLayoutTabela(
