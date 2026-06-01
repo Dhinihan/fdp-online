@@ -24,7 +24,7 @@ interface LayoutResumo {
   botaoY: number;
 }
 
-export function formatarDelta(penalidade: number): { texto: string; cor: string } {
+function formatarDelta(penalidade: number): { texto: string; cor: string } {
   if (penalidade === 0) return { texto: '(0)', cor: '#4ade80' };
   return { texto: `(-${String(penalidade)})`, cor: '#ff6b6b' };
 }

@@ -45,6 +45,7 @@ export class JogoController {
   private turnoAnterior = 1;
   private valorDeclaracaoAtual = 0;
   private ultimaPontuacao: PlacarRodada = { placar: {}, penalidades: {} };
+  private processamentoTurno?: Promise<void>;
   private readonly decisorDeclaracaoHumano = new DecisorDeclaracaoHumano();
 
   private readonly deps: DependenciasCena;
@@ -62,36 +63,52 @@ export class JogoController {
     this.partida = fabricarPartida(
       JOGADORES,
       { jogada: this.deps.decisorHumano, declaracao: this.decisorDeclaracaoHumano },
-      {
-        onCartaJogada: this.deps.redesenharTela,
-        onTurnoGanho: (id) => {
-          this.vencedorTurno = id;
-        },
-        onTurnoEmpatado: () => {
-          this.vencedorTurno = undefined;
-        },
-        onRodadaEncerrada: () => {
-          this.deps.mostrarResumoRodada(this.montarResumoRodada(), this.iniciarNovaRodada.bind(this));
-        },
-        onManilhaVirada: this.deps.atualizarPainel,
-        onRodadaIniciada: this.deps.atualizarPainel,
-        onPontuacaoAplicada: (placar, penalidades) => {
-          this.ultimaPontuacao = { placar, penalidades };
-          this.deps.atualizarPainel();
-        },
-        onJogoEncerrado: (classificacao) => {
-          this.deps.desativarResize();
-          this.deps.mostrarFimJogo(classificacao);
-        },
-        modoDebug: this.deps.modoDebug,
-      },
+      this.criarCallbacksPartida(),
     );
+  }
+
+  private criarCallbacksPartida() {
+    return {
+      onCartaJogada: this.deps.redesenharTela,
+      onTurnoGanho: (id: string) => {
+        this.vencedorTurno = id;
+      },
+      onTurnoEmpatado: () => {
+        this.vencedorTurno = undefined;
+      },
+      onRodadaEncerrada: () => {
+        this.aoRodadaEncerrada();
+      },
+      onManilhaVirada: this.deps.atualizarPainel,
+      onRodadaIniciada: this.deps.atualizarPainel,
+      onPontuacaoAplicada: (placar: Record<string, number>, penalidades: Record<string, number>) => {
+        this.ultimaPontuacao = { placar, penalidades };
+        this.deps.atualizarPainel();
+      },
+      onJogoEncerrado: (classificacao: Jogador[]) => {
+        this.deps.desativarResize();
+        this.deps.mostrarFimJogo(classificacao);
+      },
+      modoDebug: this.deps.modoDebug,
+    };
+  }
+
+  private aoRodadaEncerrada(): void {
+    const aguardarCleanup = this.processamentoTurno ?? Promise.resolve();
+    this.deps.mostrarResumoRodada(this.montarResumoRodada(), () => {
+      void this.continuarAposResumo(aguardarCleanup);
+    });
   }
 
   private montarResumoRodada(): PontuacaoRodada {
     const rodada = this.partida?.rodadaAtual;
     const jogadores = rodada ? estadoEmJogo(rodada.estado).maos.map((m) => m.jogador) : [];
     return { ...this.ultimaPontuacao, numeroRodada: this.partida?.estado.numeroRodada ?? 0, jogadores };
+  }
+
+  private async continuarAposResumo(aguardarCleanup: Promise<void>): Promise<void> {
+    await aguardarCleanup;
+    this.iniciarNovaRodada();
   }
 
   iniciarNovaRodada(): void {
@@ -152,7 +169,7 @@ export class JogoController {
   private async iniciarFluxoTurno(): Promise<void> {
     const rodada = this.partida?.rodadaAtual;
     if (!rodada) return;
-    await iniciarProcessamentoTurno({
+    const processamento = iniciarProcessamentoTurno({
       cena: this.deps.scene,
       rodada,
       getLabels: this.deps.getLabels,
@@ -164,5 +181,8 @@ export class JogoController {
       atualizarIndicadorVez: this.deps.atualizarIndicadorVez,
       atualizarPainel: this.deps.atualizarPainel,
     });
+    this.processamentoTurno = processamento;
+    await processamento;
+    this.processamentoTurno = undefined;
   }
 }
