@@ -8,6 +8,9 @@ import {
 import { RngComSeed } from '@/core/RngComSeed';
 import type { Jogador } from '@/types/entidades';
 
+const TOTAL_FAIXAS = nomesBotsPorTemperatura.length;
+const SEEDS = Array.from({ length: 1000 }, (_, indice) => indice);
+
 function jogadores(): Jogador[] {
   return [
     { id: 'humano', nome: 'Humano', pontos: 5 },
@@ -15,6 +18,10 @@ function jogadores(): Jogador[] {
     { id: 'bot2', nome: 'Bot 2', pontos: 5 },
     { id: 'bot3', nome: 'Bot 3', pontos: 5 },
   ];
+}
+
+function faixaDe(temperatura: number): number {
+  return Math.min(Math.floor(temperatura * TOTAL_FAIXAS), TOTAL_FAIXAS - 1);
 }
 
 describe('Nomes dos bots', () => {
@@ -32,17 +39,54 @@ describe('Nomes dos bots', () => {
 });
 
 describe('Perfil dos bots', () => {
-  it('deve sortear temperaturas deterministicas por seed', () => {
-    const primeiro = sortearPerfisBots(jogadores(), new RngComSeed(158));
-    const segundo = sortearPerfisBots(jogadores(), new RngComSeed(158));
+  it('nunca deve sortear dois bots com o mesmo nome (zero colisoes em 1000 seeds)', () => {
+    for (const seed of SEEDS) {
+      const perfis = sortearPerfisBots(jogadores(), new RngComSeed(seed));
+      const nomes = perfis.map((perfil) => perfil.nome);
+      expect(new Set(nomes).size, `colisao de nome na seed ${seed.toString()}`).toBe(nomes.length);
+    }
+  });
 
-    expect(segundo).toEqual(primeiro);
+  it('deve sortear bots em faixas de temperatura distintas', () => {
+    for (const seed of SEEDS) {
+      const perfis = sortearPerfisBots(jogadores(), new RngComSeed(seed));
+      const faixas = perfis.map((perfil) => faixaDe(perfil.temperatura));
+      expect(new Set(faixas).size, `faixas repetidas na seed ${seed.toString()}`).toBe(faixas.length);
+    }
+  });
+
+  it('deve manter nome e temperatura coerentes (nome = nomePorTemperatura(temperatura))', () => {
+    for (const seed of SEEDS) {
+      const perfis = sortearPerfisBots(jogadores(), new RngComSeed(seed));
+      for (const perfil of perfis) {
+        expect(perfil.nome).toBe(nomePorTemperatura(perfil.temperatura));
+      }
+    }
   });
 
   it('deve sortear temperaturas no intervalo de 0 ate antes de 1', () => {
-    const perfis = sortearPerfisBots(jogadores(), new RngComSeed(158));
+    for (const seed of SEEDS) {
+      const perfis = sortearPerfisBots(jogadores(), new RngComSeed(seed));
+      expect(perfis.every((perfil) => perfil.temperatura >= 0 && perfil.temperatura < 1)).toBe(true);
+    }
+  });
+});
 
-    expect(perfis.every((perfil) => perfil.temperatura >= 0 && perfil.temperatura < 1)).toBe(true);
+describe('Perfil dos bots — determinismo e distribuicao', () => {
+  it('deve ser deterministico: mesma seed produz o mesmo resultado', () => {
+    for (const seed of [0, 7, 158, 999]) {
+      const primeiro = sortearPerfisBots(jogadores(), new RngComSeed(seed));
+      const segundo = sortearPerfisBots(jogadores(), new RngComSeed(seed));
+      expect(segundo).toEqual(primeiro);
+    }
+  });
+
+  it('nao deve proibir tres bots na metade alta da escala (sem forcar espalhamento)', () => {
+    const todasAltas = SEEDS.some((seed) => {
+      const perfis = sortearPerfisBots(jogadores(), new RngComSeed(seed));
+      return perfis.length >= 3 && perfis.every((perfil) => faixaDe(perfil.temperatura) >= TOTAL_FAIXAS / 2);
+    });
+    expect(todasAltas).toBe(true);
   });
 
   it('deve aplicar nome e temperatura apenas nos bots', () => {
