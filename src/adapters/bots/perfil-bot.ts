@@ -30,14 +30,23 @@ export interface PerfilBot {
   temperatura: number;
 }
 
+const totalFaixas = nomesBotsPorTemperatura.length;
+const larguraFaixa = 1 / totalFaixas;
+
 export function nomePorTemperatura(temperatura: number): string {
-  const faixa = Math.min(Math.floor(temperatura * nomesBotsPorTemperatura.length), nomesBotsPorTemperatura.length - 1);
+  const faixa = Math.min(Math.floor(temperatura * totalFaixas), totalFaixas - 1);
   return nomesBotsPorTemperatura[faixa];
 }
 
-export function sortearPerfisBots(jogadores: Jogador[], rng: Pick<GeradorAleatorio, 'random'>): PerfilBot[] {
-  return jogadores.filter(ehBot).map((jogador) => {
-    const temperatura = rng.random();
+export function sortearPerfisBots(
+  jogadores: Jogador[],
+  rng: Pick<GeradorAleatorio, 'random' | 'shuffle'>,
+): PerfilBot[] {
+  const bots = jogadores.filter(ehBot);
+  const faixas = rng.shuffle(Array.from({ length: totalFaixas }, (_, indice) => indice)).slice(0, bots.length);
+
+  return bots.map((jogador, indice) => {
+    const temperatura = (faixas[indice] + rng.random()) * larguraFaixa;
     return {
       id: jogador.id,
       nome: nomePorTemperatura(temperatura),
