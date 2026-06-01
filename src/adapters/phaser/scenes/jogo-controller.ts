@@ -10,6 +10,16 @@ import { desenharBotoesDeclaracao, limparObjetosDeclaracao } from '../renderers/
 import { JOGADORES } from './jogadores';
 import { iniciarProcessamentoTurno, processarDeclaracoes } from './jogo-scene-loop';
 
+interface PlacarRodada {
+  placar: Record<string, number>;
+  penalidades: Record<string, number>;
+}
+
+export interface PontuacaoRodada extends PlacarRodada {
+  numeroRodada: number;
+  jogadores: Jogador[];
+}
+
 export interface DependenciasCena {
   scene: Scene;
   decisorHumano: DecisorHumano;
@@ -17,7 +27,7 @@ export interface DependenciasCena {
   atualizarIndicadorVez: () => void;
   atualizarPainel: () => void;
   animarRecolhimentoTurno: () => void;
-  transicionarRodada: (continuar: () => void) => void;
+  mostrarResumoRodada: (payload: PontuacaoRodada, onContinuar: () => void) => void;
   mostrarFimJogo: (classificacao: Jogador[]) => void;
   desativarResize: () => void;
   getGameArea: () => Retangulo;
@@ -34,6 +44,7 @@ export class JogoController {
   vencedorTurno?: string;
   private turnoAnterior = 1;
   private valorDeclaracaoAtual = 0;
+  private ultimaPontuacao: PlacarRodada = { placar: {}, penalidades: {} };
   private readonly decisorDeclaracaoHumano = new DecisorDeclaracaoHumano();
 
   private readonly deps: DependenciasCena;
@@ -60,11 +71,14 @@ export class JogoController {
           this.vencedorTurno = undefined;
         },
         onRodadaEncerrada: () => {
-          this.deps.transicionarRodada(this.iniciarNovaRodada.bind(this));
+          this.deps.mostrarResumoRodada(this.montarResumoRodada(), this.iniciarNovaRodada.bind(this));
         },
         onManilhaVirada: this.deps.atualizarPainel,
         onRodadaIniciada: this.deps.atualizarPainel,
-        onPontuacaoAplicada: this.deps.atualizarPainel,
+        onPontuacaoAplicada: (placar, penalidades) => {
+          this.ultimaPontuacao = { placar, penalidades };
+          this.deps.atualizarPainel();
+        },
         onJogoEncerrado: (classificacao) => {
           this.deps.desativarResize();
           this.deps.mostrarFimJogo(classificacao);
@@ -72,6 +86,12 @@ export class JogoController {
         modoDebug: this.deps.modoDebug,
       },
     );
+  }
+
+  private montarResumoRodada(): PontuacaoRodada {
+    const rodada = this.partida?.rodadaAtual;
+    const jogadores = rodada ? estadoEmJogo(rodada.estado).maos.map((m) => m.jogador) : [];
+    return { ...this.ultimaPontuacao, numeroRodada: this.partida?.estado.numeroRodada ?? 0, jogadores };
   }
 
   iniciarNovaRodada(): void {

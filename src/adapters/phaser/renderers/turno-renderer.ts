@@ -1,6 +1,4 @@
 import type { Scene } from 'phaser';
-import { escalar, escalarFonte } from '../escala';
-import type { Retangulo } from '../layout';
 
 export interface ConfigIndicadorVez {
   cena: Scene;
@@ -62,21 +60,4 @@ export function animarRecolhimentoTurno(config: ConfigAnimarTurno): void {
       },
     });
   });
-}
-
-export function mostrarOverlayRodadaConcluida(
-  cena: Scene,
-  objetos: Phaser.GameObjects.GameObject[],
-  gameArea: Retangulo,
-): void {
-  const cx = gameArea.x + gameArea.largura / 2;
-  const cy = gameArea.y + gameArea.altura / 2;
-  const largura = escalar(320, cena);
-  const altura = escalar(80, cena);
-  const fundo = cena.add.rectangle(cx, cy, largura, altura, 0x000000, 0.7).setDepth(200);
-  const texto = cena.add
-    .text(cx, cy, 'Rodada concluída', { fontSize: escalarFonte(24, cena), color: '#ffffff' })
-    .setOrigin(0.5)
-    .setDepth(201);
-  objetos.push(fundo, texto);
 }

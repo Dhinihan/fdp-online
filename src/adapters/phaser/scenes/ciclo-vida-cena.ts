@@ -1,8 +1,6 @@
-import type { Retangulo } from '../layout';
 import type { ResizeDebouncer } from '../redimensionamento';
 import { destruirDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
 import { limparObjetos } from '../renderers/limpar-objetos';
-import { mostrarOverlayRodadaConcluida } from '../renderers/turno-renderer';
 
 interface ConfigEncerramento {
   cena: Phaser.Scene;
@@ -34,16 +32,4 @@ export function desativarResize(cena: Phaser.Scene, redesenhar?: ResizeDebouncer
   if (!redesenhar) return;
   cena.scale.off('resize', redesenhar);
   redesenhar.limpar();
-}
-
-interface ConfigTransicaoRodada {
-  cena: Phaser.Scene;
-  objetos: Phaser.GameObjects.GameObject[];
-  callback: () => void;
-  gameArea: Retangulo;
-}
-
-export function transicionarRodada(config: ConfigTransicaoRodada): void {
-  mostrarOverlayRodadaConcluida(config.cena, config.objetos, config.gameArea);
-  config.cena.time.delayedCall(900, config.callback);
 }

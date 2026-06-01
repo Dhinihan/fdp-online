@@ -10,11 +10,12 @@ import { destruirDestaque, type EstadoDestaque } from '../renderers/destaque-ren
 import { limparObjetos } from '../renderers/limpar-objetos';
 import { renderizarMesa } from '../renderers/mesa-renderer';
 import { desenharPainelInfo } from '../renderers/painel-info-renderer';
+import { mostrarResumoRodada } from '../renderers/resumo-rodada-renderer';
 import { animarRecolhimentoTurno, atualizarIndicadorVez } from '../renderers/turno-renderer';
-import { aoEncerrarCena, desativarResize, transicionarRodada } from './ciclo-vida-cena';
+import { aoEncerrarCena, desativarResize } from './ciclo-vida-cena';
 import { desenharMaosJogo } from './desenhar-maos-jogo';
 import { mostrarFimJogoDaCena } from './fim-jogo-scene';
-import { JogoController, type DependenciasCena } from './jogo-controller';
+import { JogoController, type DependenciasCena, type PontuacaoRodada } from './jogo-controller';
 
 export class JogoScene extends Scene {
   objetos: Phaser.GameObjects.GameObject[] = [];
@@ -24,6 +25,7 @@ export class JogoScene extends Scene {
   destaque: EstadoDestaque = {};
   painelObjetos: Phaser.GameObjects.GameObject[] = [];
   fimJogoObjetos: Phaser.GameObjects.GameObject[] = [];
+  resumoObjetos: Phaser.GameObjects.GameObject[] = [];
   private layout?: LayoutPainel;
   private redesenhar?: ResizeDebouncer;
   private decisorHumano = new DecisorHumano();
@@ -54,8 +56,8 @@ export class JogoScene extends Scene {
       atualizarIndicadorVez: this.atualizarIndicadorVez.bind(this),
       atualizarPainel: this.atualizarPainel.bind(this),
       animarRecolhimentoTurno: this.animarRecolhimentoTurno.bind(this),
-      transicionarRodada: (cb) => {
-        transicionarRodada({ cena: this, objetos: this.objetos, callback: cb, gameArea: this.obterGameArea() });
+      mostrarResumoRodada: (payload, onContinuar) => {
+        this.exibirResumoRodada(payload, onContinuar);
       },
       mostrarFimJogo: (classificacao) => {
         mostrarFimJogoDaCena(this, classificacao);
@@ -80,6 +82,18 @@ export class JogoScene extends Scene {
 
   private obterGameArea(): Retangulo {
     return this.obterLayout().gameArea;
+  }
+
+  private exibirResumoRodada(payload: PontuacaoRodada, onContinuar: () => void): void {
+    mostrarResumoRodada({
+      cena: this,
+      numeroRodada: payload.numeroRodada,
+      jogadores: payload.jogadores,
+      placar: payload.placar,
+      penalidades: payload.penalidades,
+      objetos: this.resumoObjetos,
+      onContinuar,
+    });
   }
 
   private atualizarPainel(): void {
@@ -163,6 +177,7 @@ export class JogoScene extends Scene {
 
   private aoEncerrar = (): void => {
     this.limparBadges();
+    limparObjetos(this.resumoObjetos);
     aoEncerrarCena({
       cena: this,
       redesenhar: this.redesenhar,
