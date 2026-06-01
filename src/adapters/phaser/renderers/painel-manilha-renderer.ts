@@ -2,7 +2,12 @@ import type { Scene } from 'phaser';
 import type { Carta, Valor } from '@/core/Carta';
 import { escalar, escalarFonte } from '../escala';
 import type { Retangulo } from '../layout';
-import { criarMiniCarta } from './mini-carta-renderer';
+import { calcularLayoutManilha, type LayoutManilha } from '../layout-manilha';
+import { ALTURA, criarCartaFrente, LARGURA } from './carta-renderer';
+
+export const MARGEM_BASE = 8;
+export const GAP_CARTA_LABEL_BASE = 4;
+export const ALTURA_LABEL_BASE = 14;
 
 interface ConfigManilha {
   cena: Scene;
@@ -15,31 +20,32 @@ interface ConfigManilha {
 
 export function desenharManilhaNoPainel(config: ConfigManilha): void {
   const { cena, objetos, cartaVirada, manilha, areaManilha, ehPaisagem } = config;
-  const posicao = calcularPosicaoManilha(cena, areaManilha, ehPaisagem);
-  const miniCarta = criarMiniCarta({ cena, x: posicao.x, y: posicao.y, carta: cartaVirada });
-  miniCarta.setDepth(81);
-  objetos.push(miniCarta);
-  const label = criarLabelManilha({ cena, manilha, posicao });
+  const layout = calcularLayoutManilha({
+    area: areaManilha,
+    cartaLargura: escalar(LARGURA, cena),
+    cartaAltura: escalar(ALTURA, cena),
+    margem: escalar(MARGEM_BASE, cena),
+    gapCartaLabel: escalar(GAP_CARTA_LABEL_BASE, cena),
+    alturaLabel: escalar(ALTURA_LABEL_BASE, cena),
+    ehPaisagem,
+  });
+  const carta = criarCartaFrente({ cena, x: layout.cartaX, y: layout.cartaY, carta: cartaVirada });
+  carta.setScale(layout.escala).setDepth(81);
+  objetos.push(carta);
+  const label = criarLabelManilha({ cena, manilha, layout });
   objetos.push(label);
-}
-
-function calcularPosicaoManilha(cena: Scene, area: Retangulo, ehPaisagem: boolean): { x: number; y: number } {
-  if (ehPaisagem) {
-    return { x: area.x + area.largura / 2, y: area.y + area.altura - escalar(70, cena) };
-  }
-  return { x: area.x + area.largura / 2, y: area.y + area.altura / 2 };
 }
 
 interface ConfigLabel {
   cena: Scene;
   manilha: Valor;
-  posicao: { x: number; y: number };
+  layout: LayoutManilha;
 }
 
 function criarLabelManilha(config: ConfigLabel): Phaser.GameObjects.Text {
-  const { cena, manilha, posicao } = config;
+  const { cena, manilha, layout } = config;
   return cena.add
-    .text(posicao.x, posicao.y + escalar(32, cena), `Manilha: ${manilha}`, {
+    .text(layout.labelX, layout.labelY, `Manilha: ${manilha}`, {
       fontSize: escalarFonte(9, cena),
       color: '#facc15',
       fontFamily: 'Arial',
