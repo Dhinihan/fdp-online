@@ -10,11 +10,12 @@ import { destruirDestaque, type EstadoDestaque } from '../renderers/destaque-ren
 import { limparObjetos } from '../renderers/limpar-objetos';
 import { renderizarMesa } from '../renderers/mesa-renderer';
 import { desenharPainelInfo } from '../renderers/painel-info-renderer';
+import { mostrarResumoRodada } from '../renderers/resumo-rodada-renderer';
 import { animarRecolhimentoTurno, atualizarIndicadorVez } from '../renderers/turno-renderer';
-import { aoEncerrarCena, desativarResize, transicionarRodada } from './ciclo-vida-cena';
+import { aoEncerrarCena, desativarResize } from './ciclo-vida-cena';
 import { desenharMaosJogo } from './desenhar-maos-jogo';
 import { mostrarFimJogoDaCena } from './fim-jogo-scene';
-import { JogoController, type DependenciasCena } from './jogo-controller';
+import { JogoController, type DependenciasCena, type PontuacaoRodada } from './jogo-controller';
 
 export class JogoScene extends Scene {
   objetos: Phaser.GameObjects.GameObject[] = [];
@@ -24,6 +25,7 @@ export class JogoScene extends Scene {
   destaque: EstadoDestaque = {};
   painelObjetos: Phaser.GameObjects.GameObject[] = [];
   fimJogoObjetos: Phaser.GameObjects.GameObject[] = [];
+  resumoObjetos: Phaser.GameObjects.GameObject[] = [];
   private layout?: LayoutPainel;
   private redesenhar?: ResizeDebouncer;
   private decisorHumano = new DecisorHumano();
@@ -32,6 +34,8 @@ export class JogoScene extends Scene {
   private centrosMaos: { x: number; y: number }[] = [];
   private tweenVez?: Phaser.Tweens.Tween;
   private controller?: JogoController;
+  private resumoAtivo?: PontuacaoRodada;
+  private aoContinuarResumo?: () => void;
 
   constructor() {
     super({ key: 'JogoScene' });
@@ -54,8 +58,8 @@ export class JogoScene extends Scene {
       atualizarIndicadorVez: this.atualizarIndicadorVez.bind(this),
       atualizarPainel: this.atualizarPainel.bind(this),
       animarRecolhimentoTurno: this.animarRecolhimentoTurno.bind(this),
-      transicionarRodada: (cb) => {
-        transicionarRodada({ cena: this, objetos: this.objetos, callback: cb, gameArea: this.obterGameArea() });
+      mostrarResumoRodada: (resumoRodada, onContinuar) => {
+        this.exibirResumoRodada(resumoRodada, onContinuar);
       },
       mostrarFimJogo: (classificacao) => {
         mostrarFimJogoDaCena(this, classificacao);
@@ -81,6 +85,33 @@ export class JogoScene extends Scene {
   private obterGameArea(): Retangulo {
     return this.obterLayout().gameArea;
   }
+
+  private exibirResumoRodada(resumoRodada: PontuacaoRodada, onContinuar: () => void): void {
+    this.resumoAtivo = resumoRodada;
+    this.aoContinuarResumo = onContinuar;
+    this.renderizarResumoRodada();
+  }
+
+  private renderizarResumoRodada(): void {
+    if (!this.resumoAtivo || !this.aoContinuarResumo) return;
+    limparObjetos(this.resumoObjetos);
+    mostrarResumoRodada({
+      cena: this,
+      numeroRodada: this.resumoAtivo.numeroRodada,
+      jogadores: this.resumoAtivo.jogadores,
+      placar: this.resumoAtivo.placar,
+      penalidades: this.resumoAtivo.penalidades,
+      objetos: this.resumoObjetos,
+      onContinuar: this.continuarResumoRodada,
+    });
+  }
+
+  private continuarResumoRodada = (): void => {
+    const onContinuar = this.aoContinuarResumo;
+    this.resumoAtivo = undefined;
+    this.aoContinuarResumo = undefined;
+    onContinuar?.();
+  };
 
   private atualizarPainel(): void {
     this.layout = this.obterLayout();
@@ -114,6 +145,7 @@ export class JogoScene extends Scene {
     this.controller?.redesenharDeclaracaoAtual();
     this.sincronizarBadges();
     this.atualizarIndicadorVez();
+    this.renderizarResumoRodada();
   };
 
   private desenharMaos(maos: Parameters<typeof desenharMaosJogo>[0]['maos'], gameArea: Retangulo): void {
@@ -163,6 +195,9 @@ export class JogoScene extends Scene {
 
   private aoEncerrar = (): void => {
     this.limparBadges();
+    limparObjetos(this.resumoObjetos);
+    this.resumoAtivo = undefined;
+    this.aoContinuarResumo = undefined;
     aoEncerrarCena({
       cena: this,
       redesenhar: this.redesenhar,

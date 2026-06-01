@@ -44,6 +44,14 @@ _Avoid_: Fora, morto
 Recurso de sobrevivência da partida que começa em 5 para cada jogador e só diminui ao fim das rodadas.
 _Avoid_: Vida, score
 
+**Resumo da Rodada**:
+Painel mostrado ao fim de cada rodada que apresenta, por jogador, os **Pontos** resultantes e a **Penalidade** sofrida naquela rodada. Aguarda confirmação do jogador antes de seguir para a próxima rodada.
+_Avoid_: Placar, relatório, tela de pontuação
+
+**Penalidade**:
+Quantidade subtraída dos **Pontos** de um jogador ao fim de uma rodada, igual ao módulo da diferença entre **Declarado** e **Feito**.
+_Avoid_: Multa, desconto
+
 **Estratégia de Bot Explicável**:
 Comportamento de bot cuja declaração e jogada são coerentes com o estado da rodada e acompanhadas de justificativa auditável no debug.
 _Avoid_: IA, inteligência, estratégia

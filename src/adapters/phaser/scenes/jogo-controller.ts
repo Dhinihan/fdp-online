@@ -10,6 +10,16 @@ import { desenharBotoesDeclaracao, limparObjetosDeclaracao } from '../renderers/
 import { JOGADORES } from './jogadores';
 import { iniciarProcessamentoTurno, processarDeclaracoes } from './jogo-scene-loop';
 
+interface PlacarRodada {
+  placar: Record<string, number>;
+  penalidades: Record<string, number>;
+}
+
+export interface PontuacaoRodada extends PlacarRodada {
+  numeroRodada: number;
+  jogadores: Jogador[];
+}
+
 export interface DependenciasCena {
   scene: Scene;
   decisorHumano: DecisorHumano;
@@ -17,7 +27,7 @@ export interface DependenciasCena {
   atualizarIndicadorVez: () => void;
   atualizarPainel: () => void;
   animarRecolhimentoTurno: () => void;
-  transicionarRodada: (continuar: () => void) => void;
+  mostrarResumoRodada: (resumoRodada: PontuacaoRodada, onContinuar: () => void) => void;
   mostrarFimJogo: (classificacao: Jogador[]) => void;
   desativarResize: () => void;
   getGameArea: () => Retangulo;
@@ -34,6 +44,8 @@ export class JogoController {
   vencedorTurno?: string;
   private turnoAnterior = 1;
   private valorDeclaracaoAtual = 0;
+  private ultimaPontuacao: PlacarRodada = { placar: {}, penalidades: {} };
+  private processamentoTurno?: Promise<void>;
   private readonly decisorDeclaracaoHumano = new DecisorDeclaracaoHumano();
 
   private readonly deps: DependenciasCena;
@@ -51,27 +63,52 @@ export class JogoController {
     this.partida = fabricarPartida(
       JOGADORES,
       { jogada: this.deps.decisorHumano, declaracao: this.decisorDeclaracaoHumano },
-      {
-        onCartaJogada: this.deps.redesenharTela,
-        onTurnoGanho: (id) => {
-          this.vencedorTurno = id;
-        },
-        onTurnoEmpatado: () => {
-          this.vencedorTurno = undefined;
-        },
-        onRodadaEncerrada: () => {
-          this.deps.transicionarRodada(this.iniciarNovaRodada.bind(this));
-        },
-        onManilhaVirada: this.deps.atualizarPainel,
-        onRodadaIniciada: this.deps.atualizarPainel,
-        onPontuacaoAplicada: this.deps.atualizarPainel,
-        onJogoEncerrado: (classificacao) => {
-          this.deps.desativarResize();
-          this.deps.mostrarFimJogo(classificacao);
-        },
-        modoDebug: this.deps.modoDebug,
-      },
+      this.criarCallbacksPartida(),
     );
+  }
+
+  private criarCallbacksPartida() {
+    return {
+      onCartaJogada: this.deps.redesenharTela,
+      onTurnoGanho: (id: string) => {
+        this.vencedorTurno = id;
+      },
+      onTurnoEmpatado: () => {
+        this.vencedorTurno = undefined;
+      },
+      onRodadaEncerrada: () => {
+        this.aoRodadaEncerrada();
+      },
+      onManilhaVirada: this.deps.atualizarPainel,
+      onRodadaIniciada: this.deps.atualizarPainel,
+      onPontuacaoAplicada: (placar: Record<string, number>, penalidades: Record<string, number>) => {
+        this.ultimaPontuacao = { placar, penalidades };
+        this.deps.atualizarPainel();
+      },
+      onJogoEncerrado: (classificacao: Jogador[]) => {
+        this.deps.desativarResize();
+        this.deps.mostrarFimJogo(classificacao);
+      },
+      modoDebug: this.deps.modoDebug,
+    };
+  }
+
+  private aoRodadaEncerrada(): void {
+    const aguardarLimpeza = this.processamentoTurno ?? Promise.resolve();
+    this.deps.mostrarResumoRodada(this.montarResumoRodada(), () => {
+      void this.continuarAposResumo(aguardarLimpeza);
+    });
+  }
+
+  private montarResumoRodada(): PontuacaoRodada {
+    const rodada = this.partida?.rodadaAtual;
+    const jogadores = rodada ? estadoEmJogo(rodada.estado).maos.map((m) => m.jogador) : [];
+    return { ...this.ultimaPontuacao, numeroRodada: this.partida?.estado.numeroRodada ?? 0, jogadores };
+  }
+
+  private async continuarAposResumo(aguardarLimpeza: Promise<void>): Promise<void> {
+    await aguardarLimpeza.catch(() => undefined);
+    this.iniciarNovaRodada();
   }
 
   iniciarNovaRodada(): void {
@@ -132,7 +169,7 @@ export class JogoController {
   private async iniciarFluxoTurno(): Promise<void> {
     const rodada = this.partida?.rodadaAtual;
     if (!rodada) return;
-    await iniciarProcessamentoTurno({
+    const processamento = iniciarProcessamentoTurno({
       cena: this.deps.scene,
       rodada,
       getLabels: this.deps.getLabels,
@@ -144,5 +181,11 @@ export class JogoController {
       atualizarIndicadorVez: this.deps.atualizarIndicadorVez,
       atualizarPainel: this.deps.atualizarPainel,
     });
+    this.processamentoTurno = processamento;
+    try {
+      await processamento;
+    } finally {
+      this.processamentoTurno = undefined;
+    }
   }
 }
