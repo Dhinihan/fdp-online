@@ -104,6 +104,22 @@ _Avoid_: Limiar numérico de força, valor alto
 Carta da categoria estratégica **segura** que vence a carta líder atual.
 _Avoid_: Lista manual de valores, carta forte absoluta
 
+**Perfil de Bot**:
+Identidade reconhecível de um bot entre partidas, definida pelo nome e pela faixa de temperatura estratégica, independentemente do assento temporário ocupado na **Partida**.
+_Avoid_: Slot de bot, bot1, bot2, bot3
+
+**Ranking**:
+Classificação persistida de desempenho dos participantes reconhecíveis entre **Partidas**, agregando o jogador humano e cada **Perfil de Bot**.
+_Avoid_: Leaderboard, placar, ranking da partida, placar da rodada
+
+**Vitória de Partida**:
+Resultado atribuído somente ao primeiro colocado da **Partida** encerrada.
+_Avoid_: Vitória de rodada, vaza vencida, turno ganho
+
+**Classificação da Partida**:
+Ordem final dos participantes ao encerrar uma **Partida**, definida por **Pontos** finais decrescentes. Em empate de **Pontos**, o jogador humano fica acima dos **Perfis de Bot**.
+_Avoid_: Tabela final, ranking visual, placar final
+
 ## Relationships
 
 - Uma **Partida** contém uma ou mais **Rodadas**.
@@ -121,6 +137,11 @@ _Avoid_: Lista manual de valores, carta forte absoluta
 - Uma **Decisão de Jogada do Bot** parte de uma **Leitura da Mesa** única, compartilhada pela **Linha fria** e pela **Linha quente**.
 - Uma **Decisão de Jogada do Bot** considera a **Posição na Mesa** antes de avaliar a força da carta.
 - Uma **Decisão de Jogada do Bot** no meio da mesa considera se há **Jogadores por agir** que ainda precisam fazer ou já cumpriram.
+- Um **Ranking** agrega estatísticas por participante reconhecível: o jogador humano e cada **Perfil de Bot**.
+- Um **Perfil de Bot** pode ocupar assentos temporários diferentes em **Partidas** diferentes sem mudar sua identidade no **Ranking**.
+- O win rate no **Ranking** é calculado por **Vitórias de Partida** divididas pelas **Partidas** computadas em que o participante apareceu.
+- A **Classificação da Partida** define a **Vitória de Partida** e a posição registrada no **Ranking**.
+- O **Ranking** registra apenas **Partidas** concluídas e exibe **Perfis de Bot** somente depois que aparecem em pelo menos uma **Partida** computada.
 
 ## Example dialogue
 
@@ -131,3 +152,5 @@ _Avoid_: Lista manual de valores, carta forte absoluta
 
 - `turno` é usado em sentido amplo: inclui o **Turno 0** de declaração e os **Turnos 1..N** de jogada.
 - `G[N-X]` e `P[N-X]` são aliases técnicos; na linguagem de produto use **Escolha de vencedora por necessidade** e **Descarte por necessidade**.
+- `bot1`, `bot2` e `bot3` são assentos técnicos temporários; na linguagem de produto e no **Ranking**, use o **Perfil de Bot**.
+- `vitória` no contexto do **Ranking** significa **Vitória de Partida**, não turno feito nem rodada sobrevivida.
