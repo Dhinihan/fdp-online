@@ -3,7 +3,10 @@ import { carregarRanking, type RankingPersistido } from '@/store/ranking/carrega
 import type { MetricaRanking } from '@/store/ranking/ordenar-ranking';
 import { escalar, escalarFonte } from '../escala';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
-import { desenharTabelaRanking, OPCOES_METRICA_RANKING } from './desenhar-tabela-ranking';
+import { desenharPodioRanking } from './desenhar-podio-ranking';
+import { desenharTabelaRanking } from './desenhar-tabela-ranking';
+import { calcularLayoutRanking, type LayoutRanking } from './layout-ranking';
+import { OPCOES_METRICA_RANKING, prepararRankingRenderModel } from './ranking-view';
 
 const COR_FUNDO = 0x1a1a2e;
 const COR_TITULO = '#e8ecf5';
@@ -25,8 +28,8 @@ interface SegmentoCtx {
  * Tela cheia do Ranking, aberta sobre a JogoScene (que fica pausada).
  *
  * Lê o snapshot pela boundary estrita `carregarRanking`: ranking vazio mostra a
- * mensagem de tela vazia; ranking populado renderiza a tabela de participantes
- * ordenada pela métrica ativa. O pódio (#247) entra numa fatia posterior.
+ * mensagem de tela vazia; ranking populado renderiza pódio e tabela com a
+ * mesma ordenação da métrica ativa.
  */
 export class RankingScene extends Scene {
   private objetos: Phaser.GameObjects.GameObject[] = [];
@@ -61,8 +64,11 @@ export class RankingScene extends Scene {
 
   private desenharConteudo(ranking: RankingPersistido): void {
     if (ranking.tipo === 'populado') {
-      this.desenharControleOrdenacao();
-      this.objetos.push(...desenharTabelaRanking(this, ranking.participantes, this.metricaAtiva));
+      const layout = calcularLayoutRanking(this);
+      const model = prepararRankingRenderModel(ranking.participantes, this.metricaAtiva);
+      this.objetos.push(...desenharPodioRanking(this, model, layout));
+      this.desenharControleOrdenacao(layout);
+      this.objetos.push(...desenharTabelaRanking(this, model, layout));
       return;
     }
     this.desenharVazio();
@@ -100,20 +106,19 @@ export class RankingScene extends Scene {
     this.objetos.push(circulo, x_);
   }
 
-  private desenharControleOrdenacao(): void {
-    const largura = Math.min(this.cameras.main.width - escalar(32, this), escalar(600, this));
-    const esquerda = (this.cameras.main.width - largura) / 2;
-    const y = escalar(76, this);
+  private desenharControleOrdenacao(layout: LayoutRanking): void {
+    const { esquerda, largura } = layout.faixa;
+    const y = layout.controle.yRotulo;
     const rotulo = this.add.text(esquerda, y, 'Ordenar por', {
       fontSize: escalarFonte(12, this),
       color: COR_DIM,
       fontFamily: 'Arial',
     });
     const fundo = this.add
-      .rectangle(esquerda, y + escalar(34, this), largura, escalar(40, this), COR_SEGMENTO, 1)
+      .rectangle(esquerda, layout.controle.ySegmentos, largura, layout.controle.altura, COR_SEGMENTO, 1)
       .setOrigin(0, 0.5)
       .setStrokeStyle(escalar(1, this), COR_BORDA);
-    this.objetos.push(rotulo, fundo, ...this.desenharSegmentos(esquerda, y + escalar(34, this), largura));
+    this.objetos.push(rotulo, fundo, ...this.desenharSegmentos(esquerda, layout.controle.ySegmentos, largura));
   }
 
   private desenharSegmentos(x: number, y: number, largura: number): Phaser.GameObjects.GameObject[] {
