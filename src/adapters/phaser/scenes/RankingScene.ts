@@ -5,9 +5,10 @@ import { escalar, escalarFonte } from '../escala';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 import { desenharPodioRanking } from './desenhar-podio-ranking';
 import { desenharTabelaRanking, type TabelaRankingRender } from './desenhar-tabela-ranking';
+import { offsetMaximoRolagem, precisaRolar, type GeometriaListaRanking } from './geometria-rolagem-tabela-ranking';
 import { calcularLayoutRanking, type LayoutRanking } from './layout-ranking';
 import { OPCOES_METRICA_RANKING, prepararRankingRenderModel } from './ranking-view';
-import { ControladorRolagemTabela, offsetMaximoRolagem, precisaRolar } from './rolagem-tabela-ranking';
+import { ControladorRolagemTabela } from './rolagem-tabela-ranking';
 
 const COR_FUNDO = 0x1a1a2e;
 const COR_TITULO = '#e8ecf5';
@@ -78,28 +79,27 @@ export class RankingScene extends Scene {
 
   private desenharTabelaComRolagem(tabela: TabelaRankingRender): void {
     this.objetos.push(...tabela.cabecalho);
-    const fundo = this.cameras.main.height - escalar(18, this);
-    const alturaVisivel = fundo - tabela.primeiraLinhaTopo;
-    if (!precisaRolar(tabela.alturaConteudo, alturaVisivel)) {
+    const { regiao, alturaConteudo, alturaVisivel } = tabela.geometria;
+    if (!precisaRolar(alturaConteudo, alturaVisivel)) {
       this.objetos.push(...tabela.linhas);
       return;
     }
     const container = this.add.container(0, 0, tabela.linhas);
-    container.setMask(this.criarMascaraLista(tabela.primeiraLinhaTopo, alturaVisivel));
+    container.setMask(this.criarMascaraLista(tabela.geometria));
     this.objetos.push(container);
     this.rolagem = new ControladorRolagemTabela({
       cena: this,
       container,
-      regiao: { topo: tabela.primeiraLinhaTopo, fundo },
-      offsetMaximo: offsetMaximoRolagem(tabela.alturaConteudo, alturaVisivel),
+      regiao,
+      offsetMaximo: offsetMaximoRolagem(alturaConteudo, alturaVisivel),
     });
   }
 
-  private criarMascaraLista(topo: number, altura: number): Phaser.Display.Masks.GeometryMask {
+  private criarMascaraLista({ regiao, alturaVisivel }: GeometriaListaRanking): Phaser.Display.Masks.GeometryMask {
     const forma = this.add
       .graphics()
       .fillStyle(0xffffff, 1)
-      .fillRect(0, topo, this.cameras.main.width, altura)
+      .fillRect(regiao.esquerda, regiao.topo, regiao.direita - regiao.esquerda, alturaVisivel)
       .setVisible(false);
     this.objetos.push(forma);
     return forma.createGeometryMask();

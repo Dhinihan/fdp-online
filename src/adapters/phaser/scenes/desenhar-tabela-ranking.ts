@@ -1,6 +1,7 @@
 import type { Scene } from 'phaser';
 import type { MetricaRanking, ParticipanteRankeado } from '@/store/ranking/ordenar-ranking';
 import { escalar, escalarFonte } from '../escala';
+import { calcularGeometriaLista, type GeometriaListaRanking } from './geometria-rolagem-tabela-ranking';
 import type { LayoutRanking } from './layout-ranking';
 import { formatarMetricaRanking, OPCOES_METRICA_RANKING, type RankingRenderModel } from './ranking-view';
 
@@ -36,15 +37,14 @@ interface Pincel {
 /**
  * Resultado da tabela já separado em duas partes: `cabecalho` fica fixo na
  * cena; `linhas` é o que a `RankingScene` põe num container mascarado para
- * rolar (#249). `alturaConteudo`, `primeiraLinhaTopo` e `alturaLinha` dão a
- * geometria que o controlador de rolagem precisa para calcular os limites.
+ * rolar (#249). `geometria` traz a região retangular do corpo da tabela e as
+ * alturas visível/total — contrato fechado da viewport, sem a cena recomputar
+ * pedaços por fora.
  */
 export interface TabelaRankingRender {
   cabecalho: Phaser.GameObjects.GameObject[];
   linhas: Phaser.GameObjects.GameObject[];
-  alturaConteudo: number;
-  primeiraLinhaTopo: number;
-  alturaLinha: number;
+  geometria: GeometriaListaRanking;
 }
 
 export function desenharTabelaRanking(
@@ -61,9 +61,14 @@ export function desenharTabelaRanking(
   return {
     cabecalho: desenharCabecalho(pincel),
     linhas,
-    alturaLinha,
-    primeiraLinhaTopo: inicio - alturaLinha / 2,
-    alturaConteudo: model.participantes.length * alturaLinha,
+    geometria: calcularGeometriaLista({
+      esquerda: pincel.layout.esquerda,
+      direita: pincel.layout.direita + escalar(12, cena),
+      primeiraLinhaTopo: inicio - alturaLinha / 2,
+      fundo: cena.cameras.main.height - escalar(18, cena),
+      alturaLinha,
+      totalLinhas: model.participantes.length,
+    }),
   };
 }
 

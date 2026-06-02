@@ -1,44 +1,25 @@
 import type { Scene } from 'phaser';
+import { clampOffsetRolagem, contemPonteiroNaRegiao, type RegiaoLista } from './geometria-rolagem-tabela-ranking';
 
 /**
- * Rolagem vertical da lista de participantes do Ranking (issue #249).
+ * Controlador Phaser da rolagem da lista do Ranking (issue #249).
  *
- * O caso comum (lista curta) cabe na tela e não rola. Quando o roster cresce
- * (1 humano + até 20 Perfis de Bot) as linhas transbordam: elas vão para um
- * `Container` mascarado na região da lista e o controlador move o container no
- * eixo Y por arrasto e roda do mouse, com o deslocamento preso entre 0 e o
- * `offsetMáximo`. Título, fundo, botão de fechar, controles de ordenação e o
- * cabeçalho de colunas ficam fora do container e permanecem fixos.
+ * Quando o roster transborda (1 humano + até 20 Perfis de Bot), as linhas vão
+ * para um `Container` mascarado e este controlador as move no eixo Y por
+ * arrasto e roda do mouse, com o deslocamento preso entre 0 e o `offsetMáximo`.
+ * Arrasto e roda só agem quando o ponteiro está dentro do corpo da tabela — a
+ * mesma `RegiaoLista`, o mesmo hit-test — para não roubar input de título,
+ * cabeçalho, controles de ordenação e botão de fechar, que ficam fixos.
  *
- * A geometria pura (limites e clamp) fica isolada nas funções abaixo, testáveis
- * sem Phaser; o `ControladorRolagemTabela` apenas as aplica ao container.
+ * A geometria (limites, clamp, hit-test) vive em
+ * `geometria-rolagem-tabela-ranking.ts`, pura e testável; aqui só há Phaser.
  */
-
-export interface RegiaoLista {
-  topo: number;
-  fundo: number;
-}
 
 export interface ConfigRolagemTabela {
   cena: Scene;
   container: Phaser.GameObjects.Container;
   regiao: RegiaoLista;
   offsetMaximo: number;
-}
-
-/** Quanto a lista pode rolar: 0 quando o conteúdo cabe na área visível. */
-export function offsetMaximoRolagem(alturaConteudo: number, alturaVisivel: number): number {
-  return Math.max(0, alturaConteudo - alturaVisivel);
-}
-
-/** Há transbordo? Só então vale criar máscara e ligar o arrasto/roda. */
-export function precisaRolar(alturaConteudo: number, alturaVisivel: number): boolean {
-  return offsetMaximoRolagem(alturaConteudo, alturaVisivel) > 0;
-}
-
-/** Prende o deslocamento entre o topo (0) e o fim da lista (offsetMáximo). */
-export function clampOffsetRolagem(offset: number, offsetMaximo: number): number {
-  return Math.min(offsetMaximo, Math.max(0, offset));
 }
 
 export class ControladorRolagemTabela {
@@ -69,7 +50,7 @@ export class ControladorRolagemTabela {
       this.arrastando = false;
     };
     this.aoRolar = (p) => {
-      this.aplicar(this.offset + p.deltaY);
+      this.rolarComRoda(p);
     };
     this.registrar();
   }
@@ -84,7 +65,7 @@ export class ControladorRolagemTabela {
   }
 
   private iniciarArrasto(p: Phaser.Input.Pointer): void {
-    if (p.y < this.regiao.topo || p.y > this.regiao.fundo) return;
+    if (!contemPonteiroNaRegiao(this.regiao, p)) return;
     this.arrastando = true;
     this.ultimoY = p.y;
   }
@@ -93,6 +74,11 @@ export class ControladorRolagemTabela {
     if (!this.arrastando) return;
     this.aplicar(this.offset - (p.y - this.ultimoY));
     this.ultimoY = p.y;
+  }
+
+  private rolarComRoda(p: Phaser.Input.Pointer): void {
+    if (!contemPonteiroNaRegiao(this.regiao, p)) return;
+    this.aplicar(this.offset + p.deltaY);
   }
 
   private aplicar(bruto: number): void {
