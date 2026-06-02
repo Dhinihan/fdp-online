@@ -2,7 +2,7 @@ import type { Scene } from 'phaser';
 import type { Rodada } from '@/core/Rodada';
 import type { MaoJogador } from '@/types/estado-rodada';
 import type { DecisorHumano } from '../DecisorHumano';
-import { obterDpr, escalar } from '../escala';
+import { fatorEscala, escalar } from '../escala';
 import { criarFundoInterativo } from '../input/input-humano';
 import type { Retangulo } from '../layout';
 import type { EstadoDestaque } from '../renderers/destaque-renderer';
@@ -63,6 +63,6 @@ function calcularPosicoesMaos(
     espacamentoVertical: escalar(6, cena),
     alturaCarta: escalar(75, cena),
     quantidadesCartas,
-    dpr: obterDpr(cena),
+    fatorEscala: fatorEscala(cena),
   });
 }

@@ -15,7 +15,8 @@ export interface ConfigPosicoes {
   espacamentoVertical: number;
   alturaCarta: number;
   quantidadesCartas: number[];
-  dpr: number;
+  /** Fator que converte unidades lógicas em pixels (DPR × ampliação por tela). */
+  fatorEscala: number;
 }
 
 interface MedidasTela {
@@ -29,8 +30,8 @@ export function calcularPosicoes(config: ConfigPosicoes): PosicaoTela[] {
   const { x: ox, y: oy, largura, altura } = config.gameArea;
   const cx = ox + Math.round(largura / 2);
   const cy = oy + Math.round(altura / 2);
-  const offsetBase = Math.round(10 * config.dpr);
-  const offsetLateral = Math.round(60 * config.dpr);
+  const offsetBase = Math.round(10 * config.fatorEscala);
+  const offsetLateral = Math.round(60 * config.fatorEscala);
   const dl = config.alturaCarta / 2 + offsetBase;
   const vertical = config.espacamentoVertical;
   return [
