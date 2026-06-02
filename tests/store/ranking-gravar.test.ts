@@ -36,7 +36,7 @@ describe('registrarPartidaNoArmazenamento', () => {
   it('grava o snapshot da primeira partida na chave do Ranking', () => {
     const armazenamento = armazenamentoFake();
 
-    registrarPartidaNoArmazenamento(armazenamento, classificacao);
+    registrarPartidaNoArmazenamento(() => armazenamento, classificacao);
 
     const gravado = snapshotGravado(armazenamento);
     expect(gravado.versao).toBe(1);
@@ -51,7 +51,7 @@ describe('registrarPartidaNoArmazenamento', () => {
     });
     const armazenamento = armazenamentoFake(inicial);
 
-    registrarPartidaNoArmazenamento(armazenamento, classificacao);
+    registrarPartidaNoArmazenamento(() => armazenamento, classificacao);
 
     expect(snapshotGravado(armazenamento).participantes['humano']).toMatchObject({
       partidas: 2,
@@ -63,7 +63,7 @@ describe('registrarPartidaNoArmazenamento', () => {
   it('parte do zero quando o snapshot existente está corrompido', () => {
     const armazenamento = armazenamentoFake('{ corrompido');
 
-    registrarPartidaNoArmazenamento(armazenamento, classificacao);
+    registrarPartidaNoArmazenamento(() => armazenamento, classificacao);
 
     expect(snapshotGravado(armazenamento).participantes['humano']).toMatchObject({ partidas: 1 });
   });
@@ -74,7 +74,7 @@ describe('registrarPartidaNoArmazenamento — resiliência a falha de Storage', 
     const armazenamento = armazenamentoQueLanca('setItem');
 
     expect(() => {
-      registrarPartidaNoArmazenamento(armazenamento, classificacao);
+      registrarPartidaNoArmazenamento(() => armazenamento, classificacao);
     }).not.toThrow();
   });
 
@@ -82,7 +82,17 @@ describe('registrarPartidaNoArmazenamento — resiliência a falha de Storage', 
     const armazenamento = armazenamentoQueLanca('getItem');
 
     expect(() => {
-      registrarPartidaNoArmazenamento(armazenamento, classificacao);
+      registrarPartidaNoArmazenamento(() => armazenamento, classificacao);
+    }).not.toThrow();
+  });
+
+  it('absorve falha do próprio getter de Storage (window.localStorage bloqueado)', () => {
+    const obterArmazenamento = (): never => {
+      throw new DOMException('storage bloqueado', 'SecurityError');
+    };
+
+    expect(() => {
+      registrarPartidaNoArmazenamento(obterArmazenamento, classificacao);
     }).not.toThrow();
   });
 });

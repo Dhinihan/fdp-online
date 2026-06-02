@@ -87,7 +87,7 @@ export class JogoController {
         this.deps.atualizarPainel();
       },
       onJogoEncerrado: (classificacao: Jogador[]) => {
-        registrarPartidaNoArmazenamento(window.localStorage, classificacao);
+        registrarPartidaNoArmazenamento(() => window.localStorage, classificacao);
         this.deps.desativarResize();
         this.deps.mostrarFimJogo(classificacao);
       },
