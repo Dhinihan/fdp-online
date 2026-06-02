@@ -21,6 +21,12 @@ const MAX_FAIXA = 600;
 const COL_METRICA = 84;
 const GAP = 6;
 
+export const OPCOES_METRICA_RANKING: { chave: MetricaRanking; rotulo: string }[] = [
+  { chave: 'vitorias', rotulo: 'Vitórias' },
+  { chave: 'winRate', rotulo: 'Win rate' },
+  { chave: 'posMedia', rotulo: 'Pos. média' },
+];
+
 interface LayoutTabela {
   esquerda: number;
   direita: number;
@@ -62,7 +68,7 @@ function calcularLayout(cena: Scene): LayoutTabela {
     larguraColuna: escalar(COL_METRICA, cena),
     gap: escalar(GAP, cena),
     alturaLinha: escalar(64, cena),
-    topo: escalar(122, cena),
+    topo: escalar(144, cena),
   };
 }
 
@@ -74,8 +80,8 @@ function desenharCabecalho({ cena, layout }: Pincel): Phaser.GameObjects.GameObj
   const y = layout.topo;
   const estilo = { fontSize: escalarFonte(10, cena), color: COR_DIM, fontFamily: 'Arial' };
   const titulo = cena.add.text(layout.esquerda, y, 'Participante', estilo).setOrigin(0, 0.5);
-  const cabecalhos = ['Vitórias', 'Win rate', 'Pos. média'].map((rotulo, coluna) =>
-    cena.add.text(colunaX(layout, 2 - coluna), y, rotulo, estilo).setOrigin(1, 0.5),
+  const cabecalhos = OPCOES_METRICA_RANKING.map((opcao, coluna) =>
+    cena.add.text(colunaX(layout, 2 - coluna), y, opcao.rotulo, estilo).setOrigin(1, 0.5),
   );
   return [titulo, ...cabecalhos];
 }
@@ -142,12 +148,11 @@ function identidade({ cena, layout }: Pincel, y: number, item: ParticipanteRanke
 
 function metricas({ cena, layout }: Pincel, ctx: LinhaCtx): Phaser.GameObjects.GameObject[] {
   const valores = [String(ctx.item.vitorias), `${String(ctx.item.winRate)}%`, ctx.item.posMedia.toFixed(1)];
-  const metricasRanking: MetricaRanking[] = ['vitorias', 'winRate', 'posMedia'];
   return valores.map((valor, coluna) =>
     cena.add
       .text(colunaX(layout, 2 - coluna), ctx.y, valor, {
         fontSize: escalarFonte(15, cena),
-        color: metricasRanking[coluna] === ctx.metrica ? COR_ACENTO : COR_TEXTO,
+        color: OPCOES_METRICA_RANKING[coluna]?.chave === ctx.metrica ? COR_ACENTO : COR_TEXTO,
         fontStyle: 'bold',
         fontFamily: 'Arial',
       })

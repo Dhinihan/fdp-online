@@ -3,7 +3,7 @@ import { carregarRanking, type RankingPersistido } from '@/store/ranking/carrega
 import type { MetricaRanking } from '@/store/ranking/ordenar-ranking';
 import { escalar, escalarFonte } from '../escala';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
-import { desenharTabelaRanking } from './desenhar-tabela-ranking';
+import { desenharTabelaRanking, OPCOES_METRICA_RANKING } from './desenhar-tabela-ranking';
 
 const COR_FUNDO = 0x1a1a2e;
 const COR_TITULO = '#e8ecf5';
@@ -14,14 +14,8 @@ const COR_BORDA = 0x2a3550;
 const COR_SEGMENTO = 0x111827;
 const COR_SEGMENTO_ATIVO = 0xfacc15;
 
-const OPCOES_METRICA: { chave: MetricaRanking; rotulo: string }[] = [
-  { chave: 'vitorias', rotulo: 'Vitórias' },
-  { chave: 'winRate', rotulo: 'Win rate' },
-  { chave: 'posMedia', rotulo: 'Pos. média' },
-];
-
 interface SegmentoCtx {
-  opcao: { chave: MetricaRanking; rotulo: string };
+  opcao: (typeof OPCOES_METRICA_RANKING)[number];
   x: number;
   y: number;
   largura: number;
@@ -44,6 +38,7 @@ export class RankingScene extends Scene {
   }
 
   create(): void {
+    this.metricaAtiva = 'vitorias';
     this.cameras.main.setBackgroundColor('#1a1a2e');
     this.desenhar();
     this.redesenhar = criarDebounceResize(this, () => {
@@ -122,8 +117,8 @@ export class RankingScene extends Scene {
   }
 
   private desenharSegmentos(x: number, y: number, largura: number): Phaser.GameObjects.GameObject[] {
-    const larguraSegmento = largura / OPCOES_METRICA.length;
-    return OPCOES_METRICA.flatMap((opcao, indice) => {
+    const larguraSegmento = largura / OPCOES_METRICA_RANKING.length;
+    return OPCOES_METRICA_RANKING.flatMap((opcao, indice) => {
       const centroX = x + larguraSegmento * indice + larguraSegmento / 2;
       return this.desenharSegmento({ opcao, x: centroX, y, largura: larguraSegmento });
     });
