@@ -1,7 +1,8 @@
 import type { Scene } from 'phaser';
-import { ordenarRanking, type MetricaRanking, type ParticipanteRankeado } from '@/store/ranking/ordenar-ranking';
-import type { ParticipanteRanking } from '@/store/ranking/tipos';
+import type { MetricaRanking, ParticipanteRankeado } from '@/store/ranking/ordenar-ranking';
 import { escalar, escalarFonte } from '../escala';
+import type { LayoutRanking } from './layout-ranking';
+import { formatarMetricaRanking, OPCOES_METRICA_RANKING, type RankingRenderModel } from './ranking-view';
 
 /**
  * Tabela de participantes do Ranking, posicionada por coordenada (sem layout
@@ -16,16 +17,6 @@ const COR_ACENTO = '#facc15';
 const COR_VERDE = '#4ecca3';
 const COR_LINHA_FUNDO = 0x111827;
 const COR_LIDER = 0x4ecca3;
-
-const MAX_FAIXA = 600;
-const COL_METRICA = 84;
-const GAP = 6;
-
-export const OPCOES_METRICA_RANKING: { chave: MetricaRanking; rotulo: string }[] = [
-  { chave: 'vitorias', rotulo: 'Vitórias' },
-  { chave: 'winRate', rotulo: 'Win rate' },
-  { chave: 'posMedia', rotulo: 'Pos. média' },
-];
 
 interface LayoutTabela {
   esquerda: number;
@@ -44,31 +35,34 @@ interface Pincel {
 
 export function desenharTabelaRanking(
   cena: Scene,
-  participantes: ParticipanteRanking[],
+  model: RankingRenderModel,
+  layoutRanking: LayoutRanking,
+): Phaser.GameObjects.GameObject[] {
+  const pincel: Pincel = { cena, layout: layoutTabela(layoutRanking) };
+  return desenharTabelaOrdenada(pincel, model.participantes, model.metrica);
+}
+
+function desenharTabelaOrdenada(
+  pincel: Pincel,
+  ordenados: ParticipanteRankeado[],
   metrica: MetricaRanking,
 ): Phaser.GameObjects.GameObject[] {
-  const pincel: Pincel = { cena, layout: calcularLayout(cena) };
-  const ordenados = ordenarRanking(participantes, metrica);
   const objetos = desenharCabecalho(pincel);
   ordenados.forEach((item, indice) => {
-    const y = pincel.layout.topo + escalar(34, cena) + indice * pincel.layout.alturaLinha;
+    const y = pincel.layout.topo + escalar(34, pincel.cena) + indice * pincel.layout.alturaLinha;
     objetos.push(...desenharLinha(pincel, { item, indice, y, metrica }));
   });
   return objetos;
 }
 
-function calcularLayout(cena: Scene): LayoutTabela {
-  const { width } = cena.cameras.main;
-  const margem = escalar(16, cena);
-  const larguraFaixa = Math.min(width - margem * 2, escalar(MAX_FAIXA, cena));
-  const esquerda = (width - larguraFaixa) / 2;
+function layoutTabela(layout: LayoutRanking): LayoutTabela {
   return {
-    esquerda,
-    direita: esquerda + larguraFaixa - escalar(12, cena),
-    larguraColuna: escalar(COL_METRICA, cena),
-    gap: escalar(GAP, cena),
-    alturaLinha: escalar(64, cena),
-    topo: escalar(144, cena),
+    esquerda: layout.faixa.esquerda,
+    direita: layout.tabela.direita,
+    larguraColuna: layout.tabela.larguraColuna,
+    gap: layout.tabela.gap,
+    alturaLinha: layout.tabela.alturaLinha,
+    topo: layout.tabela.topo,
   };
 }
 
@@ -147,7 +141,7 @@ function identidade({ cena, layout }: Pincel, y: number, item: ParticipanteRanke
 }
 
 function metricas({ cena, layout }: Pincel, ctx: LinhaCtx): Phaser.GameObjects.GameObject[] {
-  const valores = [String(ctx.item.vitorias), `${String(ctx.item.winRate)}%`, ctx.item.posMedia.toFixed(1)];
+  const valores = OPCOES_METRICA_RANKING.map((opcao) => formatarMetricaRanking(ctx.item, opcao.chave));
   return valores.map((valor, coluna) =>
     cena.add
       .text(colunaX(layout, 2 - coluna), ctx.y, valor, {
