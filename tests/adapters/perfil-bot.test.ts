@@ -3,6 +3,7 @@ import {
   aplicarPerfisBots,
   nomePorTemperatura,
   nomesBotsPorTemperatura,
+  perfisBotsPorTemperatura,
   sortearPerfisBots,
 } from '@/adapters/bots/perfil-bot';
 import { RngComSeed } from '@/core/RngComSeed';
@@ -28,6 +29,12 @@ describe('Nomes dos bots', () => {
   it('deve ter exatamente 20 nomes sem duplicatas', () => {
     expect(nomesBotsPorTemperatura).toHaveLength(20);
     expect(new Set(nomesBotsPorTemperatura).size).toBe(20);
+  });
+
+  it('deve ter perfilId canônico único por perfil (sem colisão de identidade)', () => {
+    const ids = perfisBotsPorTemperatura.map((perfil) => perfil.id);
+    expect(ids).toHaveLength(20);
+    expect(new Set(ids).size).toBe(20);
   });
 
   it('deve manter o nome estavel por faixa de temperatura', () => {
@@ -72,6 +79,17 @@ describe('Perfil dos bots', () => {
   });
 });
 
+describe('Perfil dos bots — identidade canônica', () => {
+  it('deve atribuir o perfilId canônico da faixa, desacoplado do nome exibido', () => {
+    for (const seed of SEEDS) {
+      const perfis = sortearPerfisBots(jogadores(), new RngComSeed(seed));
+      for (const perfil of perfis) {
+        expect(perfil.perfilId).toBe(perfisBotsPorTemperatura[faixaDe(perfil.temperatura)].id);
+      }
+    }
+  });
+});
+
 describe('Perfil dos bots — determinismo e distribuicao', () => {
   it('deve ser deterministico: mesma seed produz o mesmo resultado', () => {
     for (const seed of [0, 7, 158, 999]) {
@@ -89,18 +107,18 @@ describe('Perfil dos bots — determinismo e distribuicao', () => {
     expect(todasAltas).toBe(true);
   });
 
-  it('deve aplicar nome e temperatura apenas nos bots', () => {
+  it('deve aplicar perfilId, nome e temperatura apenas nos bots', () => {
     const perfis = [
-      { id: 'bot1', nome: 'Severino', temperatura: 0.05 },
-      { id: 'bot2', nome: 'Iara', temperatura: 0.1 },
-      { id: 'bot3', nome: 'Bento', temperatura: 0.15 },
+      { id: 'bot1', perfilId: 'severino', nome: 'Severino', temperatura: 0.05 },
+      { id: 'bot2', perfilId: 'iara', nome: 'Iara', temperatura: 0.1 },
+      { id: 'bot3', perfilId: 'bento', nome: 'Bento', temperatura: 0.15 },
     ];
 
     expect(aplicarPerfisBots(jogadores(), perfis)).toEqual([
       { id: 'humano', nome: 'Humano', pontos: 5 },
-      { id: 'bot1', nome: 'Severino', pontos: 5, temperatura: 0.05 },
-      { id: 'bot2', nome: 'Iara', pontos: 5, temperatura: 0.1 },
-      { id: 'bot3', nome: 'Bento', pontos: 5, temperatura: 0.15 },
+      { id: 'bot1', perfilId: 'severino', nome: 'Severino', pontos: 5, temperatura: 0.05 },
+      { id: 'bot2', perfilId: 'iara', nome: 'Iara', pontos: 5, temperatura: 0.1 },
+      { id: 'bot3', perfilId: 'bento', nome: 'Bento', pontos: 5, temperatura: 0.15 },
     ]);
   });
 });

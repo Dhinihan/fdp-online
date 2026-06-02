@@ -26,11 +26,11 @@ function armazenamentoQueLanca(metodo: 'getItem' | 'setItem'): Pick<Storage, 'ge
   return { getItem: () => null, setItem: () => undefined, [metodo]: falhar };
 }
 
-function jogador(id: string, nome: string): Jogador {
-  return { id, nome, pontos: 0 };
+function jogador(id: string, nome: string, perfilId?: string): Jogador {
+  return { id, nome, pontos: 0, perfilId };
 }
 
-const classificacao: Jogador[] = [jogador('humano', 'Você'), jogador('bot1', 'Brás')];
+const classificacao: Jogador[] = [jogador('humano', 'Você'), jogador('bot1', 'Brás', 'bras')];
 
 describe('registrarPartidaNoArmazenamento', () => {
   it('grava o snapshot da primeira partida na chave do Ranking', () => {

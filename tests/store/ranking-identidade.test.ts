@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { identidadeDe } from '@/store/ranking/identidade';
 import type { Jogador } from '@/types/entidades';
 
-function jogador(id: string, nome: string): Jogador {
-  return { id, nome, pontos: 0 };
+function jogador(id: string, nome: string, perfilId?: string): Jogador {
+  return { id, nome, pontos: 0, perfilId };
 }
 
 describe('identidadeDe', () => {
@@ -11,13 +11,25 @@ describe('identidadeDe', () => {
     expect(identidadeDe(jogador('humano', 'Você'))).toEqual({ chave: 'humano', nomeExibicao: 'Você' });
   });
 
-  it('deriva slug ASCII do nome do Perfil de Bot, removendo acentos', () => {
-    expect(identidadeDe(jogador('bot1', 'Brás'))).toEqual({ chave: 'bot:bras', nomeExibicao: 'Brás' });
-    expect(identidadeDe(jogador('bot2', 'Vitória'))).toEqual({ chave: 'bot:vitoria', nomeExibicao: 'Vitória' });
-    expect(identidadeDe(jogador('bot3', 'Luís'))).toEqual({ chave: 'bot:luis', nomeExibicao: 'Luís' });
+  it('ancora a chave do Perfil de Bot no perfilId canônico, não no nome exibido', () => {
+    expect(identidadeDe(jogador('bot1', 'Brás', 'bras'))).toEqual({ chave: 'bot:bras', nomeExibicao: 'Brás' });
+    expect(identidadeDe(jogador('bot2', 'Vitória', 'vitoria'))).toEqual({
+      chave: 'bot:vitoria',
+      nomeExibicao: 'Vitória',
+    });
   });
 
-  it('usa o nome do Perfil de Bot, não o assento técnico bot1/bot2/bot3', () => {
-    expect(identidadeDe(jogador('bot1', 'Iara')).chave).toBe('bot:iara');
+  it('mantém a chave estável quando o nome exibido muda (mesmo perfilId)', () => {
+    expect(identidadeDe(jogador('bot1', 'Brás', 'bras')).chave).toBe('bot:bras');
+    expect(identidadeDe(jogador('bot3', 'Brás Cubas', 'bras')).chave).toBe('bot:bras');
+  });
+
+  it('usa o perfilId, não o assento técnico bot1/bot2/bot3', () => {
+    expect(identidadeDe(jogador('bot1', 'Iara', 'iara')).chave).toBe('bot:iara');
+    expect(identidadeDe(jogador('bot3', 'Iara', 'iara')).chave).toBe('bot:iara');
+  });
+
+  it('não trata um participante não-humano sem perfilId como bot — lança erro explícito', () => {
+    expect(() => identidadeDe(jogador('observador', 'Fantasma'))).toThrow(/identidade de Ranking/);
   });
 });
