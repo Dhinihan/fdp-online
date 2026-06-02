@@ -29,7 +29,15 @@ describe('identidadeDe', () => {
     expect(identidadeDe(jogador('bot3', 'Iara', 'iara')).chave).toBe('bot:iara');
   });
 
+  it('dá precedência ao humano mesmo que carregue um perfilId espúrio', () => {
+    expect(identidadeDe(jogador('humano', 'Você', 'bras'))).toEqual({ chave: 'humano', nomeExibicao: 'Você' });
+  });
+
   it('não trata um participante não-humano sem perfilId como bot — lança erro explícito', () => {
     expect(() => identidadeDe(jogador('observador', 'Fantasma'))).toThrow(/identidade de Ranking/);
+  });
+
+  it('rejeita perfilId vazio em vez de gerar a chave degenerada "bot:"', () => {
+    expect(() => identidadeDe(jogador('bot1', 'Sem perfil', ''))).toThrow(/identidade de Ranking/);
   });
 });
