@@ -120,6 +120,18 @@ _Avoid_: Vitória de rodada, vaza vencida, turno ganho
 Ordem final dos participantes ao encerrar uma **Partida**, definida por sobrevivência: vencedor primeiro, depois **Jogadores eliminados** do mais recente para o mais antigo. Entre jogadores eliminados no mesmo fechamento de **Rodada**, vence quem ficou com mais **Pontos**; em empate de **Pontos**, o jogador humano fica acima dos **Perfis de Bot**.
 _Avoid_: Tabela final, ranking visual, placar final
 
+**Sequência de Vitórias**:
+Quantidade de **Vitórias de Partida** consecutivas do jogador humano. Incrementa a cada **Partida** concluída em que o humano termina como vencedor e zera quando ele encerra uma **Partida** em qualquer outra posição. Abandonar uma **Partida** sem concluí-la não afeta a sequência. Exclusiva do jogador humano.
+_Avoid_: Winstreak, streak, combo
+
+**Troféu**:
+Marco persistente conquistado pelo jogador humano ao atingir um comprimento de **Sequência de Vitórias**. Uma vez conquistado, nunca é perdido, mesmo quando a **Sequência de Vitórias** zera. São sete níveis ordenados — Bronze (3), Prata (5), Ouro (10), Esmeralda (15), Safira (25), Rubi (50), Diamante (100) — e cada nível é conquistado uma única vez. Exclusivo do jogador humano.
+_Avoid_: Milestone, conquista, achievement, medalha
+
+**Maior Troféu**:
+**Troféu** de nível mais alto já conquistado pelo jogador humano. Resume toda a coleção, já que os níveis são ordenados: possuir um nível implica possuir todos os anteriores.
+_Avoid_: Melhor sequência, recorde
+
 ## Relationships
 
 - Uma **Partida** contém uma ou mais **Rodadas**.
@@ -142,6 +154,10 @@ _Avoid_: Tabela final, ranking visual, placar final
 - O win rate no **Ranking** é calculado por **Vitórias de Partida** divididas pelas **Partidas** computadas em que o participante apareceu.
 - A **Classificação da Partida** define a **Vitória de Partida** e a posição registrada no **Ranking**.
 - O **Ranking** registra apenas **Partidas** concluídas e exibe **Perfis de Bot** somente depois que aparecem em pelo menos uma **Partida** computada.
+- Uma **Vitória de Partida** do jogador humano incrementa a **Sequência de Vitórias**; qualquer outra **Classificação da Partida** dele a zera.
+- Atingir um comprimento de marco na **Sequência de Vitórias** conquista o **Troféu** correspondente, atualizando o **Maior Troféu**.
+- Um **Troféu** de nível já contido no **Maior Troféu** não é reconquistado: o próximo desbloqueio só ocorre no nível acima do **Maior Troféu**.
+- A **Sequência de Vitórias** e o **Maior Troféu** são atualizados no mesmo encerramento de **Partida** que alimenta o **Ranking**, mas pertencem só ao jogador humano.
 
 ## Example dialogue
 
@@ -154,3 +170,4 @@ _Avoid_: Tabela final, ranking visual, placar final
 - `G[N-X]` e `P[N-X]` são aliases técnicos; na linguagem de produto use **Escolha de vencedora por necessidade** e **Descarte por necessidade**.
 - `bot1`, `bot2` e `bot3` são assentos técnicos temporários; na linguagem de produto e no **Ranking**, use o **Perfil de Bot**.
 - `vitória` no contexto do **Ranking** significa **Vitória de Partida**, não turno feito nem rodada sobrevivida.
+- `winstreak`/`streak` é a **Sequência de Vitórias**; `milestone`/`conquista` é um **Troféu**. Ambos são exclusivos do jogador humano, ao contrário do **Ranking**, que agrega humano e **Perfis de Bot**.

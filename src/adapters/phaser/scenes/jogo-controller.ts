@@ -1,6 +1,8 @@
 import type { Scene } from 'phaser';
 import type { Partida } from '@/core/Partida';
 import { registrarPartidaNoArmazenamento } from '@/store/ranking/gravar-ranking';
+import { registrarTrofeusNoArmazenamento } from '@/store/trofeus/gravar-trofeus';
+import type { ResultadoTrofeus } from '@/store/trofeus/tipos';
 import type { Jogador } from '@/types/entidades';
 import { ehFaseDeclaracao, estadoEmJogo } from '@/types/estado-rodada';
 import { DecisorDeclaracaoHumano } from '../DecisorDeclaracaoHumano';
@@ -29,7 +31,7 @@ export interface DependenciasCena {
   atualizarPainel: () => void;
   animarRecolhimentoTurno: () => void;
   mostrarResumoRodada: (resumoRodada: PontuacaoRodada, onContinuar: () => void) => void;
-  mostrarFimJogo: (classificacao: Jogador[]) => void;
+  mostrarFimJogo: (classificacao: Jogador[], resultadoTrofeus: ResultadoTrofeus | null) => void;
   desativarResize: () => void;
   getGameArea: () => Retangulo;
   objetosDeclaracao: Phaser.GameObjects.GameObject[];
@@ -88,8 +90,9 @@ export class JogoController {
       },
       onJogoEncerrado: (classificacao: Jogador[]) => {
         registrarPartidaNoArmazenamento(() => window.localStorage, classificacao);
+        const resultadoTrofeus = registrarTrofeusNoArmazenamento(() => window.localStorage, classificacao);
         this.deps.desativarResize();
-        this.deps.mostrarFimJogo(classificacao);
+        this.deps.mostrarFimJogo(classificacao, resultadoTrofeus);
       },
       modoDebug: this.deps.modoDebug,
     };

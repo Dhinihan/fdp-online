@@ -61,8 +61,8 @@ export class JogoScene extends Scene {
       mostrarResumoRodada: (resumoRodada, onContinuar) => {
         this.exibirResumoRodada(resumoRodada, onContinuar);
       },
-      mostrarFimJogo: (classificacao) => {
-        mostrarFimJogoDaCena(this, classificacao);
+      mostrarFimJogo: (classificacao, resultadoTrofeus) => {
+        mostrarFimJogoDaCena(this, classificacao, resultadoTrofeus);
       },
       desativarResize: () => {
         desativarResize(this, this.redesenhar);

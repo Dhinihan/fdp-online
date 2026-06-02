@@ -1,4 +1,5 @@
 import type { Scene } from 'phaser';
+import type { ResultadoTrofeus } from '@/store/trofeus/tipos';
 import type { Jogador } from '@/types/entidades';
 import { escalar, escalarFonte } from '../escala';
 import { limparObjetos } from './limpar-objetos';
@@ -6,6 +7,7 @@ import { limparObjetos } from './limpar-objetos';
 interface ConfigFimJogo {
   cena: Scene;
   classificacao: Jogador[];
+  resultadoTrofeus: ResultadoTrofeus | null;
   objetos: Phaser.GameObjects.GameObject[];
   onReiniciar: () => void;
 }
@@ -19,10 +21,36 @@ export function desenharFimJogo(config: ConfigFimJogo): void {
   limparObjetos(config.objetos);
   desenharFundo(config);
   desenharTitulo(config.cena, config.objetos);
+  desenharSequencia(config);
   config.classificacao.forEach((jogador, indice) => {
     desenharLinha({ cena: config.cena, objetos: config.objetos, jogador, indice });
   });
   desenharBotao(config);
+}
+
+/**
+ * Exibe a Sequência de Vitórias quando há resultado a mostrar. A boundary de
+ * troféus já decide isso: o resultado só existe na vitória, e é `null` na
+ * derrota ou em falha de Storage — aqui não reinspecionamos a Classificação.
+ */
+function desenharSequencia(config: ConfigFimJogo): void {
+  if (config.resultadoTrofeus === null) return;
+  const { cena, objetos } = config;
+  const sequencia = cena.add
+    .text(
+      cena.cameras.main.centerX,
+      cena.cameras.main.height * 0.245,
+      `Sequência de Vitórias: ${String(config.resultadoTrofeus.sequenciaAtual)}`,
+      {
+        fontSize: escalarFonte(18, cena),
+        fontStyle: 'bold',
+        color: '#facc15',
+        fontFamily: 'Arial',
+      },
+    )
+    .setOrigin(0.5)
+    .setDepth(102);
+  objetos.push(sequencia);
 }
 
 function desenharFundo(config: ConfigFimJogo): void {
