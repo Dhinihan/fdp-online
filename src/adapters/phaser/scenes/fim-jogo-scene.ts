@@ -1,4 +1,5 @@
 import type { Scene } from 'phaser';
+import type { ResultadoTrofeus } from '@/store/trofeus/tipos';
 import type { Jogador } from '@/types/entidades';
 import { destruirDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
 import { desenharFimJogo } from '../renderers/fim-jogo-renderer';
@@ -8,6 +9,7 @@ import type { JogoScene } from './JogoScene';
 interface ConfigFimJogoScene {
   cena: Scene;
   classificacao: Jogador[];
+  resultadoTrofeus: ResultadoTrofeus | null;
   fimJogoObjetos: Phaser.GameObjects.GameObject[];
   objetos: Phaser.GameObjects.GameObject[];
   mesaObjetos: Phaser.GameObjects.GameObject[];
@@ -22,15 +24,21 @@ export function mostrarFimJogo(config: ConfigFimJogoScene): void {
   desenharFimJogo({
     cena: config.cena,
     classificacao: config.classificacao,
+    resultadoTrofeus: config.resultadoTrofeus,
     objetos: config.fimJogoObjetos,
     onReiniciar: config.onReiniciar,
   });
 }
 
-export function mostrarFimJogoDaCena(cena: JogoScene, classificacao: Jogador[]): void {
+export function mostrarFimJogoDaCena(
+  cena: JogoScene,
+  classificacao: Jogador[],
+  resultadoTrofeus: ResultadoTrofeus | null,
+): void {
   mostrarFimJogo({
     cena,
     classificacao,
+    resultadoTrofeus,
     fimJogoObjetos: cena.fimJogoObjetos,
     objetos: cena.objetos,
     mesaObjetos: cena.mesaObjetos,
