@@ -7,6 +7,7 @@ import { desenharPodioRanking } from './desenhar-podio-ranking';
 import { desenharTabelaRanking, type TabelaRankingRender } from './desenhar-tabela-ranking';
 import { offsetMaximoRolagem, precisaRolar, type GeometriaListaRanking } from './geometria-rolagem-tabela-ranking';
 import { calcularLayoutRanking, type LayoutRanking } from './layout-ranking';
+import { NavegacaoVoltarRanking } from './navegacao-voltar-ranking';
 import { OPCOES_METRICA_RANKING, prepararRankingRenderModel } from './ranking-view';
 import { ControladorRolagemTabela } from './rolagem-tabela-ranking';
 
@@ -37,6 +38,7 @@ export class RankingScene extends Scene {
   private objetos: Phaser.GameObjects.GameObject[] = [];
   private redesenhar?: ResizeDebouncer;
   private rolagem?: ControladorRolagemTabela;
+  private navegacao?: NavegacaoVoltarRanking;
   private metricaAtiva: MetricaRanking = 'vitorias';
 
   constructor() {
@@ -51,6 +53,10 @@ export class RankingScene extends Scene {
       this.desenhar();
     });
     this.scale.on('resize', this.redesenhar);
+    this.navegacao = new NavegacaoVoltarRanking(window.history, window, () => {
+      this.encerrarCena();
+    });
+    this.navegacao.ativar();
     this.events.once('shutdown', () => {
       this.aoEncerrar();
     });
@@ -200,6 +206,11 @@ export class RankingScene extends Scene {
   }
 
   private fechar(): void {
+    this.navegacao?.fecharPelaUI();
+    this.encerrarCena();
+  }
+
+  private encerrarCena(): void {
     this.scene.stop();
     this.scene.resume('JogoScene');
   }
@@ -220,6 +231,8 @@ export class RankingScene extends Scene {
   }
 
   private aoEncerrar(): void {
+    this.navegacao?.encerrar();
+    this.navegacao = undefined;
     if (this.redesenhar) {
       this.scale.off('resize', this.redesenhar);
       this.redesenhar.limpar();
