@@ -117,7 +117,7 @@ Resultado atribuído somente ao primeiro colocado da **Partida** encerrada.
 _Avoid_: Vitória de rodada, vaza vencida, turno ganho
 
 **Classificação da Partida**:
-Ordem final dos participantes ao encerrar uma **Partida**, definida por **Pontos** finais decrescentes. Em empate de **Pontos**, o jogador humano fica acima dos **Perfis de Bot**.
+Ordem final dos participantes ao encerrar uma **Partida**, definida por sobrevivência: vencedor primeiro, depois **Jogadores eliminados** do mais recente para o mais antigo. Entre jogadores eliminados no mesmo fechamento de **Rodada**, vence quem ficou com mais **Pontos**; em empate de **Pontos**, o jogador humano fica acima dos **Perfis de Bot**.
 _Avoid_: Tabela final, ranking visual, placar final
 
 ## Relationships
