@@ -33,26 +33,38 @@ interface Pincel {
   layout: LayoutTabela;
 }
 
+/**
+ * Resultado da tabela já separado em duas partes: `cabecalho` fica fixo na
+ * cena; `linhas` é o que a `RankingScene` põe num container mascarado para
+ * rolar (#249). `alturaConteudo`, `primeiraLinhaTopo` e `alturaLinha` dão a
+ * geometria que o controlador de rolagem precisa para calcular os limites.
+ */
+export interface TabelaRankingRender {
+  cabecalho: Phaser.GameObjects.GameObject[];
+  linhas: Phaser.GameObjects.GameObject[];
+  alturaConteudo: number;
+  primeiraLinhaTopo: number;
+  alturaLinha: number;
+}
+
 export function desenharTabelaRanking(
   cena: Scene,
   model: RankingRenderModel,
   layoutRanking: LayoutRanking,
-): Phaser.GameObjects.GameObject[] {
+): TabelaRankingRender {
   const pincel: Pincel = { cena, layout: layoutTabela(layoutRanking) };
-  return desenharTabelaOrdenada(pincel, model.participantes, model.metrica);
-}
-
-function desenharTabelaOrdenada(
-  pincel: Pincel,
-  ordenados: ParticipanteRankeado[],
-  metrica: MetricaRanking,
-): Phaser.GameObjects.GameObject[] {
-  const objetos = desenharCabecalho(pincel);
-  ordenados.forEach((item, indice) => {
-    const y = pincel.layout.topo + escalar(34, pincel.cena) + indice * pincel.layout.alturaLinha;
-    objetos.push(...desenharLinha(pincel, { item, indice, y, metrica }));
-  });
-  return objetos;
+  const { alturaLinha } = pincel.layout;
+  const inicio = pincel.layout.topo + escalar(34, cena);
+  const linhas = model.participantes.flatMap((item, indice) =>
+    desenharLinha(pincel, { item, indice, y: inicio + indice * alturaLinha, metrica: model.metrica }),
+  );
+  return {
+    cabecalho: desenharCabecalho(pincel),
+    linhas,
+    alturaLinha,
+    primeiraLinhaTopo: inicio - alturaLinha / 2,
+    alturaConteudo: model.participantes.length * alturaLinha,
+  };
 }
 
 function layoutTabela(layout: LayoutRanking): LayoutTabela {
