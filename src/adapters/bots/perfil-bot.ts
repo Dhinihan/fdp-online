@@ -1,41 +1,54 @@
 import type { GeradorAleatorio } from '@/core/RngComSeed';
 import type { Jogador } from '@/types/entidades';
 
-export const nomesBotsPorTemperatura = [
-  'Brás', // Brás Cubas — Memórias Póstumas de Brás Cubas (Machado de Assis)
-  'Severino', // Morte e Vida Severina (João Cabral de Melo Neto)
-  'Iara', // Iara — lenda do folclore brasileiro
-  'Bento', // Bento Santiago — D. Casmurro (Machado de Assis)
-  'Ana', // Ana Terra — O Tempo e o Vento (Érico Veríssimo)
-  'Pedro', // Pedro Bala — Capitães da Areia (Jorge Amado)
-  'Vitória', // Sinhá Vitória — Vidas Secas (Graciliano Ramos)
-  'Augusto', // Augusto Matraga — Sagarana (Guimarães Rosa)
-  'Leonardo', // Leonardo — Memórias de um Sargento de Milícias (Manuel Antônio de Almeida)
-  'Fabiano', // Fabiano — Vidas Secas (Graciliano Ramos)
-  'Sofia', // Sofia — Quincas Borba (Machado de Assis)
-  'Luís', // Luís da Silva — Angústia (Graciliano Ramos)
-  'Aurélia', // Aurélia Camargo — Senhora (José de Alencar)
-  'Clara', // Clara dos Anjos — Clara dos Anjos (Lima Barreto)
-  'Rita', // Rita Baiana — O Cortiço (Aluísio Azevedo)
-  'Sérgio', // narrador de O Ateneu (Raul Pompeia)
-  'Paulo', // Paulo Honório — São Bernardo (Graciliano Ramos)
-  'Flor', // Dona Flor — Dona Flor e Seus Dois Maridos (Jorge Amado)
-  'Jerônimo', // Jerônimo — O Cortiço (Aluísio Azevedo)
-  'Iracema', // Iracema — Iracema (José de Alencar)
+/**
+ * Fonte canônica dos Perfis de Bot. Cada perfil tem um `id` estável — a
+ * identidade reconhecível usada no Ranking entre Partidas — desacoplado do
+ * `nome` exibido: renomear o texto não muda o `id`, e dois perfis nunca
+ * compartilham `id` (lista fechada e curada à mão, sem slug derivado de nome).
+ */
+export const perfisBotsPorTemperatura = [
+  { id: 'bras', nome: 'Brás' }, // Brás Cubas — Memórias Póstumas de Brás Cubas (Machado de Assis)
+  { id: 'severino', nome: 'Severino' }, // Morte e Vida Severina (João Cabral de Melo Neto)
+  { id: 'iara', nome: 'Iara' }, // Iara — lenda do folclore brasileiro
+  { id: 'bento', nome: 'Bento' }, // Bento Santiago — D. Casmurro (Machado de Assis)
+  { id: 'ana', nome: 'Ana' }, // Ana Terra — O Tempo e o Vento (Érico Veríssimo)
+  { id: 'pedro', nome: 'Pedro' }, // Pedro Bala — Capitães da Areia (Jorge Amado)
+  { id: 'vitoria', nome: 'Vitória' }, // Sinhá Vitória — Vidas Secas (Graciliano Ramos)
+  { id: 'augusto', nome: 'Augusto' }, // Augusto Matraga — Sagarana (Guimarães Rosa)
+  { id: 'leonardo', nome: 'Leonardo' }, // Leonardo — Memórias de um Sargento de Milícias (Manuel Antônio de Almeida)
+  { id: 'fabiano', nome: 'Fabiano' }, // Fabiano — Vidas Secas (Graciliano Ramos)
+  { id: 'sofia', nome: 'Sofia' }, // Sofia — Quincas Borba (Machado de Assis)
+  { id: 'luis', nome: 'Luís' }, // Luís da Silva — Angústia (Graciliano Ramos)
+  { id: 'aurelia', nome: 'Aurélia' }, // Aurélia Camargo — Senhora (José de Alencar)
+  { id: 'clara', nome: 'Clara' }, // Clara dos Anjos — Clara dos Anjos (Lima Barreto)
+  { id: 'rita', nome: 'Rita' }, // Rita Baiana — O Cortiço (Aluísio Azevedo)
+  { id: 'sergio', nome: 'Sérgio' }, // narrador de O Ateneu (Raul Pompeia)
+  { id: 'paulo', nome: 'Paulo' }, // Paulo Honório — São Bernardo (Graciliano Ramos)
+  { id: 'flor', nome: 'Flor' }, // Dona Flor — Dona Flor e Seus Dois Maridos (Jorge Amado)
+  { id: 'jeronimo', nome: 'Jerônimo' }, // Jerônimo — O Cortiço (Aluísio Azevedo)
+  { id: 'iracema', nome: 'Iracema' }, // Iracema — Iracema (José de Alencar)
 ] as const;
+
+export const nomesBotsPorTemperatura = perfisBotsPorTemperatura.map((perfil) => perfil.nome);
 
 export interface PerfilBot {
   id: string;
+  perfilId: string;
   nome: string;
   temperatura: number;
 }
 
-const totalFaixas = nomesBotsPorTemperatura.length;
+const totalFaixas = perfisBotsPorTemperatura.length;
 const larguraFaixa = 1 / totalFaixas;
 
-export function nomePorTemperatura(temperatura: number): string {
+export function perfilPorTemperatura(temperatura: number): { id: string; nome: string } {
   const faixa = Math.min(Math.floor(temperatura * totalFaixas), totalFaixas - 1);
-  return nomesBotsPorTemperatura[faixa];
+  return perfisBotsPorTemperatura[faixa];
+}
+
+export function nomePorTemperatura(temperatura: number): string {
+  return perfilPorTemperatura(temperatura).nome;
 }
 
 export function sortearPerfisBots(
@@ -47,9 +60,11 @@ export function sortearPerfisBots(
 
   return bots.map((jogador, indice) => {
     const temperatura = (faixas[indice] + rng.random()) * larguraFaixa;
+    const perfil = perfilPorTemperatura(temperatura);
     return {
       id: jogador.id,
-      nome: nomePorTemperatura(temperatura),
+      perfilId: perfil.id,
+      nome: perfil.nome,
       temperatura,
     };
   });
@@ -59,7 +74,7 @@ export function aplicarPerfisBots(jogadores: Jogador[], perfis: PerfilBot[]): Jo
   return jogadores.map((jogador) => {
     const perfil = perfis.find((item) => item.id === jogador.id);
     if (!perfil) return jogador;
-    return { ...jogador, nome: perfil.nome, temperatura: perfil.temperatura };
+    return { ...jogador, perfilId: perfil.perfilId, nome: perfil.nome, temperatura: perfil.temperatura };
   });
 }
 

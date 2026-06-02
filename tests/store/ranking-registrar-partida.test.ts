@@ -3,8 +3,8 @@ import { registrarPartida } from '@/store/ranking/registrar-partida';
 import { SNAPSHOT_VAZIO, type ParticipantePersistido, type SnapshotRanking } from '@/store/ranking/tipos';
 import type { Jogador } from '@/types/entidades';
 
-function jogador(id: string, nome: string): Jogador {
-  return { id, nome, pontos: 0 };
+function jogador(id: string, nome: string, perfilId?: string): Jogador {
+  return { id, nome, pontos: 0, perfilId };
 }
 
 function part(nomeExibicao: string, somatorios: [number, number, number]): ParticipantePersistido {
@@ -12,7 +12,11 @@ function part(nomeExibicao: string, somatorios: [number, number, number]): Parti
   return { nomeExibicao, partidas, vitorias, somaPosicoes };
 }
 
-const classificacao: Jogador[] = [jogador('humano', 'Você'), jogador('bot1', 'Brás'), jogador('bot2', 'Iara')];
+const classificacao: Jogador[] = [
+  jogador('humano', 'Você'),
+  jogador('bot1', 'Brás', 'bras'),
+  jogador('bot2', 'Iara', 'iara'),
+];
 
 describe('registrarPartida', () => {
   it('registra somatórios brutos da primeira partida a partir do snapshot vazio', () => {
