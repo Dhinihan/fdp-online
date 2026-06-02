@@ -54,6 +54,13 @@ describe('ordenarRanking — ordenação por Vitórias com desempate canônico',
 
     expect(chaves(lista, 'vitorias')).toEqual(['humano', 'bot:bras']);
   });
+
+  it('desempata dois Perfis de Bot idênticos pela chave (ordem determinística entre reloads)', () => {
+    const base = { vitorias: 2, partidas: 4, somaPosicoes: 8 };
+    const lista = [p({ chave: 'bot:vitoria', ...base }), p({ chave: 'bot:bras', ...base })];
+
+    expect(chaves(lista, 'vitorias')).toEqual(['bot:bras', 'bot:vitoria']);
+  });
 });
 
 describe('ordenarRanking — outras métricas ativas', () => {

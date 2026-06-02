@@ -120,8 +120,9 @@ function posicao(
 
 function identidade({ cena, layout }: Pincel, y: number, item: ParticipanteRankeado): Phaser.GameObjects.GameObject[] {
   const x = layout.esquerda + escalar(40, cena);
+  const rotulo = item.humano ? 'Você' : item.nomeExibicao;
   const nome = cena.add
-    .text(x, y - escalar(8, cena), item.nomeExibicao, {
+    .text(x, y - escalar(8, cena), rotulo, {
       fontSize: escalarFonte(15, cena),
       color: item.humano ? COR_ACENTO : COR_TEXTO,
       fontStyle: 'bold',

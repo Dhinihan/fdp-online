@@ -5,7 +5,8 @@
  * inteiro). Pos. média = somaPosicoes / Partidas (mantida bruta; a casa decimal
  * é formatada na renderização). A ordenação já nasce com o desempate canônico
  * completo — métrica ativa → Vitórias desc → win rate desc → pos. média asc →
- * humano acima dos Perfis de Bot — embora esta fatia só renderize por Vitórias.
+ * humano acima dos Perfis de Bot → chave (lexical, para ordem determinística
+ * entre reloads) — embora esta fatia só renderize por Vitórias.
  */
 
 import type { ParticipanteRanking } from './tipos';
@@ -41,6 +42,7 @@ function desempateCanonico(a: ParticipanteRankeado, b: ParticipanteRankeado): nu
     b.vitorias - a.vitorias ||
     b.winRate - a.winRate ||
     a.posMedia - b.posMedia ||
-    (b.humano ? 1 : 0) - (a.humano ? 1 : 0)
+    (b.humano ? 1 : 0) - (a.humano ? 1 : 0) ||
+    a.chave.localeCompare(b.chave)
   );
 }
