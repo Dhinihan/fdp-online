@@ -29,11 +29,12 @@ export function desenharFimJogo(config: ConfigFimJogo): void {
 }
 
 /**
- * Ao vencer, exibe a Sequência de Vitórias atual. Ao perder, ou quando o
- * resultado é neutro (falha de Storage), não exibe nada sobre sequência.
+ * Exibe a Sequência de Vitórias quando há resultado a mostrar. A boundary de
+ * troféus já decide isso: o resultado só existe na vitória, e é `null` na
+ * derrota ou em falha de Storage — aqui não reinspecionamos a Classificação.
  */
 function desenharSequencia(config: ConfigFimJogo): void {
-  if (config.resultadoTrofeus === null || config.classificacao[0]?.id !== 'humano') return;
+  if (config.resultadoTrofeus === null) return;
   const { cena, objetos } = config;
   const sequencia = cena.add
     .text(

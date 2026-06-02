@@ -4,13 +4,16 @@
  * independente em chave separada (`fdp.trofeus.v1`).
  *
  * Lê o snapshot atual (corrompido → estado zero), deriva se o humano venceu da
- * Classificação da Partida (índice 0 = vencedor), aplica a transição, persiste
- * e **retorna** o resultado para a tela de fim de jogo.
+ * Classificação da Partida (índice 0 = vencedor) — único ponto que consulta a
+ * Classificação para decidir vitória —, aplica a transição, persiste e
+ * **retorna** o que a tela de fim de jogo deve exibir.
  *
- * A feature é um side effect secundário: qualquer falha de `Storage` é absorvida
- * — incluindo o próprio getter `window.localStorage`, que pode lançar
- * `SecurityError` — para nunca interromper o encerramento da Partida. Em falha,
- * retorna resultado neutro (`null`): a sequência simplesmente não é exibida.
+ * O resultado já encapsula "há algo a exibir": é `null` tanto na derrota quanto
+ * em falha de `Storage`, então o renderer só consome o resultado e nunca
+ * reinspeciona a Classificação. A feature é um side effect secundário: qualquer
+ * falha de `Storage` é absorvida — incluindo o próprio getter
+ * `window.localStorage`, que pode lançar `SecurityError` — para nunca
+ * interromper o encerramento da Partida.
  */
 
 import type { Jogador } from '@/types/entidades';

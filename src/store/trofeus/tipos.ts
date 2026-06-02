@@ -17,9 +17,10 @@ export interface SnapshotTrofeus {
 export const SNAPSHOT_ZERO: SnapshotTrofeus = { versao: 1, sequenciaAtual: 0, maiorTrofeu: null };
 
 /**
- * O que a tela de fim de jogo precisa saber sobre a sequência após o
- * encerramento. `null` é o resultado neutro (falha de Storage): a sequência
- * não é exibida.
+ * O que a tela de fim de jogo exibe sobre a sequência após o encerramento. Sua
+ * presença já significa "há algo a exibir": só existe quando o humano venceu. O
+ * resultado neutro — derrota ou falha de Storage — é representado por `null`, e
+ * o renderer nunca precisa reinspecionar a Classificação da Partida.
  */
 export interface ResultadoTrofeus {
   sequenciaAtual: number;

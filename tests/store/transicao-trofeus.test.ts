@@ -11,23 +11,23 @@ describe('aplicarTransicao quando o humano venceu', () => {
     const { snapshot, resultado } = aplicarTransicao(SNAPSHOT_ZERO, true);
 
     expect(snapshot.sequenciaAtual).toBe(1);
-    expect(resultado.sequenciaAtual).toBe(1);
+    expect(resultado).toEqual({ sequenciaAtual: 1 });
   });
 
   it('incrementa a sequência já existente', () => {
     const { snapshot, resultado } = aplicarTransicao(comSequencia(4), true);
 
     expect(snapshot.sequenciaAtual).toBe(5);
-    expect(resultado.sequenciaAtual).toBe(5);
+    expect(resultado).toEqual({ sequenciaAtual: 5 });
   });
 });
 
 describe('aplicarTransicao quando o humano não venceu', () => {
-  it('zera a sequência', () => {
+  it('zera a sequência persistida mas não devolve nada a exibir', () => {
     const { snapshot, resultado } = aplicarTransicao(comSequencia(7), false);
 
     expect(snapshot.sequenciaAtual).toBe(0);
-    expect(resultado.sequenciaAtual).toBe(0);
+    expect(resultado).toBeNull();
   });
 
   it('mantém a sequência zerada ao perder partindo do zero', () => {

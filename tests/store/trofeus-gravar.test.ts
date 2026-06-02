@@ -65,13 +65,13 @@ describe('registrarTrofeusNoArmazenamento quando o humano vence', () => {
 });
 
 describe('registrarTrofeusNoArmazenamento quando o humano não vence', () => {
-  it('zera a sequência persistida e retorna o resultado zerado', () => {
+  it('zera a sequência persistida e não retorna nada a exibir', () => {
     const armazenamento = armazenamentoFake(snapshotInicial(5));
 
     const resultado = registrarTrofeusNoArmazenamento(() => armazenamento, humanoPerdeu);
 
     expect(snapshotGravado(armazenamento)).toEqual({ versao: 1, sequenciaAtual: 0, maiorTrofeu: null });
-    expect(resultado).toEqual({ sequenciaAtual: 0 });
+    expect(resultado).toBeNull();
   });
 });
 
