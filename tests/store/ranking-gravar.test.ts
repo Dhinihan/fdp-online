@@ -19,6 +19,13 @@ function snapshotGravado(armazenamento: { dados: Map<string, string> }): Snapsho
   return JSON.parse(armazenamento.dados.get(CHAVE_RANKING) ?? '') as SnapshotRanking;
 }
 
+function armazenamentoQueLanca(metodo: 'getItem' | 'setItem'): Pick<Storage, 'getItem' | 'setItem'> {
+  const falhar = (): never => {
+    throw new DOMException('storage indisponível', 'SecurityError');
+  };
+  return { getItem: () => null, setItem: () => undefined, [metodo]: falhar };
+}
+
 function jogador(id: string, nome: string): Jogador {
   return { id, nome, pontos: 0 };
 }
@@ -59,5 +66,23 @@ describe('registrarPartidaNoArmazenamento', () => {
     registrarPartidaNoArmazenamento(armazenamento, classificacao);
 
     expect(snapshotGravado(armazenamento).participantes['humano']).toMatchObject({ partidas: 1 });
+  });
+});
+
+describe('registrarPartidaNoArmazenamento — resiliência a falha de Storage', () => {
+  it('não propaga falha de escrita (quota excedida)', () => {
+    const armazenamento = armazenamentoQueLanca('setItem');
+
+    expect(() => {
+      registrarPartidaNoArmazenamento(armazenamento, classificacao);
+    }).not.toThrow();
+  });
+
+  it('absorve falha de leitura (modo privado/SecurityError)', () => {
+    const armazenamento = armazenamentoQueLanca('getItem');
+
+    expect(() => {
+      registrarPartidaNoArmazenamento(armazenamento, classificacao);
+    }).not.toThrow();
   });
 });

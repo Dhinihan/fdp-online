@@ -65,15 +65,22 @@ function ehSnapshotV1(conteudo: unknown): conteudo is { versao: 1; participantes
 
 function ehParticipante(valor: unknown): valor is ParticipantePersistido {
   if (typeof valor !== 'object' || valor === null) return false;
-  const p = valor as Record<string, unknown>;
-  return (
-    typeof p.nomeExibicao === 'string' &&
-    ehNumeroFinito(p.vitorias) &&
-    ehNumeroFinito(p.partidas) &&
-    ehNumeroFinito(p.somaPosicoes)
-  );
+  const { nomeExibicao, partidas, vitorias, somaPosicoes } = valor as Record<string, unknown>;
+  if (typeof nomeExibicao !== 'string' || nomeExibicao === '') return false;
+  if (!ehContagem(partidas) || !ehContagem(vitorias) || !ehContagem(somaPosicoes)) return false;
+  return ehSomatorioCoerente(partidas, vitorias, somaPosicoes);
 }
 
-function ehNumeroFinito(valor: unknown): valor is number {
-  return typeof valor === 'number' && Number.isFinite(valor);
+/**
+ * Invariantes do somatório: cada participante persistido apareceu em ao menos
+ * uma Partida; não vence mais Partidas do que disputou; e, como cada aparição
+ * contribui com posição ≥ 1, a soma das posições nunca fica abaixo do total de
+ * Partidas (o que mantém a Pos. média ≥ 1).
+ */
+function ehSomatorioCoerente(partidas: number, vitorias: number, somaPosicoes: number): boolean {
+  return partidas >= 1 && vitorias <= partidas && somaPosicoes >= partidas;
+}
+
+function ehContagem(valor: unknown): valor is number {
+  return typeof valor === 'number' && Number.isInteger(valor) && valor >= 0;
 }

@@ -53,6 +53,29 @@ describe('carregarRanking rejeita participante inválido', () => {
     const semNome = { partidas: 5, vitorias: 2, somaPosicoes: 9 };
     expect(carregarRanking(armazenamentoCom(snapshot({ humano: semNome })))).toEqual({ tipo: 'vazio' });
   });
+
+  it('quando o nome de exibição é vazio', () => {
+    const semNome = { ...participanteValido, nomeExibicao: '' };
+    expect(carregarRanking(armazenamentoCom(snapshot({ humano: semNome })))).toEqual({ tipo: 'vazio' });
+  });
+});
+
+describe('carregarRanking rejeita somatórios incoerentes', () => {
+  const casos: Record<string, Partial<typeof participanteValido>> = {
+    'partidas negativas': { partidas: -1 },
+    'partidas fracionárias': { partidas: 2.5 },
+    'sem nenhuma partida': { partidas: 0, vitorias: 0, somaPosicoes: 0 },
+    'mais vitórias do que partidas': { partidas: 2, vitorias: 3, somaPosicoes: 4 },
+    'soma de posições abaixo do total de partidas': { partidas: 5, vitorias: 1, somaPosicoes: 4 },
+    'soma de posições negativa': { partidas: 5, vitorias: 1, somaPosicoes: -3 },
+  };
+
+  for (const [descricao, override] of Object.entries(casos)) {
+    it(`quando há ${descricao}`, () => {
+      const corrompido = { ...participanteValido, ...override };
+      expect(carregarRanking(armazenamentoCom(snapshot({ humano: corrompido })))).toEqual({ tipo: 'vazio' });
+    });
+  }
 });
 
 describe('carregarRanking', () => {
