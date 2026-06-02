@@ -1,6 +1,7 @@
 import type { Scene } from 'phaser';
 import type { MetricaRanking, ParticipanteRankeado } from '@/store/ranking/ordenar-ranking';
 import { escalar, escalarFonte } from '../escala';
+import { calcularGeometriaLista, type GeometriaListaRanking } from './geometria-rolagem-tabela-ranking';
 import type { LayoutRanking } from './layout-ranking';
 import { formatarMetricaRanking, OPCOES_METRICA_RANKING, type RankingRenderModel } from './ranking-view';
 
@@ -33,26 +34,42 @@ interface Pincel {
   layout: LayoutTabela;
 }
 
+/**
+ * Resultado da tabela já separado em duas partes: `cabecalho` fica fixo na
+ * cena; `linhas` é o que a `RankingScene` põe num container mascarado para
+ * rolar (#249). `geometria` traz a região retangular do corpo da tabela e as
+ * alturas visível/total — contrato fechado da viewport, sem a cena recomputar
+ * pedaços por fora.
+ */
+export interface TabelaRankingRender {
+  cabecalho: Phaser.GameObjects.GameObject[];
+  linhas: Phaser.GameObjects.GameObject[];
+  geometria: GeometriaListaRanking;
+}
+
 export function desenharTabelaRanking(
   cena: Scene,
   model: RankingRenderModel,
   layoutRanking: LayoutRanking,
-): Phaser.GameObjects.GameObject[] {
+): TabelaRankingRender {
   const pincel: Pincel = { cena, layout: layoutTabela(layoutRanking) };
-  return desenharTabelaOrdenada(pincel, model.participantes, model.metrica);
-}
-
-function desenharTabelaOrdenada(
-  pincel: Pincel,
-  ordenados: ParticipanteRankeado[],
-  metrica: MetricaRanking,
-): Phaser.GameObjects.GameObject[] {
-  const objetos = desenharCabecalho(pincel);
-  ordenados.forEach((item, indice) => {
-    const y = pincel.layout.topo + escalar(34, pincel.cena) + indice * pincel.layout.alturaLinha;
-    objetos.push(...desenharLinha(pincel, { item, indice, y, metrica }));
-  });
-  return objetos;
+  const { alturaLinha } = pincel.layout;
+  const inicio = pincel.layout.topo + escalar(34, cena);
+  const linhas = model.participantes.flatMap((item, indice) =>
+    desenharLinha(pincel, { item, indice, y: inicio + indice * alturaLinha, metrica: model.metrica }),
+  );
+  return {
+    cabecalho: desenharCabecalho(pincel),
+    linhas,
+    geometria: calcularGeometriaLista({
+      esquerda: pincel.layout.esquerda,
+      direita: pincel.layout.direita + escalar(12, cena),
+      primeiraLinhaTopo: inicio - alturaLinha / 2,
+      fundo: cena.cameras.main.height - escalar(18, cena),
+      alturaLinha,
+      totalLinhas: model.participantes.length,
+    }),
+  };
 }
 
 function layoutTabela(layout: LayoutRanking): LayoutTabela {

@@ -4,9 +4,11 @@ import type { MetricaRanking } from '@/store/ranking/ordenar-ranking';
 import { escalar, escalarFonte } from '../escala';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 import { desenharPodioRanking } from './desenhar-podio-ranking';
-import { desenharTabelaRanking } from './desenhar-tabela-ranking';
+import { desenharTabelaRanking, type TabelaRankingRender } from './desenhar-tabela-ranking';
+import { offsetMaximoRolagem, precisaRolar, type GeometriaListaRanking } from './geometria-rolagem-tabela-ranking';
 import { calcularLayoutRanking, type LayoutRanking } from './layout-ranking';
 import { OPCOES_METRICA_RANKING, prepararRankingRenderModel } from './ranking-view';
+import { ControladorRolagemTabela } from './rolagem-tabela-ranking';
 
 const COR_FUNDO = 0x1a1a2e;
 const COR_TITULO = '#e8ecf5';
@@ -34,6 +36,7 @@ interface SegmentoCtx {
 export class RankingScene extends Scene {
   private objetos: Phaser.GameObjects.GameObject[] = [];
   private redesenhar?: ResizeDebouncer;
+  private rolagem?: ControladorRolagemTabela;
   private metricaAtiva: MetricaRanking = 'vitorias';
 
   constructor() {
@@ -68,10 +71,38 @@ export class RankingScene extends Scene {
       const model = prepararRankingRenderModel(ranking.participantes, this.metricaAtiva);
       this.objetos.push(...desenharPodioRanking(this, model, layout));
       this.desenharControleOrdenacao(layout);
-      this.objetos.push(...desenharTabelaRanking(this, model, layout));
+      this.desenharTabelaComRolagem(desenharTabelaRanking(this, model, layout));
       return;
     }
     this.desenharVazio();
+  }
+
+  private desenharTabelaComRolagem(tabela: TabelaRankingRender): void {
+    this.objetos.push(...tabela.cabecalho);
+    const { regiao, alturaConteudo, alturaVisivel } = tabela.geometria;
+    if (!precisaRolar(alturaConteudo, alturaVisivel)) {
+      this.objetos.push(...tabela.linhas);
+      return;
+    }
+    const container = this.add.container(0, 0, tabela.linhas);
+    container.setMask(this.criarMascaraLista(tabela.geometria));
+    this.objetos.push(container);
+    this.rolagem = new ControladorRolagemTabela({
+      cena: this,
+      container,
+      regiao,
+      offsetMaximo: offsetMaximoRolagem(alturaConteudo, alturaVisivel),
+    });
+  }
+
+  private criarMascaraLista({ regiao, alturaVisivel }: GeometriaListaRanking): Phaser.Display.Masks.GeometryMask {
+    const forma = this.add
+      .graphics()
+      .fillStyle(0xffffff, 1)
+      .fillRect(regiao.esquerda, regiao.topo, regiao.direita - regiao.esquerda, alturaVisivel)
+      .setVisible(false);
+    this.objetos.push(forma);
+    return forma.createGeometryMask();
   }
 
   private desenharFundo(): void {
@@ -180,6 +211,8 @@ export class RankingScene extends Scene {
   }
 
   private limpar(): void {
+    this.rolagem?.destruir();
+    this.rolagem = undefined;
     this.objetos.forEach((obj) => {
       obj.destroy();
     });
