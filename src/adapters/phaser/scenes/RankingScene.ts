@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { carregarRanking, type RankingPersistido } from '@/store/ranking/carregar-ranking';
+import type { MetricaRanking } from '@/store/ranking/ordenar-ranking';
 import { escalar, escalarFonte } from '../escala';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 import { desenharTabelaRanking } from './desenhar-tabela-ranking';
@@ -7,20 +8,36 @@ import { desenharTabelaRanking } from './desenhar-tabela-ranking';
 const COR_FUNDO = 0x1a1a2e;
 const COR_TITULO = '#e8ecf5';
 const COR_DIM = '#8b95ad';
+const COR_ACENTO_TEXTO = '#1a1a2e';
 const COR_BOTAO_FUNDO = 0x111827;
 const COR_BORDA = 0x2a3550;
+const COR_SEGMENTO = 0x111827;
+const COR_SEGMENTO_ATIVO = 0xfacc15;
+
+const OPCOES_METRICA: { chave: MetricaRanking; rotulo: string }[] = [
+  { chave: 'vitorias', rotulo: 'Vitórias' },
+  { chave: 'winRate', rotulo: 'Win rate' },
+  { chave: 'posMedia', rotulo: 'Pos. média' },
+];
+
+interface SegmentoCtx {
+  opcao: { chave: MetricaRanking; rotulo: string };
+  x: number;
+  y: number;
+  largura: number;
+}
 
 /**
  * Tela cheia do Ranking, aberta sobre a JogoScene (que fica pausada).
  *
  * Lê o snapshot pela boundary estrita `carregarRanking`: ranking vazio mostra a
  * mensagem de tela vazia; ranking populado renderiza a tabela de participantes
- * ordenada por Vitórias (#245). O pódio (#247) e os controles de ordenação
- * (#246) entram nas próximas fatias.
+ * ordenada pela métrica ativa. O pódio (#247) entra numa fatia posterior.
  */
 export class RankingScene extends Scene {
   private objetos: Phaser.GameObjects.GameObject[] = [];
   private redesenhar?: ResizeDebouncer;
+  private metricaAtiva: MetricaRanking = 'vitorias';
 
   constructor() {
     super({ key: 'RankingScene' });
@@ -49,7 +66,8 @@ export class RankingScene extends Scene {
 
   private desenharConteudo(ranking: RankingPersistido): void {
     if (ranking.tipo === 'populado') {
-      this.objetos.push(...desenharTabelaRanking(this, ranking.participantes));
+      this.desenharControleOrdenacao();
+      this.objetos.push(...desenharTabelaRanking(this, ranking.participantes, this.metricaAtiva));
       return;
     }
     this.desenharVazio();
@@ -87,6 +105,57 @@ export class RankingScene extends Scene {
     this.objetos.push(circulo, x_);
   }
 
+  private desenharControleOrdenacao(): void {
+    const largura = Math.min(this.cameras.main.width - escalar(32, this), escalar(600, this));
+    const esquerda = (this.cameras.main.width - largura) / 2;
+    const y = escalar(76, this);
+    const rotulo = this.add.text(esquerda, y, 'Ordenar por', {
+      fontSize: escalarFonte(12, this),
+      color: COR_DIM,
+      fontFamily: 'Arial',
+    });
+    const fundo = this.add
+      .rectangle(esquerda, y + escalar(34, this), largura, escalar(40, this), COR_SEGMENTO, 1)
+      .setOrigin(0, 0.5)
+      .setStrokeStyle(escalar(1, this), COR_BORDA);
+    this.objetos.push(rotulo, fundo, ...this.desenharSegmentos(esquerda, y + escalar(34, this), largura));
+  }
+
+  private desenharSegmentos(x: number, y: number, largura: number): Phaser.GameObjects.GameObject[] {
+    const larguraSegmento = largura / OPCOES_METRICA.length;
+    return OPCOES_METRICA.flatMap((opcao, indice) => {
+      const centroX = x + larguraSegmento * indice + larguraSegmento / 2;
+      return this.desenharSegmento({ opcao, x: centroX, y, largura: larguraSegmento });
+    });
+  }
+
+  private desenharSegmento({ opcao, x, y, largura }: SegmentoCtx): Phaser.GameObjects.GameObject[] {
+    const ativo = opcao.chave === this.metricaAtiva;
+    const fundo = this.add.rectangle(
+      x,
+      y,
+      largura - escalar(8, this),
+      escalar(30, this),
+      ativo ? COR_SEGMENTO_ATIVO : 0,
+      ativo ? 1 : 0,
+    );
+    const texto = this.add
+      .text(x, y, opcao.rotulo, {
+        fontSize: escalarFonte(12, this),
+        color: ativo ? COR_ACENTO_TEXTO : COR_DIM,
+        fontStyle: 'bold',
+        fontFamily: 'Arial',
+      })
+      .setOrigin(0.5);
+    fundo.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+      this.alterarMetrica(opcao.chave);
+    });
+    texto.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+      this.alterarMetrica(opcao.chave);
+    });
+    return [fundo, texto];
+  }
+
   private desenharVazio(): void {
     const { centerX, centerY } = this.cameras.main;
     const mensagem = this.add
@@ -102,6 +171,12 @@ export class RankingScene extends Scene {
   private fechar(): void {
     this.scene.stop();
     this.scene.resume('JogoScene');
+  }
+
+  private alterarMetrica(metrica: MetricaRanking): void {
+    if (this.metricaAtiva === metrica) return;
+    this.metricaAtiva = metrica;
+    this.desenhar();
   }
 
   private limpar(): void {
