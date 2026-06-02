@@ -36,6 +36,23 @@ function classificacaoAoEncerrar(ids: string[], pontos: Record<string, number>):
 }
 
 describe('Partida — desempate da Classificação por pontos iguais', () => {
+  it('deve ordenar a Classificação pela ordem de eliminação quando jogadores caem em rodadas diferentes', () => {
+    const { emissor, partida } = criarPartidaComEmissor(['bot1', 'bot2', 'humano', 'bot3']);
+    const handler = vi.fn<(ev: EventoDominio) => void>();
+    emissor.on('JOGO_ENCERRADO', handler);
+
+    concluirRodadaComPontos(partida, { bot1: 0, bot2: 3, humano: 5, bot3: 4 });
+    partida.iniciarProximaRodada();
+    concluirRodadaComPontos(partida, { bot2: -1, humano: 2, bot3: 3 });
+    partida.iniciarProximaRodada();
+    concluirRodadaComPontos(partida, { humano: -2, bot3: 1 });
+    partida.iniciarProximaRodada();
+
+    const evento = handler.mock.calls[0][0];
+    if (evento.tipo !== 'JOGO_ENCERRADO') throw new Error('Evento JOGO_ENCERRADO não emitido');
+    expect(evento.classificacao.map((j) => j.id)).toEqual(['bot3', 'humano', 'bot2', 'bot1']);
+  });
+
   it('deve colocar o jogador humano acima dos Perfis de Bot em empate de pontos', () => {
     const classificacao = classificacaoAoEncerrar(['bot1', 'humano', 'bot2'], { bot1: 0, humano: 0, bot2: 2 });
 

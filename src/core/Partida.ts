@@ -18,6 +18,11 @@ interface DecisoresPartida {
   rng?: GeradorAleatorio;
 }
 
+interface Eliminacao {
+  jogador: Jogador;
+  ordem: number;
+}
+
 export class Partida {
   private jogadores: Jogador[];
   private decisores: DecisoresPartida;
@@ -27,7 +32,8 @@ export class Partida {
   private embaralhadorIndice: number;
   private rng: GeradorAleatorio;
   private jogoEncerrado = false;
-  private eliminados: Jogador[] = [];
+  private eliminados: Eliminacao[] = [];
+  private ordemEliminacao = 0;
 
   constructor(jogadores: Jogador[], emissor: EmissorPartida, decisores: DecisoresPartida) {
     this.jogadores = jogadores;
@@ -110,7 +116,9 @@ export class Partida {
 
     const eliminados = this.jogadores.filter(deveEliminar);
     if (eliminados.length === 0) return false;
-    this.eliminados = [...this.eliminados, ...eliminados];
+    const ordem = this.ordemEliminacao;
+    this.ordemEliminacao += 1;
+    this.eliminados = [...this.eliminados, ...eliminados.map((jogador) => ({ jogador, ordem }))];
     this.jogadores = this.jogadores.filter((jogador) => !deveEliminar(jogador));
     this.ajustarEmbaralhadorAposEliminacao();
     eliminados.forEach((jogador) => {
@@ -174,9 +182,20 @@ export class Partida {
     this.emissor.emit({
       ...criarEventoBase(),
       tipo: 'JOGO_ENCERRADO',
-      classificacao: [...this.jogadores, ...this.eliminados].sort(compararClassificacao),
+      classificacao: this.montarClassificacao(),
     });
   }
+
+  private montarClassificacao(): Jogador[] {
+    const vencedores = [...this.jogadores].sort(compararClassificacao);
+    const eliminados = [...this.eliminados].sort(compararEliminacao).map(({ jogador }) => jogador);
+    return [...vencedores, ...eliminados];
+  }
+}
+
+function compararEliminacao(a: Eliminacao, b: Eliminacao): number {
+  if (a.ordem !== b.ordem) return b.ordem - a.ordem;
+  return compararClassificacao(a.jogador, b.jogador);
 }
 
 function compararClassificacao(a: Jogador, b: Jogador): number {
