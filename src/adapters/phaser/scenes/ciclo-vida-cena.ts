@@ -28,7 +28,7 @@ export function aoEncerrarCena(config: ConfigEncerramento): {
   return { redesenhar: undefined, tweenVez: undefined };
 }
 
-export function desativarResize(cena: Phaser.Scene, redesenhar?: ResizeDebouncer): void {
+function desativarResize(cena: Phaser.Scene, redesenhar?: ResizeDebouncer): void {
   if (!redesenhar) return;
   cena.scale.off('resize', redesenhar);
   redesenhar.limpar();
