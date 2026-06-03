@@ -49,8 +49,14 @@ describe('lerSnapshot de troféus trata invariantes violadas como estado zero', 
     );
   });
 
-  it('quando maiorTrofeu não é nulo (fora da forma desta slice)', () => {
-    expect(lerSnapshot(armazenamentoCom(bruto({ versao: 1, sequenciaAtual: 3, maiorTrofeu: 'ouro' })))).toEqual(
+  it('quando maiorTrofeu não é um nível conhecido', () => {
+    expect(lerSnapshot(armazenamentoCom(bruto({ versao: 1, sequenciaAtual: 3, maiorTrofeu: 'platina' })))).toEqual(
+      SNAPSHOT_ZERO,
+    );
+  });
+
+  it('quando maiorTrofeu não é nem nível nem null', () => {
+    expect(lerSnapshot(armazenamentoCom(bruto({ versao: 1, sequenciaAtual: 3, maiorTrofeu: 7 })))).toEqual(
       SNAPSHOT_ZERO,
     );
   });
@@ -59,6 +65,12 @@ describe('lerSnapshot de troféus trata invariantes violadas como estado zero', 
 describe('lerSnapshot de troféus', () => {
   it('lê um snapshot válido tal como persistido', () => {
     const valido = { versao: 1, sequenciaAtual: 4, maiorTrofeu: null };
+
+    expect(lerSnapshot(armazenamentoCom(bruto(valido)))).toEqual(valido);
+  });
+
+  it('lê um snapshot com maiorTrofeu válido (Troféu já conquistado)', () => {
+    const valido = { versao: 1, sequenciaAtual: 0, maiorTrofeu: 'ouro' };
 
     expect(lerSnapshot(armazenamentoCom(bruto(valido)))).toEqual(valido);
   });

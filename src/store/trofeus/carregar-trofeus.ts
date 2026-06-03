@@ -3,10 +3,11 @@
  *
  * Espelha `carregar-ranking.ts`: a leitura é estrita — qualquer conteúdo que
  * não seja um snapshot `versao: 1` íntegro vira o estado zero, para nunca
- * entregar dado corrompido como confiável. Invariante: `sequenciaAtual` é um
- * inteiro ≥ 0 e, nesta slice, `maiorTrofeu` é sempre `null`.
+ * entregar dado corrompido como confiável. Invariantes: `sequenciaAtual` é um
+ * inteiro ≥ 0 e `maiorTrofeu` é um nível válido ou `null`.
  */
 
+import { ehNivel } from './tabela-trofeus';
 import { CHAVE_TROFEUS, SNAPSHOT_ZERO } from './tipos';
 import type { SnapshotTrofeus } from './tipos';
 
@@ -26,8 +27,9 @@ export function lerSnapshot(armazenamento: Pick<Storage, 'getItem'>): SnapshotTr
 function validar(conteudo: unknown): SnapshotTrofeus {
   if (typeof conteudo !== 'object' || conteudo === null) return SNAPSHOT_ZERO;
   const { versao, sequenciaAtual, maiorTrofeu } = conteudo as Record<string, unknown>;
-  if (versao !== 1 || maiorTrofeu !== null || !ehContagem(sequenciaAtual)) return SNAPSHOT_ZERO;
-  return { versao: 1, sequenciaAtual, maiorTrofeu: null };
+  if (versao !== 1 || !ehContagem(sequenciaAtual)) return SNAPSHOT_ZERO;
+  if (maiorTrofeu !== null && !ehNivel(maiorTrofeu)) return SNAPSHOT_ZERO;
+  return { versao: 1, sequenciaAtual, maiorTrofeu };
 }
 
 function ehContagem(valor: unknown): valor is number {

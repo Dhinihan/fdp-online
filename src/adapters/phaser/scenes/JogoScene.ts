@@ -12,9 +12,9 @@ import { renderizarMesa } from '../renderers/mesa-renderer';
 import { desenharPainelInfo } from '../renderers/painel-info-renderer';
 import { mostrarResumoRodada } from '../renderers/resumo-rodada-renderer';
 import { animarRecolhimentoTurno, atualizarIndicadorVez } from '../renderers/turno-renderer';
-import { aoEncerrarCena, desativarResize } from './ciclo-vida-cena';
+import { aoEncerrarCena } from './ciclo-vida-cena';
 import { desenharMaosJogo } from './desenhar-maos-jogo';
-import { mostrarFimJogoDaCena } from './fim-jogo-scene';
+import { mostrarFimJogoDaCena, type EstadoFimJogo } from './fim-jogo-scene';
 import { JogoController, type DependenciasCena, type PontuacaoRodada } from './jogo-controller';
 
 export class JogoScene extends Scene {
@@ -36,6 +36,7 @@ export class JogoScene extends Scene {
   private controller?: JogoController;
   private resumoAtivo?: PontuacaoRodada;
   private aoContinuarResumo?: () => void;
+  private fimJogoAtivo?: EstadoFimJogo;
 
   constructor() {
     super({ key: 'JogoScene' });
@@ -62,10 +63,8 @@ export class JogoScene extends Scene {
         this.exibirResumoRodada(resumoRodada, onContinuar);
       },
       mostrarFimJogo: (classificacao, resultadoTrofeus) => {
-        mostrarFimJogoDaCena(this, classificacao, resultadoTrofeus);
-      },
-      desativarResize: () => {
-        desativarResize(this, this.redesenhar);
+        this.fimJogoAtivo = { classificacao, resultadoTrofeus };
+        this.renderizarFimJogo(true);
       },
       getGameArea: () => this.obterGameArea(),
       objetosDeclaracao: this.objetosDeclaracao,
@@ -137,7 +136,18 @@ export class JogoScene extends Scene {
     this.scene.pause();
   };
 
+  private renderizarFimJogo(primeiraExibicao: boolean): void {
+    if (!this.fimJogoAtivo) return;
+    mostrarFimJogoDaCena(this, this.fimJogoAtivo, primeiraExibicao);
+  }
+
   private redesenharTela = (): void => {
+    // A tela de fim de jogo sobrepõe o tabuleiro; no resize ela se reposiciona
+    // sozinha, sem redesenhar o jogo por baixo.
+    if (this.fimJogoAtivo) {
+      this.renderizarFimJogo(false);
+      return;
+    }
     destruirDestaque(this.destaque);
     limparObjetos(this.objetos);
     this.atualizarPainel();
@@ -204,6 +214,7 @@ export class JogoScene extends Scene {
     limparObjetos(this.resumoObjetos);
     this.resumoAtivo = undefined;
     this.aoContinuarResumo = undefined;
+    this.fimJogoAtivo = undefined;
     aoEncerrarCena({
       cena: this,
       redesenhar: this.redesenhar,

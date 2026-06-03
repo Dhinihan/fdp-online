@@ -32,7 +32,6 @@ export interface DependenciasCena {
   animarRecolhimentoTurno: () => void;
   mostrarResumoRodada: (resumoRodada: PontuacaoRodada, onContinuar: () => void) => void;
   mostrarFimJogo: (classificacao: Jogador[], resultadoTrofeus: ResultadoTrofeus | null) => void;
-  desativarResize: () => void;
   getGameArea: () => Retangulo;
   objetosDeclaracao: Phaser.GameObjects.GameObject[];
   getLabels: () => Phaser.GameObjects.Text[];
@@ -91,7 +90,6 @@ export class JogoController {
       onJogoEncerrado: (classificacao: Jogador[]) => {
         registrarPartidaNoArmazenamento(() => window.localStorage, classificacao);
         const resultadoTrofeus = registrarTrofeusNoArmazenamento(() => window.localStorage, classificacao);
-        this.deps.desativarResize();
         this.deps.mostrarFimJogo(classificacao, resultadoTrofeus);
       },
       modoDebug: this.deps.modoDebug,

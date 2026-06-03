@@ -17,28 +17,34 @@ interface ConfigFimJogoScene {
   painelObjetos: Phaser.GameObjects.GameObject[];
   destaque: EstadoDestaque;
   onReiniciar: () => void;
+  /** Primeira exibição (transição jogo→fim) vs. re-render por resize. */
+  primeiraExibicao: boolean;
 }
 
 export function mostrarFimJogo(config: ConfigFimJogoScene): void {
-  limparTelaDeJogo(config);
+  // O tabuleiro só precisa ser limpo na transição jogo→fim; no re-render por
+  // resize ele já está vazio e a tela de fim de jogo apenas se reposiciona.
+  if (config.primeiraExibicao) limparTelaDeJogo(config);
   desenharFimJogo({
     cena: config.cena,
     classificacao: config.classificacao,
     resultadoTrofeus: config.resultadoTrofeus,
     objetos: config.fimJogoObjetos,
     onReiniciar: config.onReiniciar,
+    animar: config.primeiraExibicao,
   });
 }
 
-export function mostrarFimJogoDaCena(
-  cena: JogoScene,
-  classificacao: Jogador[],
-  resultadoTrofeus: ResultadoTrofeus | null,
-): void {
+export interface EstadoFimJogo {
+  classificacao: Jogador[];
+  resultadoTrofeus: ResultadoTrofeus | null;
+}
+
+export function mostrarFimJogoDaCena(cena: JogoScene, estado: EstadoFimJogo, primeiraExibicao: boolean): void {
   mostrarFimJogo({
     cena,
-    classificacao,
-    resultadoTrofeus,
+    classificacao: estado.classificacao,
+    resultadoTrofeus: estado.resultadoTrofeus,
     fimJogoObjetos: cena.fimJogoObjetos,
     objetos: cena.objetos,
     mesaObjetos: cena.mesaObjetos,
@@ -46,6 +52,7 @@ export function mostrarFimJogoDaCena(
     painelObjetos: cena.painelObjetos,
     destaque: cena.destaque,
     onReiniciar: () => cena.scene.restart(),
+    primeiraExibicao,
   });
 }
 

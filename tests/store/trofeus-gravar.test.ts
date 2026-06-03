@@ -43,8 +43,8 @@ describe('registrarTrofeusNoArmazenamento quando o humano vence', () => {
 
     const resultado = registrarTrofeusNoArmazenamento(() => armazenamento, humanoVenceu);
 
-    expect(snapshotGravado(armazenamento)).toEqual({ versao: 1, sequenciaAtual: 3, maiorTrofeu: null });
-    expect(resultado).toEqual({ sequenciaAtual: 3 });
+    expect(snapshotGravado(armazenamento)).toEqual({ versao: 1, sequenciaAtual: 3, maiorTrofeu: 'bronze' });
+    expect(resultado).toEqual({ sequenciaAtual: 3, trofeuDesbloqueado: 'bronze' });
   });
 
   it('parte do zero quando ainda não havia snapshot', () => {
@@ -52,7 +52,7 @@ describe('registrarTrofeusNoArmazenamento quando o humano vence', () => {
 
     const resultado = registrarTrofeusNoArmazenamento(() => armazenamento, humanoVenceu);
 
-    expect(resultado).toEqual({ sequenciaAtual: 1 });
+    expect(resultado).toEqual({ sequenciaAtual: 1, trofeuDesbloqueado: null });
   });
 
   it('parte do zero quando o snapshot existente está corrompido', () => {
@@ -60,7 +60,16 @@ describe('registrarTrofeusNoArmazenamento quando o humano vence', () => {
 
     const resultado = registrarTrofeusNoArmazenamento(() => armazenamento, humanoVenceu);
 
-    expect(resultado).toEqual({ sequenciaAtual: 1 });
+    expect(resultado).toEqual({ sequenciaAtual: 1, trofeuDesbloqueado: null });
+  });
+
+  it('persiste o maiorTrofeu desbloqueado e o devolve no resultado', () => {
+    const armazenamento = armazenamentoFake(JSON.stringify({ versao: 1, sequenciaAtual: 4, maiorTrofeu: 'bronze' }));
+
+    const resultado = registrarTrofeusNoArmazenamento(() => armazenamento, humanoVenceu);
+
+    expect(snapshotGravado(armazenamento)).toEqual({ versao: 1, sequenciaAtual: 5, maiorTrofeu: 'prata' });
+    expect(resultado).toEqual({ sequenciaAtual: 5, trofeuDesbloqueado: 'prata' });
   });
 });
 
