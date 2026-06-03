@@ -3,8 +3,10 @@ import { carregarRanking, type RankingPersistido } from '@/store/ranking/carrega
 import type { MetricaRanking } from '@/store/ranking/ordenar-ranking';
 import { lerSnapshot } from '@/store/trofeus/carregar-trofeus';
 import { resumirTrofeus } from '@/store/trofeus/resumo-trofeus';
+import type { Nivel } from '@/store/trofeus/tabela-trofeus';
 import { escalar, escalarFonte } from '../escala';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
+import { desenharOverlayTrofeus } from './desenhar-overlay-trofeus';
 import { desenharPodioRanking } from './desenhar-podio-ranking';
 import { desenharTabelaRanking, type TabelaRankingRender } from './desenhar-tabela-ranking';
 import { desenharTrofeusRanking } from './desenhar-trofeus-ranking';
@@ -39,6 +41,7 @@ interface SegmentoCtx {
  */
 export class RankingScene extends Scene {
   private objetos: Phaser.GameObjects.GameObject[] = [];
+  private overlayTrofeus: Phaser.GameObjects.GameObject[] = [];
   private redesenhar?: ResizeDebouncer;
   private rolagem?: ControladorRolagemTabela;
   private navegacao?: NavegacaoVoltarRanking;
@@ -79,7 +82,15 @@ export class RankingScene extends Scene {
       const resumoTrofeus = resumirTrofeus(lerSnapshot(window.localStorage));
       const layout = calcularLayoutRanking(this, resumoTrofeus !== null);
       const model = prepararRankingRenderModel(ranking.participantes, this.metricaAtiva);
-      this.objetos.push(...desenharTrofeusRanking(this, resumoTrofeus, layout));
+      this.objetos.push(
+        ...desenharTrofeusRanking(this, {
+          resumo: resumoTrofeus,
+          layout,
+          aoTocar: () => {
+            if (resumoTrofeus !== null) this.abrirOverlayTrofeus(resumoTrofeus.maiorTrofeu);
+          },
+        }),
+      );
       this.objetos.push(...desenharPodioRanking(this, model, layout));
       this.desenharControleOrdenacao(layout);
       this.desenharTabelaComRolagem(desenharTabelaRanking(this, model, layout));
@@ -220,6 +231,20 @@ export class RankingScene extends Scene {
     this.scene.resume('JogoScene');
   }
 
+  private abrirOverlayTrofeus(maiorTrofeu: Nivel): void {
+    this.fecharOverlayTrofeus();
+    this.overlayTrofeus = desenharOverlayTrofeus(this, maiorTrofeu, () => {
+      this.fecharOverlayTrofeus();
+    });
+  }
+
+  private fecharOverlayTrofeus(): void {
+    this.overlayTrofeus.forEach((obj) => {
+      obj.destroy();
+    });
+    this.overlayTrofeus = [];
+  }
+
   private alterarMetrica(metrica: MetricaRanking): void {
     if (this.metricaAtiva === metrica) return;
     this.metricaAtiva = metrica;
@@ -227,6 +252,7 @@ export class RankingScene extends Scene {
   }
 
   private limpar(): void {
+    this.fecharOverlayTrofeus();
     this.rolagem?.destruir();
     this.rolagem = undefined;
     this.objetos.forEach((obj) => {
