@@ -5,21 +5,29 @@ const MAX_FAIXA = 600;
 const COL_METRICA = 84;
 const GAP = 6;
 const PARTICIPANTES_VISIVEIS_SEM_SCROLL = 7;
+const ALTURA_RESUMO_TROFEUS = 22;
 
 export interface LayoutRanking {
   faixa: { esquerda: number; largura: number; direita: number };
+  resumoTrofeus: { y: number };
   podio: { topo: number; intervalo: number };
   controle: { yRotulo: number; ySegmentos: number; altura: number };
   tabela: { topo: number; direita: number; larguraColuna: number; gap: number; alturaLinha: number };
 }
 
-export function calcularLayoutRanking(cena: Scene): LayoutRanking {
+export function calcularLayoutRanking(cena: Scene, mostrarResumoTrofeus = false): LayoutRanking {
   const faixa = calcularFaixa(cena);
-  const controle = { yRotulo: escalar(190, cena), ySegmentos: escalar(224, cena), altura: escalar(40, cena) };
-  const topoTabela = escalar(258, cena);
+  const deslocamentoResumo = mostrarResumoTrofeus ? escalar(ALTURA_RESUMO_TROFEUS, cena) : 0;
+  const controle = {
+    yRotulo: escalar(190, cena) + deslocamentoResumo,
+    ySegmentos: escalar(224, cena) + deslocamentoResumo,
+    altura: escalar(40, cena),
+  };
+  const topoTabela = escalar(258, cena) + deslocamentoResumo;
   return {
     faixa,
-    podio: { topo: escalar(66, cena), intervalo: escalar(124, cena) },
+    resumoTrofeus: { y: escalar(56, cena) },
+    podio: { topo: escalar(66, cena) + deslocamentoResumo, intervalo: escalar(124, cena) },
     controle,
     tabela: {
       topo: topoTabela,
