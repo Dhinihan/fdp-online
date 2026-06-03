@@ -31,15 +31,22 @@ function criarConfiguracaoJogo(containerId?: string): Phaser.Types.Core.GameConf
   };
 }
 
+function sincronizarTamanhoCanvas(jogo: Game): void {
+  const dpr = obterDpr();
+  jogo.scale.setZoom(1 / dpr);
+  jogo.scale.resize(window.innerWidth * dpr, window.innerHeight * dpr);
+  jogo.canvas.style.width = `${String(window.innerWidth)}px`;
+  jogo.canvas.style.height = `${String(window.innerHeight)}px`;
+}
+
 export function inicializarJogo(containerId?: string): Game {
   jogo = new Game(criarConfiguracaoJogo(containerId));
   jogo.registry.set('modoDebug', obterModoDebug());
+  sincronizarTamanhoCanvas(jogo);
 
   aoRedimensionar = (): void => {
     if (!jogo) return;
-    const dpr = obterDpr();
-    jogo.scale.setZoom(1 / dpr);
-    jogo.scale.resize(window.innerWidth * dpr, window.innerHeight * dpr);
+    sincronizarTamanhoCanvas(jogo);
   };
 
   window.addEventListener('resize', aoRedimensionar);
