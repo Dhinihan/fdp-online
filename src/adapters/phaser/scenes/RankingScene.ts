@@ -1,10 +1,13 @@
 import { Scene } from 'phaser';
 import { carregarRanking, type RankingPersistido } from '@/store/ranking/carregar-ranking';
 import type { MetricaRanking } from '@/store/ranking/ordenar-ranking';
+import { lerSnapshot } from '@/store/trofeus/carregar-trofeus';
+import { resumirTrofeus } from '@/store/trofeus/resumo-trofeus';
 import { escalar, escalarFonte } from '../escala';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
 import { desenharPodioRanking } from './desenhar-podio-ranking';
 import { desenharTabelaRanking, type TabelaRankingRender } from './desenhar-tabela-ranking';
+import { desenharTrofeusRanking } from './desenhar-trofeus-ranking';
 import { offsetMaximoRolagem, precisaRolar, type GeometriaListaRanking } from './geometria-rolagem-tabela-ranking';
 import { calcularLayoutRanking, type LayoutRanking } from './layout-ranking';
 import { NavegacaoVoltarRanking } from './navegacao-voltar-ranking';
@@ -73,8 +76,10 @@ export class RankingScene extends Scene {
 
   private desenharConteudo(ranking: RankingPersistido): void {
     if (ranking.tipo === 'populado') {
-      const layout = calcularLayoutRanking(this);
+      const resumoTrofeus = resumirTrofeus(lerSnapshot(window.localStorage));
+      const layout = calcularLayoutRanking(this, resumoTrofeus !== null);
       const model = prepararRankingRenderModel(ranking.participantes, this.metricaAtiva);
+      this.objetos.push(...desenharTrofeusRanking(this, resumoTrofeus, layout));
       this.objetos.push(...desenharPodioRanking(this, model, layout));
       this.desenharControleOrdenacao(layout);
       this.desenharTabelaComRolagem(desenharTabelaRanking(this, model, layout));
