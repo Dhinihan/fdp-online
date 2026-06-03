@@ -77,7 +77,7 @@ export class RankingScene extends Scene {
   private desenharConteudo(ranking: RankingPersistido): void {
     if (ranking.tipo === 'populado') {
       const resumoTrofeus = resumirTrofeus(lerSnapshot(window.localStorage));
-      const layout = calcularLayoutRanking(this, resumoTrofeus.mostrar);
+      const layout = calcularLayoutRanking(this, resumoTrofeus !== null);
       const model = prepararRankingRenderModel(ranking.participantes, this.metricaAtiva);
       this.objetos.push(...desenharTrofeusRanking(this, resumoTrofeus, layout));
       this.objetos.push(...desenharPodioRanking(this, model, layout));

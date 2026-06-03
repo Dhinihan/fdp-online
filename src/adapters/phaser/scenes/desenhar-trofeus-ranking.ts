@@ -9,10 +9,10 @@ const COR_ACENTO = '#facc15';
 
 export function desenharTrofeusRanking(
   cena: Scene,
-  resumo: ResumoTrofeus,
+  resumo: ResumoTrofeus | null,
   layout: LayoutRanking,
 ): Phaser.GameObjects.GameObject[] {
-  if (!resumo.mostrar || resumo.maiorTrofeu === null) return [];
+  if (resumo === null) return [];
   const texto = cena.add
     .text(cena.cameras.main.centerX, layout.resumoTrofeus.y, formatarResumo(resumo), {
       fontSize: escalarFonte(12, cena),
@@ -28,6 +28,5 @@ export function desenharTrofeusRanking(
 }
 
 function formatarResumo(resumo: ResumoTrofeus): string {
-  if (resumo.maiorTrofeu === null) return '';
   return `${ROTULO_NIVEL[resumo.maiorTrofeu]} · 🔥 ${String(resumo.sequenciaAtual)} seguidas`;
 }
