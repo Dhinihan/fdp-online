@@ -1,7 +1,7 @@
 import type { Scene } from 'phaser';
-import { ROTULO_NIVEL } from '@/store/trofeus/tabela-trofeus';
 import type { ResultadoTrofeus } from '@/store/trofeus/tipos';
 import type { Jogador } from '@/types/entidades';
+import { desenharTrofeuArte } from '../desenhar-trofeu-arte';
 import { escalar } from '../escala';
 import { limparObjetos } from './limpar-objetos';
 
@@ -170,24 +170,34 @@ function desenharSequencia(config: ConfigFimJogo, layout: LayoutFimJogo): void {
 }
 
 /**
- * Destaque de celebração quando a vitória desbloqueia um Troféu novo. Nesta
- * slice o Troféu é só o rótulo textual do nível — a arte visual fica para a
- * slice de visual.
+ * Destaque de celebração quando a vitória desbloqueia um Troféu novo: o texto
+ * seguido da arte do Troféu conquistado, centrados como um grupo na linha.
  */
 function desenharTrofeuDesbloqueado(config: ConfigFimJogo, layout: LayoutFimJogo): void {
   const nivel = config.resultadoTrofeus?.trofeuDesbloqueado;
   if (!nivel || layout.trofeuY === null) return;
   const { cena, objetos } = config;
-  const destaque = cena.add
-    .text(cena.cameras.main.centerX, layout.trofeuY, `Troféu desbloqueado: ${ROTULO_NIVEL[nivel]}`, {
+  const tamanho = Math.round(escalar(26, cena) * layout.escalaConteudo);
+  const gap = escalar(8, cena);
+  const texto = cena.add
+    .text(0, layout.trofeuY, 'Troféu desbloqueado:', {
       fontSize: fonteFimJogo(20, cena, layout),
       fontStyle: 'bold',
       color: '#fde68a',
       fontFamily: 'Arial',
     })
-    .setOrigin(0.5)
+    .setOrigin(0, 0.5)
     .setDepth(102);
-  objetos.push(destaque);
+  const larguraTotal = texto.width + gap + tamanho;
+  const inicioX = cena.cameras.main.centerX - larguraTotal / 2;
+  texto.setX(inicioX);
+  const trofeu = desenharTrofeuArte(cena, {
+    x: inicioX + texto.width + gap + tamanho / 2,
+    y: layout.trofeuY,
+    tamanho,
+    nivel,
+  }).setDepth(102);
+  objetos.push(texto, trofeu);
 }
 
 function desenharFundo(config: ConfigFimJogo): void {

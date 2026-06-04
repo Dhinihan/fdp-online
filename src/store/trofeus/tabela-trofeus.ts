@@ -28,7 +28,7 @@ const NIVEIS: readonly DefinicaoNivel[] = [
 
 export const NIVEIS_ORDENADOS: readonly Nivel[] = NIVEIS.map((d) => d.nivel);
 
-/** Rótulos textuais exibidos na UI enquanto a arte visual não entra (slice futura). */
+/** Nomes dos níveis, exibidos junto à arte do Troféu (ex.: rótulo no overlay). */
 export const ROTULO_NIVEL: Record<Nivel, string> = {
   bronze: 'Bronze',
   prata: 'Prata',
