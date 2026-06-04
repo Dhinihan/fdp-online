@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import type { GameObjects } from 'phaser';
+import { abrirTutorialPausandoCena } from '../abrir-tutorial-cena';
 import { precarregarSomUi, prepararSomUi, tocarSomUi } from '../audio/som-ui';
 import { escalar, escalarFonte } from '../escala';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
@@ -13,6 +14,8 @@ export class MenuScene extends Scene {
   private botaoGrafico?: Graphics;
   private botaoTexto?: Text;
   private botaoZona?: Zone;
+  private tutorialTexto?: Text;
+  private tutorialZona?: Zone;
   private redesenhar?: ResizeDebouncer;
 
   constructor() {
@@ -51,6 +54,8 @@ export class MenuScene extends Scene {
     this.botaoGrafico?.destroy();
     this.botaoTexto?.destroy();
     this.botaoZona?.destroy();
+    this.tutorialTexto?.destroy();
+    this.tutorialZona?.destroy();
   }
 
   private desenharElementos(): void {
@@ -59,6 +64,7 @@ export class MenuScene extends Scene {
 
     this.criarTitulo(centroX, altura * 0.3);
     this.criarBotao(centroX, altura * 0.6);
+    this.criarBotaoTutorial(centroX, altura * 0.74);
   }
 
   private criarTitulo(x: number, y: number): void {
@@ -97,6 +103,25 @@ export class MenuScene extends Scene {
 
     this.botaoZona.on('pointerdown', this.iniciarJogo);
   }
+
+  private criarBotaoTutorial(x: number, y: number): void {
+    this.tutorialTexto = this.add
+      .text(x, y, 'Como jogar?', {
+        fontSize: escalarFonte(18, this),
+        color: '#aab4d4',
+      })
+      .setOrigin(0.5);
+
+    const largura = this.tutorialTexto.width + escalar(24, this);
+    const altura = this.tutorialTexto.height + escalar(16, this);
+    this.tutorialZona = this.add.zone(x, y, largura, altura).setInteractive({ useHandCursor: true });
+    this.tutorialZona.on('pointerdown', this.mostrarTutorial);
+  }
+
+  private mostrarTutorial = (): void => {
+    tocarSomUi(this);
+    abrirTutorialPausandoCena(this);
+  };
 
   private iniciarJogo = (): void => {
     this.botaoZona?.disableInteractive();
