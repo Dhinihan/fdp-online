@@ -19,7 +19,7 @@ describe('avaliador-carta com seguras em rodadas pequenas', () => {
     expect(avaliada.categoria).toBe('segura');
   });
 
-  it('deve classificar 3 de paus não-manilha abaixo de segura em N=5 com 4 jogadores', () => {
+  it('deve classificar 3 de paus não-manilha como segura em N=5 com 4 jogadores', () => {
     const mao = [
       criarCarta('3', '♣'),
       criarCarta('K', '♦'),
@@ -30,7 +30,7 @@ describe('avaliador-carta com seguras em rodadas pequenas', () => {
 
     const [avaliada] = avaliarCartas(mao, '4', [], 4);
 
-    expect(avaliada.categoria).toBe('alta');
+    expect(avaliada.categoria).toBe('segura');
   });
 
   it('deve classificar 3 de paus não-manilha como segura em N=1', () => {
@@ -45,6 +45,22 @@ describe('avaliador-carta com seguras em rodadas pequenas', () => {
     const avaliadas = avaliarCartas(mao, '4', [], 4);
 
     expect(avaliadas.map((avaliada) => avaliada.categoria)).toEqual(['segura', 'segura', 'segura', 'segura']);
+  });
+});
+
+describe('avaliador-carta na fronteira entre alta e segura', () => {
+  it('deve manter 2 não-manilha como alta em N=5 com 4 jogadores', () => {
+    const mao = [
+      criarCarta('2', '♣'),
+      criarCarta('K', '♦'),
+      criarCarta('Q', '♦'),
+      criarCarta('J', '♦'),
+      criarCarta('10', '♦'),
+    ];
+
+    const [avaliada] = avaliarCartas(mao, '4', [], 4);
+
+    expect(avaliada.categoria).toBe('alta');
   });
 });
 
@@ -91,8 +107,8 @@ describe('avaliador-carta sem inflação por reveladas', () => {
       4,
     );
 
-    expect(semReveladas[0].categoria).toBe('média');
-    expect(comReveladas[0].categoria).toBe('média');
+    expect(semReveladas[0].categoria).toBe('alta');
+    expect(comReveladas[0].categoria).toBe('alta');
   });
 });
 
@@ -142,8 +158,14 @@ describe('avaliador-carta contextual', () => {
 });
 
 describe('parametrosAvaliacaoPadrao', () => {
-  it('deve usar limiar seguro base 12', () => {
-    expect(parametrosAvaliacaoPadrao.limiarSegura).toBe(12);
+  it('deve usar a calibragem padrão validada em jogo', () => {
+    expect(parametrosAvaliacaoPadrao).toEqual({
+      limiarBaixa: 6.5,
+      limiarAlta: 9.5,
+      limiarSegura: 11,
+      pesoDensidade: 4,
+      baseManilha: 16,
+    });
   });
 
   it('deve exportar parâmetros padrão editáveis separadamente', () => {

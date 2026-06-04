@@ -96,8 +96,12 @@ _Avoid_: Próximo jogador, jogador restante
 Snapshot dos fatos derivados que uma **Decisão de Jogada do Bot** precisa para escolher a carta: **Feito** ainda necessário, urgência, cartas avaliadas, vencedoras/perdedoras/empates em relação à carta líder, a própria carta líder, **Jogadores por agir** e interessados, e se há alvo na mesa. Calculada uma vez por decisão e consumida igual pela **Linha fria** e pela **Linha quente**.
 _Avoid_: Contexto, estado do bot, ContextoJogadaQuente
 
+**Categoria Estratégica da Carta**:
+Classificação contextual da força de uma carta para orientar a declaração e a preservação de recursos durante uma **Rodada**. As categorias reconhecidas são baixa, média, alta, segura e garantida agora.
+_Avoid_: Classificação de jogada, resultado da mesa
+
 **Carta alta+**:
-Carta cuja categoria estratégica é **alta**, **segura** ou **garantida_agora**.
+Carta cuja **Categoria Estratégica da Carta** é alta, segura ou garantida agora.
 _Avoid_: Limiar numérico de força, valor alto
 
 **Vencedora segura**:
@@ -149,6 +153,7 @@ _Avoid_: Melhor sequência, recorde
 - Uma **Decisão de Jogada do Bot** parte de uma **Leitura da Mesa** única, compartilhada pela **Linha fria** e pela **Linha quente**.
 - Uma **Decisão de Jogada do Bot** considera a **Posição na Mesa** antes de avaliar a força da carta.
 - Uma **Decisão de Jogada do Bot** no meio da mesa considera se há **Jogadores por agir** que ainda precisam fazer ou já cumpriram.
+- Uma **Categoria Estratégica da Carta** descreve a força contextual de uma carta sem decidir, por si só, qual carta deve ser jogada.
 - Um **Ranking** agrega estatísticas por participante reconhecível: o jogador humano e cada **Perfil de Bot**.
 - Um **Perfil de Bot** pode ocupar assentos temporários diferentes em **Partidas** diferentes sem mudar sua identidade no **Ranking**.
 - O win rate no **Ranking** é calculado por **Vitórias de Partida** divididas pelas **Partidas** computadas em que o participante apareceu.

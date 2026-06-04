@@ -111,8 +111,8 @@ async function abrirFolgaNegativa(): Promise<void> {
   const bot = new DecisorJogadaPorTemperatura({ temperatura: 0.5, rng: { random: () => 0 } });
   const mao = [criarCarta('2', '♠'), criarCarta('8', '♦'), criarCarta('A', '♣')];
 
-  // A urgência deve ser alta (quebra de cautela) e escolher a carta '2' de Espadas (alta)
-  await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('2', '♠'));
+  // A urgência deve ser alta (quebra de cautela) e escolher a carta alta mais barata.
+  await expect(bot.decidirJogada(mao, estado)).resolves.toEqual(criarCarta('A', '♣'));
 }
 
 async function registraContextoAbertura(): Promise<void> {

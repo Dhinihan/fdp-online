@@ -118,12 +118,12 @@ describe('DecisorDeclaracaoBot com altas candidatas', () => {
   it('deve sortear cada carta alta individualmente e respeitar o parcial', async () => {
     const mao = [
       criarCarta('3', '♣'),
-      criarCarta('3', '♥'),
-      criarCarta('3', '♠'),
-      criarCarta('3', '♦'),
+      criarCarta('2', '♥'),
+      criarCarta('2', '♠'),
+      criarCarta('2', '♦'),
       criarCarta('6', '♦'),
     ];
-    const decisor = new DecisorDeclaracaoBot(0.5, criarRng([0.1, 0.9, 0.2, 0.8, 0.9]));
+    const decisor = new DecisorDeclaracaoBot(0.5, criarRng([0.1, 0.9, 0.8, 0.9]));
 
     await expect(decisor.declarar(criarEstado(mao), mao)).resolves.toBe(2);
   });
