@@ -233,6 +233,16 @@ const cenariosFecha: {
     estado: { mesa: mesaComK(), declaracoes: { bot: 2 }, vazas: { bot: 0 }, manilha: '5' },
     esperado: {
       tipo: 'recomenda',
+      carta: criarCarta('6', '♦'),
+      motivo: 'precisa fazer, sem carta que vence; P[N-X]',
+    },
+  },
+  {
+    nome: 'deve preservar a mais alta no último quando precisa fazer 1 e o líder jogou alta',
+    mao: [criarCarta('4', '♦'), criarCarta('6', '♦'), criarCarta('9', '♦'), criarCarta('Q', '♦')],
+    estado: { mesa: mesaComK(), declaracoes: { bot: 1 }, vazas: { bot: 0 }, manilha: '5' },
+    esperado: {
+      tipo: 'recomenda',
       carta: criarCarta('9', '♦'),
       motivo: 'precisa fazer, sem carta que vence; P[N-X]',
     },

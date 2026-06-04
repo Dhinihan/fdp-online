@@ -18,7 +18,7 @@ export function descartePorNecessidade(
   necessidade: number,
 ): CartaAvaliada {
   const ordenadas = ordenarPorForcaReal(avaliadas, manilha);
-  const indice = ordenadas.length > necessidade ? ordenadas.length - necessidade : 0;
+  const indice = ordenadas.length > necessidade ? ordenadas.length - necessidade - 1 : 0;
   return ordenadas[indice];
 }
 

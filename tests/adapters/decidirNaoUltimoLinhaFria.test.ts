@@ -103,7 +103,7 @@ const cenarios: {
     mao: [criarCarta('4', '♦'), criarCarta('6', '♦'), criarCarta('9', '♦'), criarCarta('Q', '♦')],
     estado: criarEstadoLinhaFria({ mesa: mesaComK(), declaracoes: { bot: 2 }, vazas: { bot: 0 }, manilha: '5' }),
     esperado: {
-      carta: criarCarta('9', '♦'),
+      carta: criarCarta('6', '♦'),
       motivo: 'guarda de posição permitiu; jogadores por agir já cumpriram; precisa fazer; regra P[N-X]',
       etapa: ETAPA_GUARDA_PERMITIU,
     },

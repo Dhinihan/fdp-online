@@ -74,11 +74,17 @@ escolherVencedoraPorNecessidade(vencedoras, necessidade):
 descartePorNecessidade(candidatas, necessidade):
   ordenadas = candidatas da mais fraca para a mais forte
   indice = se ordenadas.length > necessidade:
-    ordenadas.length - necessidade
+    ordenadas.length - necessidade - 1
   senao:
     0
   retornar ordenadas[indice]
 ```
+
+Diferente da escolha de vencedora, o descarte **nao** ganha vaza agora: a vaza
+ja esta perdida. Por isso ele reserva as `necessidade` cartas mais fortes
+inteiras (as melhores chances de fazer as vazas que ainda faltam) e descarta a
+mais forte do restante. Quando nao ha folga (`length <= necessidade`), descarta
+a mais fraca.
 
 ## Arvore: Abre a Mesa
 

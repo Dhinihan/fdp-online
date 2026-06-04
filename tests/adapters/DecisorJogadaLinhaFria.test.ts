@@ -34,7 +34,7 @@ const cenariosDeUltimo: {
     mao: [criarCarta('4', '♦'), criarCarta('6', '♦'), criarCarta('9', '♦'), criarCarta('Q', '♦')],
     estado: criarEstadoLinhaFria({ mesa: mesaComK(), declaracoes: { bot: 2 }, vazas: { bot: 0 }, manilha: '5' }),
     esperado: {
-      carta: criarCarta('9', '♦'),
+      carta: criarCarta('6', '♦'),
       motivo: 'precisa fazer sem carta que vence; regra P[N-X]',
       etapa: ETAPA_FECHA_PRECISA,
     },
@@ -121,7 +121,7 @@ async function deveEscolherPerdedoraPorNecessidade(): Promise<void> {
   const bot = new DecisorJogadaLinhaFria();
   await expect(
     bot.decidirJogada([criarCarta('4', '♦'), criarCarta('6', '♦'), criarCarta('9', '♦'), criarCarta('Q', '♦')], estado),
-  ).resolves.toEqual(criarCarta('9', '♦'));
+  ).resolves.toEqual(criarCarta('6', '♦'));
 }
 
 async function deveEscolherPerdedoraEscassa(): Promise<void> {
