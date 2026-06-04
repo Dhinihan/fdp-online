@@ -64,6 +64,15 @@ function corCorpo(nivel: Nivel): number {
   return v.tipo === 'metal' ? v.cor : COR_OURO;
 }
 
+/**
+ * Cor que identifica o nível: a do metal, ou a `cor` base da gema. É a mesma
+ * fonte (`VISUAL`) que a arte usa, então o rótulo nunca diverge do troféu.
+ */
+export function corDoNivel(nivel: Nivel): number {
+  const v = VISUAL[nivel];
+  return v.tipo === 'metal' ? v.cor : v.gema.cor;
+}
+
 export interface OpcoesTrofeuArte {
   x: number;
   y: number;
