@@ -13,14 +13,11 @@ import { desenharManilhaNoPainel } from './painel-manilha-renderer';
 // Compartilhada entre o desenho e o cálculo dos tamanhos mínimos: o desenho
 // dos ícones, suas zonas de toque e a largura mínima do painel saem todos
 // das constantes abaixo, para não divergirem.
-const MARGEM_CABECALHO = 16; // x do primeiro ícone (troféu)
+const MARGEM_CABECALHO = 16; // padding horizontal do conteúdo do cabeçalho
+const CABECALHO_Y = 22; // y do centro da linha do cabeçalho
 const TAMANHO_ALVO = 36; // lado da zona de toque dos ícones 🏆 e ?
-const GAP_ICONES = 4; // folga entre zonas de toque (e antes do rótulo)
+const GAP_ICONES = 4; // folga entre o rótulo e os ícones, e entre os dois ícones
 const LARGURA_ROTULO_RODADA = 70;
-// Posições derivadas: cada ícone começa onde a zona do anterior termina.
-const TROFEU_X = MARGEM_CABECALHO;
-const AJUDA_X = TROFEU_X + TAMANHO_ALVO + GAP_ICONES;
-const OFFSET_CABECALHO_RODADA_Y = 20;
 const OFFSET_CABECALHO_TABELA = 44;
 const OFFSET_PRIMEIRA_LINHA = 20;
 const ESPACAMENTO_LINHA = 18;
@@ -63,9 +60,12 @@ export function desenharPainelInfo(config: ConfigPainelInfo): void {
   const base: ConfigDesenho = { cena, objetos, area: infoArea };
 
   desenharFundo(base);
-  desenharCabecalhoRodada(base, config.numeroRodada, ehPaisagem);
-  if (config.aoAbrirRanking) desenharBotaoTrofeu(base, config.aoAbrirRanking);
-  if (config.aoAbrirTutorial) desenharBotaoAjuda(base, config.aoAbrirTutorial);
+  // Cabeçalho: "Rodada N" à esquerda, depois 🏆 e ? ancorados à direita
+  // (? mais à direita), na borda da tabela — em retrato, antes da manilha.
+  desenharCabecalhoRodada(base, config.numeroRodada);
+  const { trofeuX, ajudaX } = posicoesIcones(infoArea, ehPaisagem, cena);
+  if (config.aoAbrirRanking) desenharBotaoTrofeu(base, trofeuX, config.aoAbrirRanking);
+  if (config.aoAbrirTutorial) desenharBotaoAjuda(base, ajudaX, config.aoAbrirTutorial);
   const { colunas, areaManilha } = calcularLayoutTabela(cena, infoArea, ehPaisagem);
   desenharTabela(base, config, colunas);
   if (config.cartaVirada) {
@@ -86,10 +86,10 @@ export function desenharPainelInfo(config: ConfigPainelInfo): void {
  * em retrato, altura que comporte a tabela inteira de jogadores.
  */
 export function calcularMinimosPainel(cena: Scene, qtdJogadores: number): MinimosPainel {
-  // Reserva a zona de toque inteira da ajuda (não só o glifo) antes do rótulo,
-  // senão "Rodada N" se sobrepõe à área clicável do "?" em telas estreitas.
-  const fimIcones = AJUDA_X + TAMANHO_ALVO + GAP_ICONES;
-  const larguraCabecalho = fimIcones + LARGURA_ROTULO_RODADA + MARGEM_TABELA;
+  // "Rodada N" (esquerda) + os dois ícones e suas zonas de toque (direita),
+  // com folgas; usa o hitbox inteiro (não só o glifo) para nada se sobrepor.
+  const larguraCabecalho =
+    MARGEM_CABECALHO + LARGURA_ROTULO_RODADA + GAP_ICONES + TAMANHO_ALVO + GAP_ICONES + TAMANHO_ALVO + MARGEM_TABELA;
   const linhas = Math.max(qtdJogadores - 1, 0);
   const alturaTabela = OFFSET_CABECALHO_TABELA + OFFSET_PRIMEIRA_LINHA + linhas * ESPACAMENTO_LINHA + FOLGA_TABELA;
   return { largura: escalar(larguraCabecalho, cena), altura: escalar(alturaTabela, cena) };
@@ -109,33 +109,40 @@ function desenharFundo(config: ConfigDesenho): void {
   objetos.push(fundo);
 }
 
-// Borda direita da tabela; é onde a "Rodada N" se alinha para não bater nos
-// ícones (à esquerda) nem na manilha (à direita, em retrato).
+// Borda direita do conteúdo do cabeçalho: em paisagem é a borda do painel;
+// em retrato é a borda da tabela (60%), para os ícones não baterem na manilha.
 function bordaDireitaTabela(area: Retangulo, ehPaisagem: boolean, cena: Scene): number {
   if (ehPaisagem) return area.x + area.largura - escalar(MARGEM_TABELA, cena);
   return area.x + escalar(MARGEM_TABELA, cena) + Math.round(area.largura * FRACAO_TABELA_RETRATO);
 }
 
-function desenharCabecalhoRodada(config: ConfigDesenho, numero: number, ehPaisagem: boolean): void {
+// x (borda esquerda) de cada ícone, ancorando o par à direita: ? é o mais à
+// direita e o 🏆 fica à esquerda dele, separados por GAP_ICONES.
+function posicoesIcones(area: Retangulo, ehPaisagem: boolean, cena: Scene): { trofeuX: number; ajudaX: number } {
+  const alvo = escalar(TAMANHO_ALVO, cena);
+  const ajudaX = bordaDireitaTabela(area, ehPaisagem, cena) - alvo;
+  const trofeuX = ajudaX - escalar(GAP_ICONES, cena) - alvo;
+  return { trofeuX, ajudaX };
+}
+
+function desenharCabecalhoRodada(config: ConfigDesenho, numero: number): void {
   if (!numero) return;
   const { cena, objetos, area } = config;
-  const x = bordaDireitaTabela(area, ehPaisagem, cena);
   const texto = cena.add
-    .text(x, area.y + escalar(OFFSET_CABECALHO_RODADA_Y, cena), `Rodada ${String(numero)}`, {
+    .text(area.x + escalar(MARGEM_CABECALHO, cena), area.y + escalar(CABECALHO_Y, cena), `Rodada ${String(numero)}`, {
       fontSize: escalarFonte(13, cena),
       color: '#facc15',
       fontStyle: 'bold',
       fontFamily: 'Arial',
     })
-    .setOrigin(1, 0)
+    .setOrigin(0, 0.5)
     .setDepth(81);
   objetos.push(texto);
 }
 
-function desenharBotaoTrofeu(config: ConfigDesenho, aoAbrir: () => void): void {
+function desenharBotaoTrofeu(config: ConfigDesenho, x: number, aoAbrir: () => void): void {
   const { cena, objetos, area } = config;
-  const x = area.x + escalar(TROFEU_X, cena);
-  const y = area.y + escalar(22, cena);
+  const y = area.y + escalar(CABECALHO_Y, cena);
   const trofeu = cena.add
     .text(x, y, '🏆', { fontSize: escalarFonte(18, cena), fontFamily: 'Arial' })
     .setOrigin(0, 0.5)
@@ -146,10 +153,9 @@ function desenharBotaoTrofeu(config: ConfigDesenho, aoAbrir: () => void): void {
   objetos.push(trofeu, zona);
 }
 
-function desenharBotaoAjuda(config: ConfigDesenho, aoAbrir: () => void): void {
+function desenharBotaoAjuda(config: ConfigDesenho, x: number, aoAbrir: () => void): void {
   const { cena, objetos, area } = config;
-  const x = area.x + escalar(AJUDA_X, cena);
-  const y = area.y + escalar(22, cena);
+  const y = area.y + escalar(CABECALHO_Y, cena);
   const ajuda = cena.add
     .text(x, y, '?', { fontSize: escalarFonte(18, cena), color: '#7c9cff', fontStyle: 'bold', fontFamily: 'Arial' })
     .setOrigin(0, 0.5)
