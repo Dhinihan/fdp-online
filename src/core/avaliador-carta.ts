@@ -19,11 +19,11 @@ export interface ParametrosAvaliacaoCarta {
 }
 
 export const parametrosAvaliacaoPadrao: ParametrosAvaliacaoCarta = {
-  limiarBaixa: 5.6,
-  limiarAlta: 11,
-  limiarSegura: 12,
-  pesoDensidade: 3,
-  baseManilha: 14,
+  limiarBaixa: 6.5,
+  limiarAlta: 9.5,
+  limiarSegura: 11,
+  pesoDensidade: 4,
+  baseManilha: 16,
 };
 
 const hierarquiaValores: Record<Valor, number> = {

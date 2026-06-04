@@ -64,19 +64,19 @@ function esperarDeclaracaoComSorteios(decisao: DecisaoDeclaracaoDebug): void {
     resultadoFinal: 2,
     regraEspecialPrimeiraRodada: false,
   });
-  expect(identificarCartas(decisao.fortesVisiveis)).toEqual(['3♣', '2♦', '2♥']);
-  expect(identificarCartas(decisao.altasCandidatas)).toEqual(['2♦', '2♥']);
-  expect(identificarCartas(decisao.sorteiosAplicaveis)).toEqual(['2♦']);
-  expect(identificarCartas(decisao.sorteiosNaoAplicaveis)).toEqual(['2♥']);
+  expect(identificarCartas(decisao.fortesVisiveis)).toEqual(['K♣', 'A♦', 'A♥']);
+  expect(identificarCartas(decisao.altasCandidatas)).toEqual(['A♦', 'A♥']);
+  expect(identificarCartas(decisao.sorteiosAplicaveis)).toEqual(['A♦']);
+  expect(identificarCartas(decisao.sorteiosNaoAplicaveis)).toEqual(['A♥']);
 }
 
 describe('Contrato de debug da declaração do bot com sorteios de altas', () => {
   it('deve expor base determinística e separar sorteios aplicáveis dos não aplicáveis', async () => {
     const debug: DecisaoDeclaracaoDebug[] = [];
     const mao = [
-      { valor: '3', naipe: '♣' },
-      { valor: '2', naipe: '♦' },
-      { valor: '2', naipe: '♥' },
+      { valor: 'K', naipe: '♣' },
+      { valor: 'A', naipe: '♦' },
+      { valor: 'A', naipe: '♥' },
       { valor: '4', naipe: '♦' },
     ] satisfies Carta[];
     const decisor = new DecisorDeclaracaoBot(0.5, criarRng([0.1, 0.9]), {
