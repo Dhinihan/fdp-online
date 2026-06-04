@@ -1,6 +1,7 @@
 import type { Scene } from 'phaser';
 import type { ResumoTrofeus } from '@/store/trofeus/resumo-trofeus';
-import { desenharTrofeuArte, ehPedra } from '../desenhar-trofeu-arte';
+import type { Nivel } from '@/store/trofeus/tabela-trofeus';
+import { desenharCristalTrofeu, desenharTrofeuArte, ehPedra } from '../desenhar-trofeu-arte';
 import { escalar, escalarFonte } from '../escala';
 import type { LayoutRanking } from './layout-ranking';
 
@@ -30,18 +31,31 @@ export function desenharTrofeusRanking(
   const gap = escalar(6, cena);
   const centerY = layout.resumoTrofeus.y + tamanho / 2;
   const texto = criarTexto(cena, resumo, centerY);
+  // A medição do grupo respeita a faixa do Ranking: o texto quebra dentro do
+  // espaço restante em vez de o grupo estourar para fora da faixa (i18n/telas
+  // estreitas). O `max` evita largura negativa em faixas muito apertadas.
+  texto.setWordWrapWidth(Math.max(escalar(40, cena), layout.faixa.largura - tamanho - gap));
   const larguraTotal = tamanho + gap + texto.width;
   const inicioX = cena.cameras.main.centerX - larguraTotal / 2;
   texto.setX(inicioX + tamanho + gap);
-  const trofeu = desenharTrofeuArte(cena, {
-    x: inicioX + tamanho / 2,
-    y: centerY,
-    tamanho,
-    nivel: resumo.maiorTrofeu,
-    apenasGema: ehPedra(resumo.maiorTrofeu),
-  });
-  const zona = criarZona(cena, { inicioX, centerY, larguraTotal, tamanho }, aoTocar);
-  return [trofeu, texto, zona];
+  const icone = desenharIcone(cena, { x: inicioX + tamanho / 2, y: centerY, tamanho, nivel: resumo.maiorTrofeu });
+  const altura = Math.max(tamanho, texto.height);
+  const zona = criarZona(cena, { inicioX, centerY, larguraTotal, altura }, aoTocar);
+  return [icone, texto, zona];
+}
+
+interface GeoIcone {
+  x: number;
+  y: number;
+  tamanho: number;
+  nivel: Nivel;
+}
+
+/** Pedra vira só o cristal; metal mantém o troféu inteiro. */
+function desenharIcone(cena: Scene, { x, y, tamanho, nivel }: GeoIcone): Phaser.GameObjects.Container {
+  return ehPedra(nivel)
+    ? desenharCristalTrofeu(cena, { x, y, tamanho, nivel })
+    : desenharTrofeuArte(cena, { x, y, tamanho, nivel });
 }
 
 function criarTexto(cena: Scene, resumo: ResumoTrofeus, centerY: number): Phaser.GameObjects.Text {
@@ -61,12 +75,12 @@ interface GeoZona {
   inicioX: number;
   centerY: number;
   larguraTotal: number;
-  tamanho: number;
+  altura: number;
 }
 
 function criarZona(cena: Scene, geo: GeoZona, aoTocar: () => void): Phaser.GameObjects.Zone {
   const zona = cena.add
-    .zone(geo.inicioX, geo.centerY, geo.larguraTotal, geo.tamanho)
+    .zone(geo.inicioX, geo.centerY, geo.larguraTotal, geo.altura)
     .setOrigin(0, 0.5)
     .setInteractive({ useHandCursor: true });
   zona.on('pointerdown', aoTocar);
