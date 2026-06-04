@@ -47,7 +47,7 @@ export class JogoController {
   private turnoAnterior = 1;
   private valorDeclaracaoAtual = 0;
   private ultimaPontuacao: PlacarRodada = { placar: {}, penalidades: {} };
-  private processamentoTurno?: Promise<void>;
+  private resumoPendente?: PontuacaoRodada;
   private readonly decisorDeclaracaoHumano = new DecisorDeclaracaoHumano();
 
   private readonly deps: DependenciasCena;
@@ -97,9 +97,17 @@ export class JogoController {
   }
 
   private aoRodadaEncerrada(): void {
-    const aguardarLimpeza = this.processamentoTurno ?? Promise.resolve();
-    this.deps.mostrarResumoRodada(this.montarResumoRodada(), () => {
-      void this.continuarAposResumo(aguardarLimpeza);
+    // O resumo só aparece depois que o loop de turnos termina o recolhimento da
+    // última vaza; aqui apenas guardamos os dados, capturados no momento do evento.
+    this.resumoPendente = this.montarResumoRodada();
+  }
+
+  private exibirResumoPendente(): void {
+    const resumo = this.resumoPendente;
+    if (!resumo) return;
+    this.resumoPendente = undefined;
+    this.deps.mostrarResumoRodada(resumo, () => {
+      this.iniciarNovaRodada();
     });
   }
 
@@ -107,11 +115,6 @@ export class JogoController {
     const rodada = this.partida?.rodadaAtual;
     const jogadores = rodada ? estadoEmJogo(rodada.estado).maos.map((m) => m.jogador) : [];
     return { ...this.ultimaPontuacao, numeroRodada: this.partida?.estado.numeroRodada ?? 0, jogadores };
-  }
-
-  private async continuarAposResumo(aguardarLimpeza: Promise<void>): Promise<void> {
-    await aguardarLimpeza.catch(() => undefined);
-    this.iniciarNovaRodada();
   }
 
   iniciarNovaRodada(): void {
@@ -184,11 +187,9 @@ export class JogoController {
       atualizarIndicadorVez: this.deps.atualizarIndicadorVez,
       atualizarPainel: this.deps.atualizarPainel,
     });
-    this.processamentoTurno = processamento;
-    try {
-      await processamento;
-    } finally {
-      this.processamentoTurno = undefined;
-    }
+    await processamento;
+    // Loop concluído: o recolhimento da última vaza já rodou. Só agora o resumo
+    // aparece, sem cobrir a carta nem o sweep do fim de rodada.
+    this.exibirResumoPendente();
   }
 }
