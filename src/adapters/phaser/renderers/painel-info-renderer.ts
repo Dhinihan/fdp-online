@@ -4,10 +4,25 @@ import type { Jogador } from '@/types/entidades';
 import type { EstadoRodada, EstadoEmJogo } from '@/types/estado-rodada';
 import { estadoEmJogo } from '@/types/estado-rodada';
 import { escalar, escalarFonte } from '../escala';
-import type { LayoutPainel, Retangulo } from '../layout';
+import type { LayoutPainel, MinimosPainel, Retangulo } from '../layout';
 import { calcularAreaManilha } from '../layout-manilha';
 import { limparObjetos } from './limpar-objetos';
 import { desenharManilhaNoPainel } from './painel-manilha-renderer';
+
+// Geometria do painel, em unidades lógicas (escaladas por `escalar`).
+// Compartilhada entre o desenho e o cálculo dos tamanhos mínimos.
+const OFFSET_TROFEU = 16;
+const OFFSET_AJUDA = 48;
+const LARGURA_ICONE = 14;
+const LARGURA_ROTULO_RODADA = 70;
+const OFFSET_CABECALHO_RODADA_Y = 20;
+const OFFSET_CABECALHO_TABELA = 44;
+const OFFSET_PRIMEIRA_LINHA = 20;
+const ESPACAMENTO_LINHA = 18;
+const FOLGA_TABELA = 14;
+const MARGEM_TABELA = 10;
+// Em retrato a tabela ocupa 60% à esquerda; os 40% restantes ficam para a manilha.
+const FRACAO_TABELA_RETRATO = 0.6;
 
 export interface ConfigPainelInfo {
   cena: Scene;
@@ -19,6 +34,7 @@ export interface ConfigPainelInfo {
   layout: LayoutPainel;
   objetos: Phaser.GameObjects.GameObject[];
   aoAbrirRanking?: () => void;
+  aoAbrirTutorial?: () => void;
 }
 
 interface ConfigDesenho {
@@ -42,8 +58,9 @@ export function desenharPainelInfo(config: ConfigPainelInfo): void {
   const base: ConfigDesenho = { cena, objetos, area: infoArea };
 
   desenharFundo(base);
-  desenharCabecalhoRodada(base, config.numeroRodada);
+  desenharCabecalhoRodada(base, config.numeroRodada, ehPaisagem);
   if (config.aoAbrirRanking) desenharBotaoTrofeu(base, config.aoAbrirRanking);
+  if (config.aoAbrirTutorial) desenharBotaoAjuda(base, config.aoAbrirTutorial);
   const { colunas, areaManilha } = calcularLayoutTabela(cena, infoArea, ehPaisagem);
   desenharTabela(base, config, colunas);
   if (config.cartaVirada) {
@@ -56,6 +73,18 @@ export function desenharPainelInfo(config: ConfigPainelInfo): void {
       ehPaisagem,
     });
   }
+}
+
+/**
+ * Tamanhos mínimos do painel para o conteúdo não se sobrepor:
+ * em paisagem, largura que comporte 🏆 + ? + "Rodada N" lado a lado;
+ * em retrato, altura que comporte a tabela inteira de jogadores.
+ */
+export function calcularMinimosPainel(cena: Scene, qtdJogadores: number): MinimosPainel {
+  const larguraCabecalho = OFFSET_AJUDA + LARGURA_ICONE + MARGEM_TABELA + LARGURA_ROTULO_RODADA + MARGEM_TABELA;
+  const linhas = Math.max(qtdJogadores - 1, 0);
+  const alturaTabela = OFFSET_CABECALHO_TABELA + OFFSET_PRIMEIRA_LINHA + linhas * ESPACAMENTO_LINHA + FOLGA_TABELA;
+  return { largura: escalar(larguraCabecalho, cena), altura: escalar(alturaTabela, cena) };
 }
 
 function desenharFundo(config: ConfigDesenho): void {
@@ -72,24 +101,32 @@ function desenharFundo(config: ConfigDesenho): void {
   objetos.push(fundo);
 }
 
-function desenharCabecalhoRodada(config: ConfigDesenho, numero: number): void {
+// Borda direita da tabela; é onde a "Rodada N" se alinha para não bater nos
+// ícones (à esquerda) nem na manilha (à direita, em retrato).
+function bordaDireitaTabela(area: Retangulo, ehPaisagem: boolean, cena: Scene): number {
+  if (ehPaisagem) return area.x + area.largura - escalar(MARGEM_TABELA, cena);
+  return area.x + escalar(MARGEM_TABELA, cena) + Math.round(area.largura * FRACAO_TABELA_RETRATO);
+}
+
+function desenharCabecalhoRodada(config: ConfigDesenho, numero: number, ehPaisagem: boolean): void {
   if (!numero) return;
   const { cena, objetos, area } = config;
+  const x = bordaDireitaTabela(area, ehPaisagem, cena);
   const texto = cena.add
-    .text(area.x + area.largura / 2, area.y + escalar(20, cena), `Rodada ${String(numero)}`, {
+    .text(x, area.y + escalar(OFFSET_CABECALHO_RODADA_Y, cena), `Rodada ${String(numero)}`, {
       fontSize: escalarFonte(13, cena),
       color: '#facc15',
       fontStyle: 'bold',
       fontFamily: 'Arial',
     })
-    .setOrigin(0.5, 0)
+    .setOrigin(1, 0)
     .setDepth(81);
   objetos.push(texto);
 }
 
 function desenharBotaoTrofeu(config: ConfigDesenho, aoAbrir: () => void): void {
   const { cena, objetos, area } = config;
-  const x = area.x + escalar(16, cena);
+  const x = area.x + escalar(OFFSET_TROFEU, cena);
   const y = area.y + escalar(22, cena);
   const trofeu = cena.add
     .text(x, y, '🏆', { fontSize: escalarFonte(18, cena), fontFamily: 'Arial' })
@@ -101,13 +138,29 @@ function desenharBotaoTrofeu(config: ConfigDesenho, aoAbrir: () => void): void {
   objetos.push(trofeu, zona);
 }
 
+function desenharBotaoAjuda(config: ConfigDesenho, aoAbrir: () => void): void {
+  const { cena, objetos, area } = config;
+  const x = area.x + escalar(OFFSET_AJUDA, cena);
+  const y = area.y + escalar(22, cena);
+  const ajuda = cena.add
+    .text(x, y, '?', { fontSize: escalarFonte(18, cena), color: '#7c9cff', fontStyle: 'bold', fontFamily: 'Arial' })
+    .setOrigin(0, 0.5)
+    .setDepth(82);
+  const alvo = escalar(36, cena);
+  const zona = cena.add.zone(x, y, alvo, alvo).setOrigin(0, 0.5).setDepth(82).setInteractive({ useHandCursor: true });
+  zona.on('pointerdown', aoAbrir);
+  objetos.push(ajuda, zona);
+}
+
 function calcularLayoutTabela(
   cena: Scene,
   area: Retangulo,
   ehPaisagem: boolean,
 ): { colunas: Colunas; areaManilha: Retangulo } {
-  const tabelaX = area.x + escalar(10, cena);
-  const larguraTabela = ehPaisagem ? area.largura - escalar(20, cena) : Math.round(area.largura * 0.6);
+  const tabelaX = area.x + escalar(MARGEM_TABELA, cena);
+  const larguraTabela = ehPaisagem
+    ? area.largura - escalar(MARGEM_TABELA * 2, cena)
+    : Math.round(area.largura * FRACAO_TABELA_RETRATO);
   const colunas: Colunas = {
     nome: tabelaX,
     declarado: tabelaX + Math.round(larguraTabela * 0.42),
@@ -122,7 +175,7 @@ function desenharTabela(config: ConfigDesenho, painelConfig: ConfigPainelInfo, c
   if (painelConfig.estado.fase === 'distribuindo') return;
   const { cena, objetos, area } = config;
   const emJogo = estadoEmJogo(painelConfig.estado);
-  const cabecalhoY = area.y + escalar(44, cena);
+  const cabecalhoY = area.y + escalar(OFFSET_CABECALHO_TABELA, cena);
   desenharCabecalhoTabela({ cena, objetos, colunas, y: cabecalhoY });
   desenharLinhasJogadores({ cena, objetos, colunas, cabecalhoY, jogadores: painelConfig.jogadores, emJogo });
 }
@@ -172,8 +225,8 @@ interface ConfigLinhas {
 
 function desenharLinhasJogadores(config: ConfigLinhas): void {
   const { cena, objetos, colunas, cabecalhoY, jogadores, emJogo } = config;
-  const linhaY = cabecalhoY + escalar(20, cena);
-  const espacamento = escalar(18, cena);
+  const linhaY = cabecalhoY + escalar(OFFSET_PRIMEIRA_LINHA, cena);
+  const espacamento = escalar(ESPACAMENTO_LINHA, cena);
   jogadores.forEach((jogador, indice) => {
     const y = linhaY + indice * espacamento;
     const declarado = jogador.id in emJogo.declaracoes ? emJogo.declaracoes[jogador.id] : null;

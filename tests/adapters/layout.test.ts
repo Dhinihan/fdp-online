@@ -51,6 +51,32 @@ describe('calcularLayout — retrato', () => {
   });
 });
 
+describe('calcularLayout — mínimos do painel', () => {
+  it('deve respeitar a largura mínima quando 18% da tela é estreito demais (paisagem)', () => {
+    const layout = calcularLayout(700, 600, { largura: 240 });
+    expect(layout.infoArea.largura).toBe(240);
+    expect(layout.gameArea.largura).toBe(700 - 240);
+  });
+
+  it('deve ignorar a largura mínima quando 18% já é suficiente (paisagem)', () => {
+    const layout = calcularLayout(2000, 600, { largura: 240 });
+    expect(layout.infoArea.largura).toBe(Math.round(2000 * 0.18));
+  });
+
+  it('deve respeitar a altura mínima quando 18% da tela é baixo demais (retrato)', () => {
+    const layout = calcularLayout(400, 700, { altura: 200 });
+    expect(layout.infoArea.altura).toBe(200);
+    expect(layout.gameArea.altura).toBe(700 - 200);
+  });
+
+  it('nunca deve deixar o painel passar de metade da tela', () => {
+    const paisagem = calcularLayout(700, 600, { largura: 9999 });
+    expect(paisagem.infoArea.largura).toBe(350);
+    const retrato = calcularLayout(400, 700, { altura: 9999 });
+    expect(retrato.infoArea.altura).toBe(350);
+  });
+});
+
 describe('calcularLayout — segurança', () => {
   it('a gameArea nunca deve ter tamanho negativo', () => {
     const layout = calcularLayout(100, 50);

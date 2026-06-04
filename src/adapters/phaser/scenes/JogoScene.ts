@@ -2,6 +2,7 @@ import { Scene } from 'phaser';
 import { VALOR_MINIMO } from '@/core/Carta';
 import { Rodada } from '@/core/Rodada';
 import { ehFaseDeclaracao, estadoEmJogo } from '@/types/estado-rodada';
+import { abrirTutorial } from '../../tutorial/tutorial-overlay';
 import { DecisorHumano } from '../DecisorHumano';
 import { calcularLayout, type LayoutPainel, type Retangulo } from '../layout';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
@@ -9,12 +10,13 @@ import { renderizarBadgesDeclaradoTurno0 } from '../renderers/declarado-turno0-r
 import { destruirDestaque, type EstadoDestaque } from '../renderers/destaque-renderer';
 import { limparObjetos } from '../renderers/limpar-objetos';
 import { renderizarMesa } from '../renderers/mesa-renderer';
-import { desenharPainelInfo } from '../renderers/painel-info-renderer';
+import { calcularMinimosPainel, desenharPainelInfo } from '../renderers/painel-info-renderer';
 import { mostrarResumoRodada } from '../renderers/resumo-rodada-renderer';
 import { animarRecolhimentoTurno, atualizarIndicadorVez } from '../renderers/turno-renderer';
 import { aoEncerrarCena } from './ciclo-vida-cena';
 import { desenharMaosJogo } from './desenhar-maos-jogo';
 import { mostrarFimJogoDaCena, type EstadoFimJogo } from './fim-jogo-scene';
+import { JOGADORES } from './jogadores';
 import { JogoController, type DependenciasCena, type PontuacaoRodada } from './jogo-controller';
 
 export class JogoScene extends Scene {
@@ -78,7 +80,13 @@ export class JogoScene extends Scene {
 
   private obterLayout(): LayoutPainel {
     const { width, height } = this.cameras.main;
-    return calcularLayout(width, height);
+    return calcularLayout(width, height, calcularMinimosPainel(this, this.contarJogadores()));
+  }
+
+  private contarJogadores(): number {
+    const estado = this.controller?.partida?.estado;
+    if (estado && estado.fase !== 'distribuindo') return estadoEmJogo(estado).maos.length;
+    return JOGADORES.length;
   }
 
   private obterGameArea(): Retangulo {
@@ -128,12 +136,22 @@ export class JogoScene extends Scene {
       layout: this.layout,
       objetos: this.painelObjetos,
       aoAbrirRanking: this.abrirRanking,
+      aoAbrirTutorial: this.mostrarTutorial,
     });
   }
 
   private abrirRanking = (): void => {
     this.scene.launch('RankingScene');
     this.scene.pause();
+  };
+
+  private mostrarTutorial = (): void => {
+    this.scene.pause();
+    abrirTutorial({
+      aoFechar: () => {
+        this.scene.resume();
+      },
+    });
   };
 
   private renderizarFimJogo(primeiraExibicao: boolean): void {

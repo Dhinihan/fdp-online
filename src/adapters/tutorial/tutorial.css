@@ -1,0 +1,336 @@
+/*
+  Estilos do overlay "Como jogar". Portado do protótipo aprovado
+  (prototypes/tutorial-final.html). Tudo escopado em .tutorial-fundo
+  para não vazar para o resto do app.
+*/
+.tutorial-fundo {
+  --bg: #1a1a2e;
+  --panel: #16213e;
+  --panel-2: #0f1830;
+  --ink: #eef2ff;
+  --ink-soft: #aab4d4;
+  --ink-dim: #6f7aa0;
+  --green: #4ecca3;
+  --yellow: #facc15;
+  --red: #ff6b6b;
+  --accent: #7c9cff;
+  --line: #2a3a63;
+
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  overflow: auto;
+  background: rgba(8, 10, 24, 0.72);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.tutorial-fundo * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.tutorial-fundo .tutorial-palco {
+  width: 100%;
+  max-width: 720px;
+}
+
+.tutorial-fundo .overlay {
+  container-type: inline-size;
+  background: linear-gradient(180deg, var(--panel), var(--panel-2));
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+  max-height: 92vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tutorial-fundo .topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.tutorial-fundo .topo .marca {
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+  color: var(--green);
+  background: rgba(78, 204, 163, 0.12);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.tutorial-fundo .topo h1 {
+  font-size: 18px;
+  font-weight: 700;
+  flex: 1;
+}
+.tutorial-fundo .fechar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 16px;
+  cursor: pointer;
+}
+.tutorial-fundo .corpo {
+  padding: 20px 24px 22px;
+  overflow-y: auto;
+}
+.tutorial-fundo b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.tutorial-fundo .red {
+  color: var(--red);
+}
+
+.tutorial-fundo .alvo {
+  text-align: center;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: rgba(78, 204, 163, 0.1);
+  border: 1px solid rgba(78, 204, 163, 0.28);
+}
+.tutorial-fundo .alvo b {
+  color: var(--green);
+}
+.tutorial-fundo .alvo span {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+.tutorial-fundo .corpo3 {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.tutorial-fundo .et {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+}
+.tutorial-fundo .et .bolha {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--green);
+  color: #06241a;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+}
+.tutorial-fundo .et .txt {
+  flex: 1;
+}
+.tutorial-fundo .et .txt h3 {
+  font-size: 14px;
+}
+.tutorial-fundo .et .txt p {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+.tutorial-fundo .seta {
+  color: var(--line);
+  padding: 3px 0 3px 13px;
+  font-size: 13px;
+}
+.tutorial-fundo .seta.ciclar {
+  color: var(--ink-dim);
+  font-size: 11.5px;
+}
+.tutorial-fundo .extra {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.4;
+  margin-top: 5px;
+}
+.tutorial-fundo .extra::before {
+  content: '•';
+  color: var(--accent);
+  font-weight: 800;
+}
+.tutorial-fundo .extra b {
+  color: var(--ink);
+}
+
+.tutorial-fundo .lateral {
+  background: rgba(250, 204, 21, 0.06);
+  border: 1px solid rgba(250, 204, 21, 0.2);
+  border-radius: 14px;
+  padding: 14px;
+  align-self: start;
+}
+.tutorial-fundo .lateral h3 {
+  font-size: 13.5px;
+  color: var(--yellow);
+  margin-bottom: 6px;
+}
+.tutorial-fundo .lateral p {
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+.tutorial-fundo .lateral .esp {
+  margin-top: 11px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(250, 204, 21, 0.18);
+}
+.tutorial-fundo .lateral .esp h3 {
+  color: var(--accent);
+}
+.tutorial-fundo .lateral .esp p {
+  margin-bottom: 0;
+}
+.tutorial-fundo .vermelho {
+  color: #ff6b6b;
+}
+
+/* ---------- ESCADA DE FORÇA ---------- */
+.tutorial-fundo .forca {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 16px 16px;
+  background: rgba(255, 255, 255, 0.015);
+}
+.tutorial-fundo .forca .cab {
+  font-size: 13.5px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.tutorial-fundo .forca .nota {
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+.tutorial-fundo .forca .nota b {
+  color: var(--ink);
+}
+
+.tutorial-fundo .carta {
+  background: #f6f7fb;
+  color: #13203a;
+  border-radius: 6px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+.tutorial-fundo .carta.top {
+  background: #fff7d6;
+  color: #7a5b00;
+  outline: 2px solid var(--yellow);
+}
+
+/* horizontal (desktop) */
+.tutorial-fundo .escada-h {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+}
+.tutorial-fundo .escada-h .carta {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+}
+.tutorial-fundo .ancoras {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-top: 7px;
+}
+.tutorial-fundo .ancoras .f {
+  color: var(--green);
+}
+.tutorial-fundo .ancoras .w {
+  color: var(--red);
+}
+.tutorial-fundo .escada-v {
+  display: none;
+}
+
+/* vertical (mobile) — rotaciona pra barras */
+@container (max-width: 520px) {
+  .tutorial-fundo .corpo3 {
+    grid-template-columns: 1fr;
+  }
+  .tutorial-fundo .escada-h,
+  .tutorial-fundo .ancoras {
+    display: none;
+  }
+  .tutorial-fundo .escada-v {
+    display: grid;
+    gap: 5px;
+  }
+  .tutorial-fundo .escada-v .linha {
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    gap: 9px;
+    align-items: center;
+  }
+  .tutorial-fundo .escada-v .carta {
+    width: 30px;
+    height: 30px;
+    font-size: 12.5px;
+  }
+  .tutorial-fundo .escada-v .barra-f {
+    height: 18px;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #4ecca3, #3aa17f);
+  }
+  .tutorial-fundo .escada-v .linha.top .barra-f {
+    background: linear-gradient(90deg, #facc15, #e0a800);
+  }
+  .tutorial-fundo .escada-v .topo-rot {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--green);
+    margin-bottom: 3px;
+  }
+  .tutorial-fundo .escada-v .base-rot {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--red);
+    margin-top: 4px;
+    text-align: right;
+  }
+}
+
+.tutorial-fundo .cta {
+  margin-top: 18px;
+  text-align: center;
+}
+.tutorial-fundo .cta button {
+  background: var(--green);
+  color: #06241a;
+  border: none;
+  border-radius: 12px;
+  padding: 11px 28px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
