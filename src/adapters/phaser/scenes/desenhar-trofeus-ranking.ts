@@ -7,10 +7,15 @@ import type { LayoutRanking } from './layout-ranking';
 const COR_TEXTO = '#e8ecf5';
 const COR_ACENTO = '#facc15';
 
+export interface OpcoesTrofeusRanking {
+  resumo: ResumoTrofeus | null;
+  layout: LayoutRanking;
+  aoTocar: () => void;
+}
+
 export function desenharTrofeusRanking(
   cena: Scene,
-  resumo: ResumoTrofeus | null,
-  layout: LayoutRanking,
+  { resumo, layout, aoTocar }: OpcoesTrofeusRanking,
 ): Phaser.GameObjects.GameObject[] {
   if (resumo === null) return [];
   const texto = cena.add
@@ -24,6 +29,7 @@ export function desenharTrofeusRanking(
     .setOrigin(0.5, 0)
     .setWordWrapWidth(layout.faixa.largura);
   texto.setShadow(0, 0, COR_ACENTO, 2);
+  texto.setInteractive({ useHandCursor: true }).on('pointerdown', aoTocar);
   return [texto];
 }
 
