@@ -1,7 +1,7 @@
 import type { Scene } from 'phaser';
 import type { Nivel } from '@/store/trofeus/tabela-trofeus';
 import { NIVEIS_ORDENADOS, ROTULO_NIVEL } from '@/store/trofeus/tabela-trofeus';
-import { desenharTrofeuArte } from '../desenhar-trofeu-arte';
+import { corDoNivel, desenharTrofeuArte } from '../desenhar-trofeu-arte';
 import { escalar, escalarFonte } from '../escala';
 
 const COR_BACKDROP = 0x0b0f1a;
@@ -9,8 +9,25 @@ const COR_PAINEL = 0x1f2740;
 const COR_BORDA = 0x2a3550;
 const COR_TITULO = '#e8ecf5';
 const COR_DICA = '#8b95ad';
-const COR_CONQUISTADO = '#facc15';
 const COR_BLOQUEADO = '#4b5572';
+
+/** Nível-porta: as gemas só aparecem no painel depois de conquistar o Ouro. */
+const NIVEL_PORTA: Nivel = 'ouro';
+
+/**
+ * Níveis a exibir no painel: sempre os metais; as gemas só entram quando o
+ * `maiorTrofeu` já alcançou o Ouro. Antes disso o painel encolhe e se comporta
+ * como se as gemas não existissem.
+ */
+function niveisVisiveis(maiorTrofeu: Nivel): readonly Nivel[] {
+  const conquistouOuro = NIVEIS_ORDENADOS.indexOf(maiorTrofeu) >= NIVEIS_ORDENADOS.indexOf(NIVEL_PORTA);
+  return conquistouOuro ? NIVEIS_ORDENADOS : NIVEIS_ORDENADOS.slice(0, NIVEIS_ORDENADOS.indexOf(NIVEL_PORTA) + 1);
+}
+
+/** Converte cor numérica (`0xrrggbb`) na string `#rrggbb` que o texto exige. */
+function paraHex(cor: number): string {
+  return `#${cor.toString(16).padStart(6, '0')}`;
+}
 
 const PASSO_NIVEL = 40;
 const PAD_TOPO = 76;
@@ -34,10 +51,10 @@ interface LayoutOverlay {
  * compacta espaçamentos e fontes para o painel nunca sair da viewport — daí
  * `topo >= margem` é garantido. Espelha o `escalaConteudo` do fim de jogo.
  */
-function calcularLayout(cena: Scene): LayoutOverlay {
+function calcularLayout(cena: Scene, totalNiveis: number): LayoutOverlay {
   const { centerX, centerY, width, height } = cena.cameras.main;
   const largura = Math.min(width - escalar(48, cena), escalar(340, cena));
-  const alturaNatural = escalar(PAD_TOPO + PAD_BASE, cena) + escalar(PASSO_NIVEL, cena) * NIVEIS_ORDENADOS.length;
+  const alturaNatural = escalar(PAD_TOPO + PAD_BASE, cena) + escalar(PASSO_NIVEL, cena) * totalNiveis;
   const altura = Math.min(alturaNatural, height - escalar(MARGEM_VERTICAL, cena) * 2);
   return {
     cena,
@@ -63,7 +80,8 @@ export function desenharOverlayTrofeus(
   maiorTrofeu: Nivel,
   aoFechar: () => void,
 ): Phaser.GameObjects.GameObject[] {
-  const layout = calcularLayout(cena);
+  const niveis = niveisVisiveis(maiorTrofeu);
+  const layout = calcularLayout(cena, niveis.length);
   const { centerX, centerY, largura, altura } = layout;
   const { width, height } = cena.cameras.main;
 
@@ -79,7 +97,7 @@ export function desenharOverlayTrofeus(
     .setInteractive();
   const fechar = desenharBotaoFechar(layout, aoFechar);
 
-  return [backdrop, painel, fechar, ...desenharCabecalho(layout), ...desenharNiveis(layout, maiorTrofeu)];
+  return [backdrop, painel, fechar, ...desenharCabecalho(layout), ...desenharNiveis(layout, niveis, maiorTrofeu)];
 }
 
 function desenharBotaoFechar(layout: LayoutOverlay, aoFechar: () => void): Phaser.GameObjects.GameObject {
@@ -104,23 +122,21 @@ function desenharCabecalho({ cena, centerX, topo, fator }: LayoutOverlay): Phase
       fontFamily: 'Arial',
     })
     .setOrigin(0.5);
-  const dica = cena.add
-    .text(centerX, topo + escalar(50 * fator, cena), 'Toque fora para fechar', {
-      fontSize: escalarFonte(11 * fator, cena),
-      color: COR_DICA,
-      fontFamily: 'Arial',
-    })
-    .setOrigin(0.5);
-  return [titulo, dica];
+  return [titulo];
 }
 
-function desenharNiveis(layout: LayoutOverlay, maiorTrofeu: Nivel): Phaser.GameObjects.GameObject[] {
+function desenharNiveis(
+  layout: LayoutOverlay,
+  niveis: readonly Nivel[],
+  maiorTrofeu: Nivel,
+): Phaser.GameObjects.GameObject[] {
   const { cena, xEsquerda, topo, fator } = layout;
   const maxIndice = NIVEIS_ORDENADOS.indexOf(maiorTrofeu);
   const baseY = topo + escalar(PAD_TOPO * fator, cena);
-  return NIVEIS_ORDENADOS.flatMap((nivel, indice) => {
+  return niveis.flatMap((nivel, indice) => {
     const y = baseY + escalar(PASSO_NIVEL * fator, cena) * indice;
-    return desenharNivel(cena, { nivel, conquistado: indice <= maxIndice, x: xEsquerda, y, fator });
+    const conquistado = NIVEIS_ORDENADOS.indexOf(nivel) <= maxIndice;
+    return desenharNivel(cena, { nivel, conquistado, x: xEsquerda, y, fator });
   });
 }
 
@@ -141,7 +157,7 @@ function desenharNivel(
   const rotulo = cena.add
     .text(x + tamanho + escalar(12, cena), y, ROTULO_NIVEL[nivel], {
       fontSize: escalarFonte(14 * fator, cena),
-      color: conquistado ? COR_CONQUISTADO : COR_BLOQUEADO,
+      color: conquistado ? paraHex(corDoNivel(nivel)) : COR_BLOQUEADO,
       fontStyle: conquistado ? 'bold' : 'normal',
       fontFamily: 'Arial',
     })
