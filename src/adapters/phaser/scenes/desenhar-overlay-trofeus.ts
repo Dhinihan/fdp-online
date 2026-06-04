@@ -1,6 +1,7 @@
 import type { Scene } from 'phaser';
 import type { Nivel } from '@/store/trofeus/tabela-trofeus';
 import { NIVEIS_ORDENADOS, ROTULO_NIVEL } from '@/store/trofeus/tabela-trofeus';
+import { desenharTrofeuArte } from '../desenhar-trofeu-arte';
 import { escalar, escalarFonte } from '../escala';
 
 const COR_BACKDROP = 0x0b0f1a;
@@ -117,7 +118,7 @@ function desenharNiveis(layout: LayoutOverlay, maiorTrofeu: Nivel): Phaser.GameO
   const { cena, xEsquerda, topo, fator } = layout;
   const maxIndice = NIVEIS_ORDENADOS.indexOf(maiorTrofeu);
   const baseY = topo + escalar(PAD_TOPO * fator, cena);
-  return NIVEIS_ORDENADOS.map((nivel, indice) => {
+  return NIVEIS_ORDENADOS.flatMap((nivel, indice) => {
     const y = baseY + escalar(PASSO_NIVEL * fator, cena) * indice;
     return desenharNivel(cena, { nivel, conquistado: indice <= maxIndice, x: xEsquerda, y, fator });
   });
@@ -131,9 +132,14 @@ interface ContextoNivel {
   fator: number;
 }
 
-function desenharNivel(cena: Scene, { nivel, conquistado, x, y, fator }: ContextoNivel): Phaser.GameObjects.GameObject {
-  return cena.add
-    .text(x, y, `🏆  ${ROTULO_NIVEL[nivel]}`, {
+function desenharNivel(
+  cena: Scene,
+  { nivel, conquistado, x, y, fator }: ContextoNivel,
+): Phaser.GameObjects.GameObject[] {
+  const tamanho = escalar(28 * fator, cena);
+  const trofeu = desenharTrofeuArte(cena, { x: x + tamanho / 2, y, tamanho, nivel, aceso: conquistado });
+  const rotulo = cena.add
+    .text(x + tamanho + escalar(12, cena), y, ROTULO_NIVEL[nivel], {
       fontSize: escalarFonte(14 * fator, cena),
       color: conquistado ? COR_CONQUISTADO : COR_BLOQUEADO,
       fontStyle: conquistado ? 'bold' : 'normal',
@@ -141,4 +147,5 @@ function desenharNivel(cena: Scene, { nivel, conquistado, x, y, fator }: Context
     })
     .setOrigin(0, 0.5)
     .setAlpha(conquistado ? 1 : 0.5);
+  return [trofeu, rotulo];
 }
