@@ -12,6 +12,10 @@ describe('escolhas por necessidade', () => {
   it('deve escolher vencedora pelo índice canônico quando há cartas suficientes', deveEscolherVencedoraPorIndice);
   it('deve escolher a vencedora mais fraca quando vencedoras são escassas', deveEscolherVencedoraEscassa);
   it('deve descartar pelo índice canônico quando há folga sobre a necessidade', deveDescartarPorIndice);
+  it(
+    'deve preservar a mais forte e descartar a segunda mais forte com necessidade 1',
+    deveDescartarPreservandoAMaisForte,
+  );
   it('deve descartar a carta mais fraca quando candidatas não excedem a necessidade', deveDescartarEscassa);
   it('deve ordenar por força real considerando manilha e desempate por naipe', deveOrdenarPorForcaReal);
 });
@@ -31,7 +35,14 @@ function deveEscolherVencedoraEscassa(): void {
 function deveDescartarPorIndice(): void {
   const candidatas = avaliar([criarCarta('4', '♦'), criarCarta('6', '♦'), criarCarta('9', '♦'), criarCarta('Q', '♦')]);
 
-  expect(descartePorNecessidade(candidatas, '5', 2).carta).toEqual(criarCarta('9', '♦'));
+  expect(descartePorNecessidade(candidatas, '5', 2).carta).toEqual(criarCarta('6', '♦'));
+}
+
+function deveDescartarPreservandoAMaisForte(): void {
+  const candidatas = avaliar([criarCarta('4', '♦'), criarCarta('6', '♦'), criarCarta('9', '♦'), criarCarta('Q', '♦')]);
+
+  // Precisa fazer 1 e não vence agora: reserva a Q para a vaza futura e joga a 9.
+  expect(descartePorNecessidade(candidatas, '5', 1).carta).toEqual(criarCarta('9', '♦'));
 }
 
 function deveDescartarEscassa(): void {
