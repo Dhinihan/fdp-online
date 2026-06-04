@@ -10,11 +10,16 @@ import { limparObjetos } from './limpar-objetos';
 import { desenharManilhaNoPainel } from './painel-manilha-renderer';
 
 // Geometria do painel, em unidades lógicas (escaladas por `escalar`).
-// Compartilhada entre o desenho e o cálculo dos tamanhos mínimos.
-const OFFSET_TROFEU = 16;
-const OFFSET_AJUDA = 48;
-const LARGURA_ICONE = 14;
+// Compartilhada entre o desenho e o cálculo dos tamanhos mínimos: o desenho
+// dos ícones, suas zonas de toque e a largura mínima do painel saem todos
+// das constantes abaixo, para não divergirem.
+const MARGEM_CABECALHO = 16; // x do primeiro ícone (troféu)
+const TAMANHO_ALVO = 36; // lado da zona de toque dos ícones 🏆 e ?
+const GAP_ICONES = 4; // folga entre zonas de toque (e antes do rótulo)
 const LARGURA_ROTULO_RODADA = 70;
+// Posições derivadas: cada ícone começa onde a zona do anterior termina.
+const TROFEU_X = MARGEM_CABECALHO;
+const AJUDA_X = TROFEU_X + TAMANHO_ALVO + GAP_ICONES;
 const OFFSET_CABECALHO_RODADA_Y = 20;
 const OFFSET_CABECALHO_TABELA = 44;
 const OFFSET_PRIMEIRA_LINHA = 20;
@@ -81,7 +86,10 @@ export function desenharPainelInfo(config: ConfigPainelInfo): void {
  * em retrato, altura que comporte a tabela inteira de jogadores.
  */
 export function calcularMinimosPainel(cena: Scene, qtdJogadores: number): MinimosPainel {
-  const larguraCabecalho = OFFSET_AJUDA + LARGURA_ICONE + MARGEM_TABELA + LARGURA_ROTULO_RODADA + MARGEM_TABELA;
+  // Reserva a zona de toque inteira da ajuda (não só o glifo) antes do rótulo,
+  // senão "Rodada N" se sobrepõe à área clicável do "?" em telas estreitas.
+  const fimIcones = AJUDA_X + TAMANHO_ALVO + GAP_ICONES;
+  const larguraCabecalho = fimIcones + LARGURA_ROTULO_RODADA + MARGEM_TABELA;
   const linhas = Math.max(qtdJogadores - 1, 0);
   const alturaTabela = OFFSET_CABECALHO_TABELA + OFFSET_PRIMEIRA_LINHA + linhas * ESPACAMENTO_LINHA + FOLGA_TABELA;
   return { largura: escalar(larguraCabecalho, cena), altura: escalar(alturaTabela, cena) };
@@ -126,13 +134,13 @@ function desenharCabecalhoRodada(config: ConfigDesenho, numero: number, ehPaisag
 
 function desenharBotaoTrofeu(config: ConfigDesenho, aoAbrir: () => void): void {
   const { cena, objetos, area } = config;
-  const x = area.x + escalar(OFFSET_TROFEU, cena);
+  const x = area.x + escalar(TROFEU_X, cena);
   const y = area.y + escalar(22, cena);
   const trofeu = cena.add
     .text(x, y, '🏆', { fontSize: escalarFonte(18, cena), fontFamily: 'Arial' })
     .setOrigin(0, 0.5)
     .setDepth(82);
-  const alvo = escalar(36, cena);
+  const alvo = escalar(TAMANHO_ALVO, cena);
   const zona = cena.add.zone(x, y, alvo, alvo).setOrigin(0, 0.5).setDepth(82).setInteractive({ useHandCursor: true });
   zona.on('pointerdown', aoAbrir);
   objetos.push(trofeu, zona);
@@ -140,13 +148,13 @@ function desenharBotaoTrofeu(config: ConfigDesenho, aoAbrir: () => void): void {
 
 function desenharBotaoAjuda(config: ConfigDesenho, aoAbrir: () => void): void {
   const { cena, objetos, area } = config;
-  const x = area.x + escalar(OFFSET_AJUDA, cena);
+  const x = area.x + escalar(AJUDA_X, cena);
   const y = area.y + escalar(22, cena);
   const ajuda = cena.add
     .text(x, y, '?', { fontSize: escalarFonte(18, cena), color: '#7c9cff', fontStyle: 'bold', fontFamily: 'Arial' })
     .setOrigin(0, 0.5)
     .setDepth(82);
-  const alvo = escalar(36, cena);
+  const alvo = escalar(TAMANHO_ALVO, cena);
   const zona = cena.add.zone(x, y, alvo, alvo).setOrigin(0, 0.5).setDepth(82).setInteractive({ useHandCursor: true });
   zona.on('pointerdown', aoAbrir);
   objetos.push(ajuda, zona);

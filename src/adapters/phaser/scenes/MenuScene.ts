@@ -1,6 +1,6 @@
 import { Scene } from 'phaser';
 import type { GameObjects } from 'phaser';
-import { abrirTutorial } from '../../tutorial/tutorial-overlay';
+import { abrirTutorialPausandoCena } from '../abrir-tutorial-cena';
 import { precarregarSomUi, prepararSomUi, tocarSomUi } from '../audio/som-ui';
 import { escalar, escalarFonte } from '../escala';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
@@ -120,12 +120,7 @@ export class MenuScene extends Scene {
 
   private mostrarTutorial = (): void => {
     tocarSomUi(this);
-    this.scene.pause();
-    abrirTutorial({
-      aoFechar: () => {
-        this.scene.resume();
-      },
-    });
+    abrirTutorialPausandoCena(this);
   };
 
   private iniciarJogo = (): void => {

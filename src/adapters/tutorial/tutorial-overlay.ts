@@ -12,14 +12,16 @@ export interface OpcoesTutorial {
 let overlayAtivo: HTMLElement | null = null;
 let aoTeclar: ((evento: KeyboardEvent) => void) | null = null;
 
-export function abrirTutorial(opcoes: OpcoesTutorial = {}): void {
-  if (overlayAtivo) return;
+/** Retorna `true` se o overlay foi aberto; `false` se já havia um ativo. */
+export function abrirTutorial(opcoes: OpcoesTutorial = {}): boolean {
+  if (overlayAtivo) return false;
   const fundo = document.createElement('div');
   fundo.className = 'tutorial-fundo';
   fundo.innerHTML = `<div class="tutorial-palco">${montarConteudoTutorial()}</div>`;
   document.body.appendChild(fundo);
   overlayAtivo = fundo;
   registrarFechamento(fundo, opcoes.aoFechar);
+  return true;
 }
 
 function fecharTutorial(aoFechar?: () => void): void {

@@ -2,7 +2,7 @@ import { Scene } from 'phaser';
 import { VALOR_MINIMO } from '@/core/Carta';
 import { Rodada } from '@/core/Rodada';
 import { ehFaseDeclaracao, estadoEmJogo } from '@/types/estado-rodada';
-import { abrirTutorial } from '../../tutorial/tutorial-overlay';
+import { abrirTutorialPausandoCena } from '../abrir-tutorial-cena';
 import { DecisorHumano } from '../DecisorHumano';
 import { calcularLayout, type LayoutPainel, type Retangulo } from '../layout';
 import { criarDebounceResize, type ResizeDebouncer } from '../redimensionamento';
@@ -146,12 +146,7 @@ export class JogoScene extends Scene {
   };
 
   private mostrarTutorial = (): void => {
-    this.scene.pause();
-    abrirTutorial({
-      aoFechar: () => {
-        this.scene.resume();
-      },
-    });
+    abrirTutorialPausandoCena(this);
   };
 
   private renderizarFimJogo(primeiraExibicao: boolean): void {
