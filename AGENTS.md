@@ -68,6 +68,12 @@ src/
 - **Pre-commit hooks**: Prettier + ESLint + typecheck + testes rodam automaticamente.
 - **Knip**: detecta dependências e código morto.
 
+### Alvo do PR
+
+- **Todo PR tem `preview` como base.** É a branch de integração, e cada merge nela republica o link de playtest.
+- **`main` só com pedido explícito do Vinícius.** `main` é produção na Vercel; promover `preview` → `main` é decisão dele, não passo automático de quem entrega uma feature.
+- Na dúvida, abra contra `preview`.
+
 ---
 
 ## 5. Ferramentas
