@@ -25,7 +25,23 @@ Jogo de cartas brasileiro online. Gratuito, open-source, multiplayer P2P via bro
 
 - Browser game (mobile-first).
 - Multiplayer P2P via WebRTC.
-- Deploy no Vercel.
+- Deploy no Vercel (produção) e no GitHub Pages (playtest).
+
+## Onde jogar
+
+| Link                                   | Branch    | Para quê                                     |
+| -------------------------------------- | --------- | -------------------------------------------- |
+| https://fdp-online.vercel.app          | `main`    | Produção.                                    |
+| https://dhinihan.github.io/fdp-online/ | `preview` | Playtest: balanceamento, diversão, feedback. |
+
+Os dois guardam ranking e troféus separados, porque `localStorage` é por origem.
+Acrescente `?debug=1` a qualquer um dos links para ligar o modo de depuração.
+
+### Fluxo de branches
+
+PRs têm `preview` como base, e cada merge nela republica o link de playtest.
+Promover `preview` → `main` (isto é, para produção) é decisão explícita, nunca
+parte de entregar uma feature.
 
 ## Regras completas
 
