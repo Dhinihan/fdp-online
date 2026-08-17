@@ -6,7 +6,7 @@
  */
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { arquivosForaDoPrecache, extrairUrlsDePrecache } from './precache.ts';
+import { arquivosDoServiceWorker, arquivosForaDoPrecache, extrairUrlsDePrecache } from './precache.ts';
 
 const raizDist = path.resolve(process.argv[2] ?? 'dist');
 
@@ -25,7 +25,7 @@ async function listarArquivos(diretorio: string, prefixo = ''): Promise<string[]
 
 const arquivos = await listarArquivos(raizDist);
 const sw = await readFile(path.join(raizDist, 'sw.js'), 'utf8');
-const faltando = arquivosForaDoPrecache(arquivos, extrairUrlsDePrecache(sw));
+const faltando = arquivosForaDoPrecache(arquivos, extrairUrlsDePrecache(sw), arquivosDoServiceWorker(sw));
 
 if (faltando.length > 0) {
   console.error(
