@@ -5,6 +5,6 @@
     "checkJs": true,
     "types": ["vite/client", "@playwright/test", "node"]
   },
-  "include": ["src", "tests", ".sandcastle/**/*.ts", "*.config.ts", "*.config.js"],
+  "include": ["src", "tests", "scripts/**/*.ts", ".sandcastle/**/*.ts", "*.config.ts", "*.config.js"],
   "exclude": ["dist", "node_modules", "public", "coverage", ".pi", ".sandcastle/worktrees"]
 }
