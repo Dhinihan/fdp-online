@@ -19,7 +19,7 @@
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:e2e": "playwright test --config=playwright.config.js",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.tests.json",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.tests.json && tsc --noEmit -p tsconfig.scripts.json",
     "sandcastle:run": "tsx .sandcastle/run.ts",
     "sandcastle:cron": "pnpm sandcastle:run",
     "sandcastle:cron:lock": ".sandcastle/rodar-cron-com-lock.sh",
