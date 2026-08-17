@@ -19,7 +19,7 @@ export default defineConfig(
     },
   },
   {
-    files: ['*.config.{ts,js}', '.sandcastle/**/*.ts', 'tests/**/*.{ts,tsx}'],
+    files: ['*.config.{ts,js}', '.sandcastle/**/*.ts', 'scripts/**/*.ts', 'tests/**/*.{ts,tsx}'],
     languageOptions: {
       globals: { ...globals.node },
     },
@@ -53,7 +53,7 @@ export default defineConfig(
     },
   },
   {
-    files: ['.sandcastle/**/*.ts'],
+    files: ['.sandcastle/**/*.ts', 'scripts/**/*.ts'],
     rules: {
       'no-console': 'off',
     },
