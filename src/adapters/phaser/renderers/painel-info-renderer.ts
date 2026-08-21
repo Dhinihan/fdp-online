@@ -63,8 +63,8 @@ export function desenharPainelInfo(config: ConfigPainelInfo): void {
   desenharFundo(base);
   // Cabeçalho: "Rodada N" à esquerda, depois 💬, 🏆 e ? ancorados à direita
   // (? mais à direita), na borda da tabela — em retrato, antes da manilha.
-  desenharCabecalhoRodada(base, config.numeroRodada);
   const { feedbackX, trofeuX, ajudaX } = posicoesIcones(infoArea, ehPaisagem, cena);
+  desenharCabecalhoRodada(base, config.numeroRodada, feedbackX);
   if (config.aoAbrirFeedback) desenharBotaoFeedback(base, feedbackX, config.aoAbrirFeedback);
   if (config.aoAbrirRanking) desenharBotaoTrofeu(base, trofeuX, config.aoAbrirRanking);
   if (config.aoAbrirTutorial) desenharBotaoAjuda(base, ajudaX, config.aoAbrirTutorial);
@@ -133,7 +133,7 @@ function posicoesIcones(
   return { feedbackX, trofeuX, ajudaX };
 }
 
-function desenharCabecalhoRodada(config: ConfigDesenho, numero: number): void {
+function desenharCabecalhoRodada(config: ConfigDesenho, numero: number, limiteX: number): void {
   if (!numero) return;
   const { cena, objetos, area } = config;
   const texto = cena.add
@@ -145,6 +145,8 @@ function desenharCabecalhoRodada(config: ConfigDesenho, numero: number): void {
     })
     .setOrigin(0, 0.5)
     .setDepth(81);
+  const larguraDisponivel = limiteX - texto.x - escalar(GAP_ICONES, cena);
+  if (texto.width > larguraDisponivel) texto.setText(`R${String(numero)}`);
   objetos.push(texto);
 }
 
