@@ -1,0 +1,211 @@
+.feedback-fundo {
+  --feedback-bg: #1a1a2e;
+  --feedback-painel: #16213e;
+  --feedback-campo: #0f1830;
+  --feedback-texto: #eef2ff;
+  --feedback-suave: #aab4d4;
+  --feedback-verde: #4ecca3;
+  --feedback-linha: #2a3a63;
+  --feedback-erro: #ff8a8a;
+
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  overflow: auto;
+  background: rgba(8, 10, 24, 0.78);
+  color: var(--feedback-texto);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.feedback-fundo * {
+  box-sizing: border-box;
+}
+
+.feedback-painel {
+  width: min(100%, 460px);
+  overflow: hidden;
+  border: 1px solid var(--feedback-linha);
+  border-radius: 18px;
+  background: linear-gradient(180deg, var(--feedback-painel), var(--feedback-campo));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.58);
+}
+
+.feedback-topo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.feedback-topo h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 19px;
+  font-weight: 750;
+}
+
+.feedback-fechar {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--feedback-linha);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--feedback-suave);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.feedback-conteudo {
+  padding: 20px;
+}
+
+.feedback-formulario {
+  display: grid;
+  gap: 8px;
+}
+
+.feedback-formulario label {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.feedback-formulario label span {
+  color: var(--feedback-suave);
+  font-weight: 450;
+}
+
+.feedback-formulario input,
+.feedback-formulario textarea {
+  width: 100%;
+  border: 1px solid var(--feedback-linha);
+  border-radius: 10px;
+  outline: none;
+  background: rgba(5, 8, 22, 0.62);
+  color: var(--feedback-texto);
+  font: inherit;
+}
+
+.feedback-formulario input {
+  height: 42px;
+  padding: 0 12px;
+}
+
+.feedback-formulario .feedback-armadilha {
+  position: fixed;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.feedback-formulario textarea {
+  min-height: 180px;
+  padding: 12px 14px;
+  resize: vertical;
+  line-height: 1.5;
+  box-shadow: inset 3px 0 0 rgba(78, 204, 163, 0.5);
+}
+
+.feedback-formulario textarea::placeholder {
+  color: #6f7aa0;
+}
+
+.feedback-formulario input:focus,
+.feedback-formulario textarea:focus {
+  border-color: var(--feedback-verde);
+  box-shadow: 0 0 0 3px rgba(78, 204, 163, 0.14);
+}
+
+.feedback-formulario textarea:focus {
+  box-shadow:
+    inset 3px 0 0 var(--feedback-verde),
+    0 0 0 3px rgba(78, 204, 163, 0.14);
+}
+
+.feedback-nota,
+.feedback-mensagem {
+  min-height: 18px;
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.feedback-nota {
+  color: var(--feedback-suave);
+}
+
+.feedback-mensagem {
+  color: var(--feedback-erro);
+}
+
+.feedback-enviar,
+.feedback-sucesso button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--feedback-verde);
+  color: #06241a;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.feedback-enviar:disabled {
+  cursor: wait;
+  opacity: 0.66;
+}
+
+.feedback-fechar:focus-visible,
+.feedback-enviar:focus-visible,
+.feedback-sucesso button:focus-visible {
+  outline: 3px solid rgba(124, 156, 255, 0.72);
+  outline-offset: 2px;
+}
+
+.feedback-formulario[hidden] {
+  display: none;
+}
+
+.feedback-sucesso {
+  text-align: center;
+}
+
+.feedback-sucesso p {
+  margin: 8px 0 20px;
+  color: var(--feedback-texto);
+  line-height: 1.5;
+}
+
+.feedback-sucesso button {
+  width: 100%;
+}
+
+@media (max-height: 560px) {
+  .feedback-fundo {
+    place-items: start center;
+    padding-block: 12px;
+  }
+
+  .feedback-conteudo {
+    padding-block: 14px;
+  }
+
+  .feedback-formulario textarea {
+    min-height: 110px;
+  }
+}
