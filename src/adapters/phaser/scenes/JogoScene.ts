@@ -152,22 +152,20 @@ export class JogoScene extends Scene {
   };
 
   private mostrarFeedback = (): void => {
-    this.abrirFeedback('partida');
-  };
-
-  mostrarFeedbackFim = (): void => {
-    this.abrirFeedback('fim-da-partida');
-  };
-
-  private abrirFeedback(origem: 'partida' | 'fim-da-partida'): void {
     const estado = this.controller?.partida?.estado;
     if (!estado) return;
     abrirFeedbackPausandoCena(this, {
-      origem,
+      origem: 'partida',
       numeroRodada: estado.numeroRodada,
       fase: estado.fase,
     });
-  }
+  };
+
+  mostrarFeedbackFim = (): void => {
+    const numeroRodada = this.controller?.partida?.estado.numeroRodada;
+    if (numeroRodada === undefined) return;
+    abrirFeedbackPausandoCena(this, { origem: 'fim-da-partida', numeroRodada });
+  };
 
   private renderizarFimJogo(primeiraExibicao: boolean): void {
     if (!this.fimJogoAtivo) return;

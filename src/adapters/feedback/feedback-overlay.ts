@@ -7,7 +7,8 @@ const MENSAGEM_ERRO = 'Não foi possível enviar. Verifique sua conexão e tente
 
 export type ContextoFeedback =
   | { origem: 'menu' }
-  | { origem: 'partida' | 'fim-da-partida'; numeroRodada: number; fase: FaseRodada };
+  | { origem: 'partida'; numeroRodada: number; fase: FaseRodada }
+  | { origem: 'fim-da-partida'; numeroRodada: number };
 
 interface OpcoesFeedback {
   contexto: ContextoFeedback;
@@ -157,7 +158,8 @@ function criarRequisicao(elementos: ElementosFormulario, feedback: string, conte
 function adicionarContextoPartida(dados: FormData, contexto: ContextoFeedback): void {
   if (contexto.origem === 'menu') return;
   dados.set('rodada', String(contexto.numeroRodada));
-  dados.set('fase', contexto.fase);
+  const fase = contexto.origem === 'fim-da-partida' ? 'partidaEncerrada' : contexto.fase;
+  dados.set('fase', fase);
 }
 
 function definirEnviando(elementos: ElementosFormulario, enviando: boolean): void {
