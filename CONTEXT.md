@@ -136,6 +136,10 @@ _Avoid_: Milestone, conquista, achievement, medalha
 **Troféu** de nível mais alto já conquistado pelo jogador humano. Resume toda a coleção, já que os níveis são ordenados: possuir um nível implica possuir todos os anteriores.
 _Avoid_: Melhor sequência, recorde
 
+**Feedback de Playtest**:
+Anotação textual livre enviada voluntariamente por um jogador durante os testes do jogo, sem categorias nem perguntas direcionadas. Pode incluir um nome ou apelido, mas essa identificação é opcional.
+_Avoid_: Ticket, avaliação, review
+
 ## Relationships
 
 - Uma **Partida** contém uma ou mais **Rodadas**.

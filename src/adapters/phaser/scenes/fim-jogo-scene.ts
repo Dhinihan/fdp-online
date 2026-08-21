@@ -17,6 +17,7 @@ interface ConfigFimJogoScene {
   painelObjetos: Phaser.GameObjects.GameObject[];
   destaque: EstadoDestaque;
   onReiniciar: () => void;
+  onFeedback: () => void;
   /** Primeira exibição (transição jogo→fim) vs. re-render por resize. */
   primeiraExibicao: boolean;
 }
@@ -31,6 +32,7 @@ export function mostrarFimJogo(config: ConfigFimJogoScene): void {
     resultadoTrofeus: config.resultadoTrofeus,
     objetos: config.fimJogoObjetos,
     onReiniciar: config.onReiniciar,
+    onFeedback: config.onFeedback,
     animar: config.primeiraExibicao,
   });
 }
@@ -52,6 +54,7 @@ export function mostrarFimJogoDaCena(cena: JogoScene, estado: EstadoFimJogo, pri
     painelObjetos: cena.painelObjetos,
     destaque: cena.destaque,
     onReiniciar: () => cena.scene.restart(),
+    onFeedback: cena.mostrarFeedbackFim,
     primeiraExibicao,
   });
 }

@@ -2,6 +2,7 @@ import { Scene } from 'phaser';
 import { VALOR_MINIMO } from '@/core/Carta';
 import { Rodada } from '@/core/Rodada';
 import { ehFaseDeclaracao, estadoEmJogo } from '@/types/estado-rodada';
+import { abrirFeedbackPausandoCena } from '../abrir-feedback-cena';
 import { abrirTutorialPausandoCena } from '../abrir-tutorial-cena';
 import { DecisorHumano } from '../DecisorHumano';
 import { calcularLayout, type LayoutPainel, type Retangulo } from '../layout';
@@ -137,6 +138,7 @@ export class JogoScene extends Scene {
       objetos: this.painelObjetos,
       aoAbrirRanking: this.abrirRanking,
       aoAbrirTutorial: this.mostrarTutorial,
+      aoAbrirFeedback: this.mostrarFeedback,
     });
   }
 
@@ -147,6 +149,22 @@ export class JogoScene extends Scene {
 
   private mostrarTutorial = (): void => {
     abrirTutorialPausandoCena(this);
+  };
+
+  private mostrarFeedback = (): void => {
+    const estado = this.controller?.partida?.estado;
+    if (!estado) return;
+    abrirFeedbackPausandoCena(this, {
+      origem: 'partida',
+      numeroRodada: estado.numeroRodada,
+      fase: estado.fase,
+    });
+  };
+
+  mostrarFeedbackFim = (): void => {
+    const numeroRodada = this.controller?.partida?.estado.numeroRodada;
+    if (numeroRodada === undefined) return;
+    abrirFeedbackPausandoCena(this, { origem: 'fim-da-partida', numeroRodada });
   };
 
   private renderizarFimJogo(primeiraExibicao: boolean): void {
