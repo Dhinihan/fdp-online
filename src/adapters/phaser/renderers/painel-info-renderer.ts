@@ -15,8 +15,8 @@ import { desenharManilhaNoPainel } from './painel-manilha-renderer';
 // das constantes abaixo, para não divergirem.
 const MARGEM_CABECALHO = 16; // padding horizontal do conteúdo do cabeçalho
 const CABECALHO_Y = 22; // y do centro da linha do cabeçalho
-const TAMANHO_ALVO = 36; // lado da zona de toque dos ícones 🏆 e ?
-const GAP_ICONES = 4; // folga entre o rótulo e os ícones, e entre os dois ícones
+const TAMANHO_ALVO = 36; // lado da zona de toque dos ícones 💬, 🏆 e ?
+const GAP_ICONES = 4; // folga entre o rótulo e os ícones, e entre cada ícone
 const LARGURA_ROTULO_RODADA = 70;
 const OFFSET_CABECALHO_TABELA = 44;
 const OFFSET_PRIMEIRA_LINHA = 20;
@@ -37,6 +37,7 @@ export interface ConfigPainelInfo {
   objetos: Phaser.GameObjects.GameObject[];
   aoAbrirRanking?: () => void;
   aoAbrirTutorial?: () => void;
+  aoAbrirFeedback?: () => void;
 }
 
 interface ConfigDesenho {
@@ -60,10 +61,11 @@ export function desenharPainelInfo(config: ConfigPainelInfo): void {
   const base: ConfigDesenho = { cena, objetos, area: infoArea };
 
   desenharFundo(base);
-  // Cabeçalho: "Rodada N" à esquerda, depois 🏆 e ? ancorados à direita
+  // Cabeçalho: "Rodada N" à esquerda, depois 💬, 🏆 e ? ancorados à direita
   // (? mais à direita), na borda da tabela — em retrato, antes da manilha.
-  desenharCabecalhoRodada(base, config.numeroRodada);
-  const { trofeuX, ajudaX } = posicoesIcones(infoArea, ehPaisagem, cena);
+  const { feedbackX, trofeuX, ajudaX } = posicoesIcones(infoArea, ehPaisagem, cena);
+  desenharCabecalhoRodada(base, config.numeroRodada, feedbackX);
+  if (config.aoAbrirFeedback) desenharBotaoFeedback(base, feedbackX, config.aoAbrirFeedback);
   if (config.aoAbrirRanking) desenharBotaoTrofeu(base, trofeuX, config.aoAbrirRanking);
   if (config.aoAbrirTutorial) desenharBotaoAjuda(base, ajudaX, config.aoAbrirTutorial);
   const { colunas, areaManilha } = calcularLayoutTabela(cena, infoArea, ehPaisagem);
@@ -82,14 +84,14 @@ export function desenharPainelInfo(config: ConfigPainelInfo): void {
 
 /**
  * Tamanhos mínimos do painel para o conteúdo não se sobrepor:
- * em paisagem, largura que comporte 🏆 + ? + "Rodada N" lado a lado;
+ * em paisagem, largura que comporte 💬 + 🏆 + ? + "Rodada N" lado a lado;
  * em retrato, altura que comporte a tabela inteira de jogadores.
  */
 export function calcularMinimosPainel(cena: Scene, qtdJogadores: number): MinimosPainel {
-  // "Rodada N" (esquerda) + os dois ícones e suas zonas de toque (direita),
+  // "Rodada N" (esquerda) + os três ícones e suas zonas de toque (direita),
   // com folgas; usa o hitbox inteiro (não só o glifo) para nada se sobrepor.
   const larguraCabecalho =
-    MARGEM_CABECALHO + LARGURA_ROTULO_RODADA + GAP_ICONES + TAMANHO_ALVO + GAP_ICONES + TAMANHO_ALVO + MARGEM_TABELA;
+    MARGEM_CABECALHO + LARGURA_ROTULO_RODADA + GAP_ICONES + TAMANHO_ALVO * 3 + GAP_ICONES * 2 + MARGEM_TABELA;
   const linhas = Math.max(qtdJogadores - 1, 0);
   const alturaTabela = OFFSET_CABECALHO_TABELA + OFFSET_PRIMEIRA_LINHA + linhas * ESPACAMENTO_LINHA + FOLGA_TABELA;
   return { largura: escalar(larguraCabecalho, cena), altura: escalar(alturaTabela, cena) };
@@ -116,16 +118,22 @@ function bordaDireitaTabela(area: Retangulo, ehPaisagem: boolean, cena: Scene): 
   return area.x + escalar(MARGEM_TABELA, cena) + Math.round(area.largura * FRACAO_TABELA_RETRATO);
 }
 
-// x (borda esquerda) de cada ícone, ancorando o par à direita: ? é o mais à
-// direita e o 🏆 fica à esquerda dele, separados por GAP_ICONES.
-function posicoesIcones(area: Retangulo, ehPaisagem: boolean, cena: Scene): { trofeuX: number; ajudaX: number } {
+// x (borda esquerda) de cada ícone, ancorando o trio à direita: ? é o mais à
+// direita, com 🏆 e 💬 à esquerda, separados por GAP_ICONES.
+function posicoesIcones(
+  area: Retangulo,
+  ehPaisagem: boolean,
+  cena: Scene,
+): { feedbackX: number; trofeuX: number; ajudaX: number } {
   const alvo = escalar(TAMANHO_ALVO, cena);
+  const gap = escalar(GAP_ICONES, cena);
   const ajudaX = bordaDireitaTabela(area, ehPaisagem, cena) - alvo;
-  const trofeuX = ajudaX - escalar(GAP_ICONES, cena) - alvo;
-  return { trofeuX, ajudaX };
+  const trofeuX = ajudaX - gap - alvo;
+  const feedbackX = trofeuX - gap - alvo;
+  return { feedbackX, trofeuX, ajudaX };
 }
 
-function desenharCabecalhoRodada(config: ConfigDesenho, numero: number): void {
+function desenharCabecalhoRodada(config: ConfigDesenho, numero: number, limiteX: number): void {
   if (!numero) return;
   const { cena, objetos, area } = config;
   const texto = cena.add
@@ -137,7 +145,22 @@ function desenharCabecalhoRodada(config: ConfigDesenho, numero: number): void {
     })
     .setOrigin(0, 0.5)
     .setDepth(81);
+  const larguraDisponivel = limiteX - texto.x - escalar(GAP_ICONES, cena);
+  if (texto.width > larguraDisponivel) texto.setText(`R${String(numero)}`);
   objetos.push(texto);
+}
+
+function desenharBotaoFeedback(config: ConfigDesenho, x: number, aoAbrir: () => void): void {
+  const { cena, objetos, area } = config;
+  const y = area.y + escalar(CABECALHO_Y, cena);
+  const feedback = cena.add
+    .text(x, y, '💬', { fontSize: escalarFonte(17, cena), fontFamily: 'Arial' })
+    .setOrigin(0, 0.5)
+    .setDepth(82);
+  const alvo = escalar(TAMANHO_ALVO, cena);
+  const zona = cena.add.zone(x, y, alvo, alvo).setOrigin(0, 0.5).setDepth(82).setInteractive({ useHandCursor: true });
+  zona.on('pointerdown', aoAbrir);
+  objetos.push(feedback, zona);
 }
 
 function desenharBotaoTrofeu(config: ConfigDesenho, x: number, aoAbrir: () => void): void {

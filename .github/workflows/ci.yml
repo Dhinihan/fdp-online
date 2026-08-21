@@ -27,6 +27,10 @@ jobs:
             script: test
           - name: build
             script: build
+          # Guarda de precache: falha se algum arquivo do dist ficar fora do
+          # Service Worker, nos dois alvos de base (`/` e `/fdp-online/`).
+          - name: precache
+            script: verifica:precache:builds
     name: ${{ matrix.name }}
     steps:
       - uses: actions/checkout@v7

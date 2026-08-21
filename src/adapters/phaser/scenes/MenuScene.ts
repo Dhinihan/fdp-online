@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import type { GameObjects } from 'phaser';
+import { abrirFeedbackPausandoCena } from '../abrir-feedback-cena';
 import { abrirTutorialPausandoCena } from '../abrir-tutorial-cena';
 import { precarregarSomUi, prepararSomUi, tocarSomUi } from '../audio/som-ui';
 import { escalar, escalarFonte } from '../escala';
@@ -16,6 +17,8 @@ export class MenuScene extends Scene {
   private botaoZona?: Zone;
   private tutorialTexto?: Text;
   private tutorialZona?: Zone;
+  private feedbackTexto?: Text;
+  private feedbackZona?: Zone;
   private redesenhar?: ResizeDebouncer;
 
   constructor() {
@@ -56,6 +59,8 @@ export class MenuScene extends Scene {
     this.botaoZona?.destroy();
     this.tutorialTexto?.destroy();
     this.tutorialZona?.destroy();
+    this.feedbackTexto?.destroy();
+    this.feedbackZona?.destroy();
   }
 
   private desenharElementos(): void {
@@ -65,6 +70,7 @@ export class MenuScene extends Scene {
     this.criarTitulo(centroX, altura * 0.3);
     this.criarBotao(centroX, altura * 0.6);
     this.criarBotaoTutorial(centroX, altura * 0.74);
+    this.criarBotaoFeedback(centroX, altura * 0.84);
   }
 
   private criarTitulo(x: number, y: number): void {
@@ -118,9 +124,28 @@ export class MenuScene extends Scene {
     this.tutorialZona.on('pointerdown', this.mostrarTutorial);
   }
 
+  private criarBotaoFeedback(x: number, y: number): void {
+    this.feedbackTexto = this.add
+      .text(x, y, 'Enviar feedback', {
+        fontSize: escalarFonte(16, this),
+        color: '#aab4d4',
+      })
+      .setOrigin(0.5);
+
+    const largura = this.feedbackTexto.width + escalar(24, this);
+    const altura = this.feedbackTexto.height + escalar(16, this);
+    this.feedbackZona = this.add.zone(x, y, largura, altura).setInteractive({ useHandCursor: true });
+    this.feedbackZona.on('pointerdown', this.mostrarFeedback);
+  }
+
   private mostrarTutorial = (): void => {
     tocarSomUi(this);
     abrirTutorialPausandoCena(this);
+  };
+
+  private mostrarFeedback = (): void => {
+    tocarSomUi(this);
+    abrirFeedbackPausandoCena(this, { origem: 'menu' });
   };
 
   private iniciarJogo = (): void => {

@@ -11,6 +11,7 @@ interface ConfigFimJogo {
   resultadoTrofeus: ResultadoTrofeus | null;
   objetos: Phaser.GameObjects.GameObject[];
   onReiniciar: () => void;
+  onFeedback: () => void;
   /** Anima fundo (fade-in) só na primeira exibição; no re-render por resize fica estático. */
   animar: boolean;
 }
@@ -30,6 +31,7 @@ interface LayoutFimJogo {
   alturaLinhaVencedor: number;
   alturaLinha: number;
   botaoY: number;
+  feedbackY: number;
   larguraRanking: number;
   larguraBotao: number;
   alturaBotao: number;
@@ -52,6 +54,8 @@ const ALTURA_LINHA_VENCEDOR = 54;
 const ALTURA_LINHA = 44;
 const ESPACO_RANKING_BOTAO = 30;
 const ALTURA_BOTAO = 52;
+const ESPACO_BOTAO_FEEDBACK = 10;
+const ALTURA_FEEDBACK = 34;
 const LARGURA_RANKING = 360;
 const LARGURA_BOTAO = 220;
 
@@ -67,6 +71,7 @@ export function desenharFimJogo(config: ConfigFimJogo): void {
     desenharLinha({ cena, objetos, jogador, indice, layout }, config.animar);
   });
   desenharBotao(config, layout);
+  desenharLinkFeedback(config, layout);
 }
 
 function limparFimJogoAnterior(config: ConfigFimJogo): void {
@@ -100,7 +105,9 @@ function calcularMetricas(config: ConfigFimJogo): MetricasFimJogo {
     Math.max(0, config.classificacao.length - 1) * PASSO_RANKING +
     ALTURA_LINHA_VENCEDOR +
     ESPACO_RANKING_BOTAO +
-    ALTURA_BOTAO;
+    ALTURA_BOTAO +
+    ESPACO_BOTAO_FEEDBACK +
+    ALTURA_FEEDBACK;
   return {
     linhasCabecalho,
     totalNatural,
@@ -112,7 +119,7 @@ function calcularPosicoes(
   config: ConfigFimJogo,
   metricas: MetricasFimJogo,
   paraTela: (valor: number) => number,
-): Pick<LayoutFimJogo, 'tituloY' | 'sequenciaY' | 'trofeuY' | 'primeiraLinhaY' | 'botaoY'> {
+): Pick<LayoutFimJogo, 'tituloY' | 'sequenciaY' | 'trofeuY' | 'primeiraLinhaY' | 'botaoY' | 'feedbackY'> {
   let cursor = Math.max(escalar(12, config.cena), inicioVertical(config, metricas, paraTela));
   const tituloY = cursor + paraTela(ALTURA_TITULO) / 2;
   cursor += paraTela(ALTURA_TITULO + espacoAposTitulo(metricas.linhasCabecalho));
@@ -124,7 +131,8 @@ function calcularPosicoes(
   const primeiraLinhaY = cursor + paraTela(ALTURA_LINHA_VENCEDOR) / 2;
   const ultimaLinhaY = primeiraLinhaY + Math.max(0, config.classificacao.length - 1) * paraTela(PASSO_RANKING);
   const botaoY = ultimaLinhaY + paraTela(ALTURA_LINHA_VENCEDOR / 2 + ESPACO_RANKING_BOTAO + ALTURA_BOTAO / 2);
-  return { tituloY, sequenciaY, trofeuY, primeiraLinhaY, botaoY };
+  const feedbackY = botaoY + paraTela(ALTURA_BOTAO / 2 + ESPACO_BOTAO_FEEDBACK + ALTURA_FEEDBACK / 2);
+  return { tituloY, sequenciaY, trofeuY, primeiraLinhaY, botaoY, feedbackY };
 }
 
 function contarLinhasCabecalho(resultado: ResultadoTrofeus | null): number {
@@ -304,6 +312,23 @@ function desenharBotao(config: ConfigFimJogo, layout: LayoutFimJogo): void {
   const zona = cena.add.zone(x, y, largura, altura).setInteractive({ useHandCursor: true }).setDepth(104);
   zona.on('pointerdown', config.onReiniciar);
   objetos.push(botao, texto, zona);
+}
+
+function desenharLinkFeedback(config: ConfigFimJogo, layout: LayoutFimJogo): void {
+  const { cena, objetos } = config;
+  const largura = escalar(LARGURA_BOTAO, cena);
+  const altura = Math.round(escalar(ALTURA_FEEDBACK, cena) * layout.escalaConteudo);
+  const texto = cena.add
+    .text(cena.cameras.main.centerX, layout.feedbackY, 'Enviar feedback', {
+      fontSize: fonteFimJogo(15, cena, layout),
+      color: '#aab4d4',
+      fontFamily: 'Arial',
+    })
+    .setOrigin(0.5)
+    .setDepth(103);
+  const zona = cena.add.zone(texto.x, texto.y, largura, altura).setInteractive({ useHandCursor: true }).setDepth(104);
+  zona.on('pointerdown', config.onFeedback);
+  objetos.push(texto, zona);
 }
 
 function fonteFimJogo(tamanho: number, cena: Scene, layout: LayoutFimJogo): string {
